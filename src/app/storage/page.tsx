@@ -178,7 +178,7 @@ export default function StoragePage() {
           <div className="mt-8">
             <button
               onClick={() => setShowDeleted(!showDeleted)}
-              className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors mb-3"
+              className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors mb-3 cursor-pointer"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"

@@ -112,7 +112,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   const getFieldLabel = (field: string | null): string => {
     const labels: Record<string, string> = {
       name: 'დასახელება',
-      price: 'ფასი',
+      price: ' გასაყიდი ფასი',
       cost_price: 'თვითღირებულება',
       quantity: 'რაოდენობა',
       description: 'აღწერა',
@@ -396,7 +396,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
             <div className="border-t dark:border-gray-700">
               <button
                 onClick={toggleHistory}
-                className="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                className="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer"
               >
                 <span className="font-medium text-gray-800 dark:text-white">ისტორია</span>
                 <svg
@@ -449,7 +449,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
             <div className="border-t dark:border-gray-700">
               <button
                 onClick={() => setOrdersOpen(!ordersOpen)}
-                className="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                className="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer"
               >
                 <span className="font-medium text-gray-800 dark:text-white">შეკვეთები</span>
                 <svg
