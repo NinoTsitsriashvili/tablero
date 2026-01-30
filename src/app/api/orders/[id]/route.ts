@@ -40,7 +40,7 @@ export async function GET(
   }
 }
 
-// PUT update order
+// PUT update order (supports partial updates)
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -56,6 +56,25 @@ export async function PUT(
   try {
     const sql = getDb();
     const body = await request.json();
+
+    // If only status is being updated
+    if (body.status !== undefined && Object.keys(body).length === 1) {
+      const result = await sql`
+        UPDATE orders
+        SET status = ${body.status},
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = ${id}
+        RETURNING *
+      `;
+
+      if (result.length === 0) {
+        return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+      }
+
+      return NextResponse.json(result[0]);
+    }
+
+    // Full update
     const { fb_name, recipient_name, phone, address, product_id, product_price, courier_price, comment, status } = body;
 
     const result = await sql`
