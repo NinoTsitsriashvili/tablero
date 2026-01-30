@@ -277,13 +277,24 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
         ) : (
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
             {product.photo_url && (
-              <div className="relative h-64 w-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={product.photo_url}
-                  alt={product.name}
-                  className="max-h-full max-w-full object-contain"
-                />
+              <div className="relative w-full bg-gray-100 dark:bg-gray-700">
+                <div className="h-64 flex items-center justify-center">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={product.photo_url}
+                    alt={product.name}
+                    className="max-h-full max-w-full object-contain"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = 'none';
+                      target.nextElementSibling?.classList.remove('hidden');
+                    }}
+                  />
+                  <div className="hidden text-center p-4">
+                    <p className="text-red-500 dark:text-red-400 mb-2">სურათი ვერ ჩაიტვირთა</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 break-all">{product.photo_url}</p>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -345,6 +356,22 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
               <div className="mb-4">
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">აღწერა</p>
                 <p className="text-gray-800 dark:text-gray-300 whitespace-pre-wrap">{product.description || '--'}</p>
+              </div>
+
+              <div className="mb-4">
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">ფოტოს ბმული</p>
+                {product.photo_url ? (
+                  <a
+                    href={product.photo_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 dark:text-blue-400 hover:underline text-sm break-all"
+                  >
+                    {product.photo_url}
+                  </a>
+                ) : (
+                  <p className="text-gray-800 dark:text-gray-300">--</p>
+                )}
               </div>
 
               <div className="border-t dark:border-gray-700 pt-4 mt-4">
