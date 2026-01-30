@@ -56,6 +56,17 @@ export async function PUT(
       return NextResponse.json({ error: 'Name and price are required' }, { status: 400 });
     }
 
+    // Fetch old product to compare changes
+    const oldProducts = await sql`
+      SELECT * FROM products WHERE id = ${id} AND deleted_at IS NULL
+    `;
+
+    if (oldProducts.length === 0) {
+      return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+    }
+
+    const oldProduct = oldProducts[0];
+
     const result = await sql`
       UPDATE products
       SET name = ${name},
@@ -70,8 +81,26 @@ export async function PUT(
       RETURNING *
     `;
 
-    if (result.length === 0) {
-      return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+    // Log changes to history
+    const fieldsToTrack = [
+      { field: 'name', oldVal: oldProduct.name, newVal: name },
+      { field: 'price', oldVal: oldProduct.price, newVal: price },
+      { field: 'cost_price', oldVal: oldProduct.cost_price, newVal: cost_price || null },
+      { field: 'quantity', oldVal: oldProduct.quantity, newVal: quantity || 0 },
+      { field: 'description', oldVal: oldProduct.description, newVal: description || null },
+      { field: 'barcode', oldVal: oldProduct.barcode, newVal: barcode || null },
+      { field: 'photo_url', oldVal: oldProduct.photo_url, newVal: photo_url || null },
+    ];
+
+    for (const { field, oldVal, newVal } of fieldsToTrack) {
+      const oldStr = oldVal === null ? null : String(oldVal);
+      const newStr = newVal === null ? null : String(newVal);
+      if (oldStr !== newStr) {
+        await sql`
+          INSERT INTO product_history (product_id, action, field_name, old_value, new_value)
+          VALUES (${id}, 'updated', ${field}, ${oldStr}, ${newStr})
+        `;
+      }
     }
 
     return NextResponse.json(result[0]);

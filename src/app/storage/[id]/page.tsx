@@ -4,10 +4,20 @@ import { useState, useEffect, use } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import Image from 'next/image';
 import Navbar from '@/components/Navbar';
 import ProductForm from '@/components/ProductForm';
 import { Product } from '../page';
+
+interface HistoryEntry {
+  id: number;
+  product_id: number;
+  action: string;
+  field_name: string | null;
+  old_value: string | null;
+  new_value: string | null;
+  note: string | null;
+  created_at: string;
+}
 
 export default function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -17,6 +27,10 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   const [loading, setLoading] = useState(true);
   const [showEditForm, setShowEditForm] = useState(false);
   const [error, setError] = useState('');
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [ordersOpen, setOrdersOpen] = useState(false);
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -68,6 +82,54 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   const handleProductSaved = () => {
     setShowEditForm(false);
     fetchProduct();
+    if (historyOpen) {
+      fetchHistory();
+    }
+  };
+
+  const fetchHistory = async () => {
+    setHistoryLoading(true);
+    try {
+      const res = await fetch(`/api/products/${id}/history`);
+      if (res.ok) {
+        const data = await res.json();
+        setHistory(data);
+      }
+    } catch (error) {
+      console.error('Error fetching history:', error);
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
+  const toggleHistory = () => {
+    if (!historyOpen && history.length === 0) {
+      fetchHistory();
+    }
+    setHistoryOpen(!historyOpen);
+  };
+
+  const getFieldLabel = (field: string | null): string => {
+    const labels: Record<string, string> = {
+      name: 'დასახელება',
+      price: 'ფასი',
+      cost_price: 'თვითღირებულება',
+      quantity: 'რაოდენობა',
+      description: 'აღწერა',
+      barcode: 'შტრიხკოდი',
+      photo_url: 'ფოტო',
+    };
+    return field ? labels[field] || field : '';
+  };
+
+  const getActionLabel = (action: string): string => {
+    const labels: Record<string, string> = {
+      created: 'შექმნა',
+      updated: 'განახლება',
+      stock_added: 'მარაგის დამატება',
+      stock_removed: 'მარაგის გამოკლება',
+    };
+    return labels[action] || action;
   };
 
   if (status === 'loading' || loading) {
@@ -123,13 +185,12 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
         ) : (
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
             {product.photo_url && (
-              <div className="relative h-64 w-full bg-gray-100 dark:bg-gray-700">
-                <Image
+              <div className="relative h-64 w-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
                   src={product.photo_url}
                   alt={product.name}
-                  fill
-                  className="object-contain"
-                  sizes="(max-width: 896px) 100vw, 896px"
+                  className="max-h-full max-w-full object-contain"
                 />
               </div>
             )}
@@ -216,6 +277,97 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                   </div>
                 </div>
               </div>
+            </div>
+
+            {/* Collapsible History Tab */}
+            <div className="border-t dark:border-gray-700">
+              <button
+                onClick={toggleHistory}
+                className="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+              >
+                <span className="font-medium text-gray-800 dark:text-white">ისტორია</span>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className={`w-5 h-5 text-gray-500 dark:text-gray-400 transition-transform ${historyOpen ? 'rotate-180' : ''}`}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                </svg>
+              </button>
+              {historyOpen && (
+                <div className="px-6 pb-4">
+                  {historyLoading ? (
+                    <p className="text-gray-500 dark:text-gray-400">იტვირთება...</p>
+                  ) : history.length === 0 ? (
+                    <p className="text-gray-500 dark:text-gray-400">ისტორია არ არის</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {history.map((entry) => (
+                        <div
+                          key={entry.id}
+                          className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 text-sm"
+                        >
+                          <div className="flex justify-between items-start mb-1">
+                            <span className="font-medium text-gray-800 dark:text-white">
+                              {getActionLabel(entry.action)}
+                              {entry.field_name && `: ${getFieldLabel(entry.field_name)}`}
+                            </span>
+                            <span className="text-gray-500 dark:text-gray-400 text-xs">
+                              {new Date(entry.created_at).toLocaleString('ka-GE')}
+                            </span>
+                          </div>
+                          {(entry.old_value || entry.new_value) && (
+                            <div className="text-gray-600 dark:text-gray-300">
+                              {entry.old_value && entry.new_value ? (
+                                <span>
+                                  <span className="text-red-500 dark:text-red-400 line-through">{entry.old_value}</span>
+                                  {' → '}
+                                  <span className="text-green-500 dark:text-green-400">{entry.new_value}</span>
+                                </span>
+                              ) : entry.new_value ? (
+                                <span className="text-green-500 dark:text-green-400">{entry.new_value}</span>
+                              ) : null}
+                            </div>
+                          )}
+                          {entry.note && (
+                            <p className="text-gray-500 dark:text-gray-400 mt-1">{entry.note}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Collapsible Orders Tab (Placeholder) */}
+            <div className="border-t dark:border-gray-700">
+              <button
+                onClick={() => setOrdersOpen(!ordersOpen)}
+                className="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+              >
+                <span className="font-medium text-gray-800 dark:text-white">შეკვეთები</span>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className={`w-5 h-5 text-gray-500 dark:text-gray-400 transition-transform ${ordersOpen ? 'rotate-180' : ''}`}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                </svg>
+              </button>
+              {ordersOpen && (
+                <div className="px-6 pb-4">
+                  <p className="text-gray-500 dark:text-gray-400">
+                    შეკვეთები ჯერ არ არის დაკავშირებული. ეს ფუნქცია მალე დაემატება.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         )}

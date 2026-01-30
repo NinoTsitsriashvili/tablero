@@ -48,7 +48,15 @@ export async function POST(request: NextRequest) {
       RETURNING *
     `;
 
-    return NextResponse.json(result[0], { status: 201 });
+    const product = result[0];
+
+    // Log creation in history
+    await sql`
+      INSERT INTO product_history (product_id, action, field_name, new_value)
+      VALUES (${product.id}, 'created', 'quantity', ${quantity || 0})
+    `;
+
+    return NextResponse.json(product, { status: 201 });
   } catch (error) {
     console.error('Error creating product:', error);
     return NextResponse.json({ error: 'Failed to create product' }, { status: 500 });

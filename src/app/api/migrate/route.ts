@@ -19,6 +19,20 @@ export async function POST(request: NextRequest) {
       ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP DEFAULT NULL
     `;
 
+    // Create product_history table
+    await sql`
+      CREATE TABLE IF NOT EXISTS product_history (
+        id SERIAL PRIMARY KEY,
+        product_id INTEGER NOT NULL REFERENCES products(id),
+        action VARCHAR(50) NOT NULL,
+        field_name VARCHAR(100),
+        old_value TEXT,
+        new_value TEXT,
+        note TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+
     return NextResponse.json({ message: 'Migration completed successfully' }, { status: 200 });
   } catch (error) {
     console.error('Migration error:', error);
