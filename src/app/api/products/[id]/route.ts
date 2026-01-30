@@ -81,26 +81,46 @@ export async function PUT(
       RETURNING *
     `;
 
-    // Log changes to history
-    const fieldsToTrack = [
-      { field: 'name', oldVal: oldProduct.name, newVal: name },
-      { field: 'price', oldVal: oldProduct.price, newVal: price },
-      { field: 'cost_price', oldVal: oldProduct.cost_price, newVal: cost_price || null },
-      { field: 'quantity', oldVal: oldProduct.quantity, newVal: quantity || 0 },
-      { field: 'description', oldVal: oldProduct.description, newVal: description || null },
-      { field: 'barcode', oldVal: oldProduct.barcode, newVal: barcode || null },
-      { field: 'photo_url', oldVal: oldProduct.photo_url, newVal: photo_url || null },
-    ];
+    // Log update with full snapshot showing old and new values, and which fields changed
+    const oldSnapshot = {
+      name: oldProduct.name,
+      price: oldProduct.price,
+      cost_price: oldProduct.cost_price,
+      quantity: oldProduct.quantity,
+      description: oldProduct.description,
+      barcode: oldProduct.barcode,
+      photo_url: oldProduct.photo_url,
+    };
 
-    for (const { field, oldVal, newVal } of fieldsToTrack) {
+    const newSnapshot = {
+      name: name,
+      price: price,
+      cost_price: cost_price || null,
+      quantity: quantity || 0,
+      description: description || null,
+      barcode: barcode || null,
+      photo_url: photo_url || null,
+    };
+
+    // Find which fields changed
+    const changedFields: string[] = [];
+    const fields = ['name', 'price', 'cost_price', 'quantity', 'description', 'barcode', 'photo_url'] as const;
+    for (const field of fields) {
+      const oldVal = oldSnapshot[field];
+      const newVal = newSnapshot[field];
       const oldStr = oldVal === null ? null : String(oldVal);
       const newStr = newVal === null ? null : String(newVal);
       if (oldStr !== newStr) {
-        await sql`
-          INSERT INTO product_history (product_id, action, field_name, old_value, new_value)
-          VALUES (${id}, 'updated', ${field}, ${oldStr}, ${newStr})
-        `;
+        changedFields.push(field);
       }
+    }
+
+    // Only log if something actually changed
+    if (changedFields.length > 0) {
+      await sql`
+        INSERT INTO product_history (product_id, action, field_name, old_value, new_value)
+        VALUES (${id}, 'updated', ${changedFields.join(',')}, ${JSON.stringify(oldSnapshot)}, ${JSON.stringify(newSnapshot)})
+      `;
     }
 
     return NextResponse.json(result[0]);

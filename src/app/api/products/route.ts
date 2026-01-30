@@ -50,10 +50,20 @@ export async function POST(request: NextRequest) {
 
     const product = result[0];
 
-    // Log creation in history
+    // Log creation in history with all fields as JSON snapshot
+    const snapshot = JSON.stringify({
+      name: name,
+      price: price,
+      cost_price: cost_price || null,
+      quantity: quantity || 0,
+      description: description || null,
+      barcode: barcode || null,
+      photo_url: photo_url || null,
+    });
+
     await sql`
-      INSERT INTO product_history (product_id, action, field_name, new_value)
-      VALUES (${product.id}, 'created', 'quantity', ${quantity || 0})
+      INSERT INTO product_history (product_id, action, new_value)
+      VALUES (${product.id}, 'created', ${snapshot})
     `;
 
     return NextResponse.json(product, { status: 201 });

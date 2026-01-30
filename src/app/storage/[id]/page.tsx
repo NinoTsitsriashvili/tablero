@@ -132,6 +132,98 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
     return labels[action] || action;
   };
 
+  const formatValue = (value: unknown): string => {
+    if (value === null || value === undefined || value === '') {
+      return '--';
+    }
+    return String(value);
+  };
+
+  const parseSnapshot = (jsonStr: string | null): Record<string, unknown> | null => {
+    if (!jsonStr) return null;
+    try {
+      return JSON.parse(jsonStr);
+    } catch {
+      return null;
+    }
+  };
+
+  const renderHistoryEntry = (entry: HistoryEntry) => {
+    if (entry.action === 'created') {
+      const snapshot = parseSnapshot(entry.new_value);
+      if (snapshot) {
+        return (
+          <div className="space-y-1 text-sm">
+            <div><span className="text-gray-500 dark:text-gray-400">დასახელება:</span> <span className="text-green-600 dark:text-green-400">{formatValue(snapshot.name)}</span></div>
+            <div><span className="text-gray-500 dark:text-gray-400">ფასი:</span> <span className="text-green-600 dark:text-green-400">{snapshot.price ? `₾${Number(snapshot.price).toFixed(2)}` : '--'}</span></div>
+            <div><span className="text-gray-500 dark:text-gray-400">თვითღირებულება:</span> <span className="text-green-600 dark:text-green-400">{snapshot.cost_price ? `₾${Number(snapshot.cost_price).toFixed(2)}` : '--'}</span></div>
+            <div><span className="text-gray-500 dark:text-gray-400">რაოდენობა:</span> <span className="text-green-600 dark:text-green-400">{formatValue(snapshot.quantity)}</span></div>
+            <div><span className="text-gray-500 dark:text-gray-400">აღწერა:</span> <span className="text-green-600 dark:text-green-400">{formatValue(snapshot.description)}</span></div>
+            <div><span className="text-gray-500 dark:text-gray-400">შტრიხკოდი:</span> <span className="text-green-600 dark:text-green-400">{formatValue(snapshot.barcode)}</span></div>
+            <div><span className="text-gray-500 dark:text-gray-400">ფოტო:</span> <span className="text-green-600 dark:text-green-400">{snapshot.photo_url ? 'დამატებულია' : '--'}</span></div>
+          </div>
+        );
+      }
+      // Fallback for old format
+      return <span className="text-green-600 dark:text-green-400">{entry.new_value || '--'}</span>;
+    }
+
+    if (entry.action === 'updated') {
+      const oldSnapshot = parseSnapshot(entry.old_value);
+      const newSnapshot = parseSnapshot(entry.new_value);
+      const changedFields = entry.field_name?.split(',') || [];
+
+      if (oldSnapshot && newSnapshot) {
+        const fields = [
+          { key: 'name', label: 'დასახელება' },
+          { key: 'price', label: 'ფასი', format: (v: unknown) => v ? `₾${Number(v).toFixed(2)}` : '--' },
+          { key: 'cost_price', label: 'თვითღირებულება', format: (v: unknown) => v ? `₾${Number(v).toFixed(2)}` : '--' },
+          { key: 'quantity', label: 'რაოდენობა' },
+          { key: 'description', label: 'აღწერა' },
+          { key: 'barcode', label: 'შტრიხკოდი' },
+          { key: 'photo_url', label: 'ფოტო', format: (v: unknown) => v ? 'დამატებულია' : '--' },
+        ];
+
+        return (
+          <div className="space-y-1 text-sm">
+            {fields.map(({ key, label, format }) => {
+              const oldVal = oldSnapshot[key];
+              const newVal = newSnapshot[key];
+              const isChanged = changedFields.includes(key);
+              const formatFn = format || formatValue;
+
+              return (
+                <div key={key}>
+                  <span className="text-gray-500 dark:text-gray-400">{label}:</span>{' '}
+                  {isChanged ? (
+                    <>
+                      <span className="text-red-500 dark:text-red-400 line-through">{formatFn(oldVal)}</span>
+                      {' → '}
+                      <span className="text-green-600 dark:text-green-400">{formatFn(newVal)}</span>
+                    </>
+                  ) : (
+                    <span className="text-gray-700 dark:text-gray-300">{formatFn(newVal)}</span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        );
+      }
+
+      // Fallback for old format (single field changes)
+      return (
+        <span>
+          <span className="text-red-500 dark:text-red-400 line-through">{entry.old_value || '--'}</span>
+          {' → '}
+          <span className="text-green-600 dark:text-green-400">{entry.new_value || '--'}</span>
+        </span>
+      );
+    }
+
+    return null;
+  };
+
   if (status === 'loading' || loading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -223,12 +315,12 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                   <p className="text-xl font-bold text-gray-800 dark:text-white">₾{price.toFixed(2)}</p>
                 </div>
 
-                {costPrice !== null && (
-                  <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">თვითღირებულება</p>
-                    <p className="text-xl font-bold text-gray-800 dark:text-white">₾{costPrice.toFixed(2)}</p>
-                  </div>
-                )}
+                <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">თვითღირებულება</p>
+                  <p className="text-xl font-bold text-gray-800 dark:text-white">
+                    {costPrice !== null ? `₾${costPrice.toFixed(2)}` : '--'}
+                  </p>
+                </div>
 
                 <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
                   <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">მარაგი</p>
@@ -237,29 +329,23 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                   </p>
                 </div>
 
-                {profit !== null && (
-                  <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">მოგება</p>
-                    <p className={`text-xl font-bold ${profit > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                      ₾{profit.toFixed(2)}
-                    </p>
-                  </div>
-                )}
+                <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">მოგება</p>
+                  <p className={`text-xl font-bold ${profit !== null ? (profit > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400') : 'text-gray-800 dark:text-white'}`}>
+                    {profit !== null ? `₾${profit.toFixed(2)}` : '--'}
+                  </p>
+                </div>
               </div>
 
-              {product.barcode && (
-                <div className="mb-4">
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">შტრიხკოდი</p>
-                  <p className="text-gray-800 dark:text-gray-300 font-mono">{product.barcode}</p>
-                </div>
-              )}
+              <div className="mb-4">
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">შტრიხკოდი</p>
+                <p className="text-gray-800 dark:text-gray-300 font-mono">{product.barcode || '--'}</p>
+              </div>
 
-              {product.description && (
-                <div className="mb-4">
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">აღწერა</p>
-                  <p className="text-gray-800 dark:text-gray-300 whitespace-pre-wrap">{product.description}</p>
-                </div>
-              )}
+              <div className="mb-4">
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">აღწერა</p>
+                <p className="text-gray-800 dark:text-gray-300 whitespace-pre-wrap">{product.description || '--'}</p>
+              </div>
 
               <div className="border-t dark:border-gray-700 pt-4 mt-4">
                 <div className="grid grid-cols-2 gap-4 text-sm text-gray-500 dark:text-gray-400">
@@ -308,32 +394,21 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                       {history.map((entry) => (
                         <div
                           key={entry.id}
-                          className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 text-sm"
+                          className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3"
                         >
-                          <div className="flex justify-between items-start mb-1">
+                          <div className="flex justify-between items-start mb-2">
                             <span className="font-medium text-gray-800 dark:text-white">
                               {getActionLabel(entry.action)}
-                              {entry.field_name && `: ${getFieldLabel(entry.field_name)}`}
                             </span>
                             <span className="text-gray-500 dark:text-gray-400 text-xs">
                               {new Date(entry.created_at).toLocaleString('ka-GE')}
                             </span>
                           </div>
-                          {(entry.old_value || entry.new_value) && (
-                            <div className="text-gray-600 dark:text-gray-300">
-                              {entry.old_value && entry.new_value ? (
-                                <span>
-                                  <span className="text-red-500 dark:text-red-400 line-through">{entry.old_value}</span>
-                                  {' → '}
-                                  <span className="text-green-500 dark:text-green-400">{entry.new_value}</span>
-                                </span>
-                              ) : entry.new_value ? (
-                                <span className="text-green-500 dark:text-green-400">{entry.new_value}</span>
-                              ) : null}
-                            </div>
-                          )}
+                          <div className="text-gray-600 dark:text-gray-300">
+                            {renderHistoryEntry(entry)}
+                          </div>
                           {entry.note && (
-                            <p className="text-gray-500 dark:text-gray-400 mt-1">{entry.note}</p>
+                            <p className="text-gray-500 dark:text-gray-400 mt-2 text-sm italic">{entry.note}</p>
                           )}
                         </div>
                       ))}
