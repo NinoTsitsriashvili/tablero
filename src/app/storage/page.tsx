@@ -228,7 +228,7 @@ export default function StoragePage() {
                           <button
                             onClick={() => handleRestore(product.id)}
                             disabled={restoringId === product.id}
-                            className="px-3 py-1.5 text-sm bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded-md hover:bg-green-200 dark:hover:bg-green-800 transition-colors disabled:opacity-50"
+                            className="px-3 py-1.5 text-sm bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded-md hover:bg-green-200 dark:hover:bg-green-800 transition-colors disabled:opacity-50 cursor-pointer"
                           >
                             {restoringId === product.id ? 'აღდგენა...' : 'აღდგენა'}
                           </button>
