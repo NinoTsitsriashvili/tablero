@@ -110,7 +110,7 @@ export default function StoragePage() {
               </thead>
               <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                 {products.map((product) => (
-                  <tr key={product.id} className="hover:bg-gray-50 dark:hover:bg-gray-750">
+                  <tr key={product.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                     <td className="px-4 py-3 text-gray-800 dark:text-white font-medium">
                       {product.name}
                     </td>
