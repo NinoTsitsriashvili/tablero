@@ -1,0 +1,54 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import { getDb } from '@/lib/db';
+
+// GET all products
+export async function GET() {
+  const session = await getServerSession(authOptions);
+
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  try {
+    const sql = getDb();
+    const products = await sql`
+      SELECT * FROM products ORDER BY created_at DESC
+    `;
+    return NextResponse.json(products);
+  } catch (error) {
+    console.error('Error fetching products:', error);
+    return NextResponse.json({ error: 'Failed to fetch products' }, { status: 500 });
+  }
+}
+
+// POST create new product
+export async function POST(request: NextRequest) {
+  const session = await getServerSession(authOptions);
+
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  try {
+    const sql = getDb();
+    const body = await request.json();
+    const { name, price, cost_price, quantity, description, barcode, photo_url } = body;
+
+    if (!name || price === undefined) {
+      return NextResponse.json({ error: 'Name and price are required' }, { status: 400 });
+    }
+
+    const result = await sql`
+      INSERT INTO products (name, price, cost_price, quantity, description, barcode, photo_url)
+      VALUES (${name}, ${price}, ${cost_price || null}, ${quantity || 0}, ${description || null}, ${barcode || null}, ${photo_url || null})
+      RETURNING *
+    `;
+
+    return NextResponse.json(result[0], { status: 201 });
+  } catch (error) {
+    console.error('Error creating product:', error);
+    return NextResponse.json({ error: 'Failed to create product' }, { status: 500 });
+  }
+}
