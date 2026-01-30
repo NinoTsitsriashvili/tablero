@@ -135,6 +135,7 @@ export default function OrdersPage() {
                     <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">ჯამი</th>
                     <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">სტატუსი</th>
                     <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">თარიღი</th>
+                    <th className="px-4 py-3 text-right text-sm font-medium text-gray-700 dark:text-gray-300"></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -165,6 +166,14 @@ export default function OrdersPage() {
                           hour: '2-digit',
                           minute: '2-digit',
                         })}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <Link
+                          href={`/orders/${order.id}`}
+                          className="px-3 py-1.5 text-sm bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-md hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors cursor-pointer"
+                        >
+                          ნახვა
+                        </Link>
                       </td>
                     </tr>
                   ))}
