@@ -81,6 +81,16 @@ export async function PUT(
       RETURNING *
     `;
 
+    // Helper to normalize values for comparison
+    const normalizeValue = (val: unknown, isNumeric: boolean): string | null => {
+      if (val === null || val === undefined || val === '') return null;
+      if (isNumeric) {
+        const num = Number(val);
+        return isNaN(num) ? null : num.toString();
+      }
+      return String(val).trim();
+    };
+
     // Log update with full snapshot showing old and new values, and which fields changed
     const oldSnapshot = {
       name: oldProduct.name,
@@ -102,17 +112,37 @@ export async function PUT(
       photo_url: photo_url || null,
     };
 
-    // Find which fields changed
+    // Find which fields changed - use proper type-aware comparison
     const changedFields: string[] = [];
-    const fields = ['name', 'price', 'cost_price', 'quantity', 'description', 'barcode', 'photo_url'] as const;
-    for (const field of fields) {
-      const oldVal = oldSnapshot[field];
-      const newVal = newSnapshot[field];
-      const oldStr = oldVal === null ? null : String(oldVal);
-      const newStr = newVal === null ? null : String(newVal);
-      if (oldStr !== newStr) {
-        changedFields.push(field);
-      }
+    const numericFields = ['price', 'cost_price', 'quantity'];
+
+    // Compare name
+    if (normalizeValue(oldProduct.name, false) !== normalizeValue(name, false)) {
+      changedFields.push('name');
+    }
+    // Compare price
+    if (normalizeValue(oldProduct.price, true) !== normalizeValue(price, true)) {
+      changedFields.push('price');
+    }
+    // Compare cost_price
+    if (normalizeValue(oldProduct.cost_price, true) !== normalizeValue(cost_price || null, true)) {
+      changedFields.push('cost_price');
+    }
+    // Compare quantity
+    if (normalizeValue(oldProduct.quantity, true) !== normalizeValue(quantity || 0, true)) {
+      changedFields.push('quantity');
+    }
+    // Compare description
+    if (normalizeValue(oldProduct.description, false) !== normalizeValue(description || null, false)) {
+      changedFields.push('description');
+    }
+    // Compare barcode
+    if (normalizeValue(oldProduct.barcode, false) !== normalizeValue(barcode || null, false)) {
+      changedFields.push('barcode');
+    }
+    // Compare photo_url
+    if (normalizeValue(oldProduct.photo_url, false) !== normalizeValue(photo_url || null, false)) {
+      changedFields.push('photo_url');
     }
 
     // Only log if something actually changed
