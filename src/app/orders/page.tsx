@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import OrderForm from '@/components/OrderForm';
 
@@ -139,8 +140,10 @@ export default function OrdersPage() {
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                   {orders.map((order) => (
                     <tr key={order.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                      <td className="px-4 py-3 text-gray-800 dark:text-white font-medium">
-                        {order.fb_name}
+                      <td className="px-4 py-3">
+                        <Link href={`/orders/${order.id}`} className="text-gray-800 dark:text-white font-medium hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer">
+                          {order.fb_name}
+                        </Link>
                       </td>
                       <td className="px-4 py-3">
                         <div className="text-gray-800 dark:text-white">{order.recipient_name}</div>

@@ -19,6 +19,16 @@ interface HistoryEntry {
   created_at: string;
 }
 
+interface ProductOrder {
+  id: number;
+  fb_name: string;
+  recipient_name: string;
+  phone: string;
+  total_price: number;
+  status: string;
+  created_at: string;
+}
+
 export default function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { data: session, status } = useSession();
@@ -31,6 +41,8 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   const [ordersOpen, setOrdersOpen] = useState(false);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [orders, setOrders] = useState<ProductOrder[]>([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
   const [showStockModal, setShowStockModal] = useState(false);
   const [stockReduceAmount, setStockReduceAmount] = useState('');
   const [stockReduceNote, setStockReduceNote] = useState('');
@@ -112,6 +124,50 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
       fetchHistory();
     }
     setHistoryOpen(!historyOpen);
+  };
+
+  const fetchOrders = async () => {
+    setOrdersLoading(true);
+    try {
+      const res = await fetch(`/api/products/${id}/orders`);
+      if (res.ok) {
+        const data = await res.json();
+        setOrders(data);
+      }
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+    } finally {
+      setOrdersLoading(false);
+    }
+  };
+
+  const toggleOrders = () => {
+    if (!ordersOpen) {
+      fetchOrders();
+    }
+    setOrdersOpen(!ordersOpen);
+  };
+
+  const getOrderStatusBadge = (status: string) => {
+    const styles: Record<string, string> = {
+      pending: 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200',
+      processing: 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200',
+      shipped: 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200',
+      delivered: 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200',
+      cancelled: 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200',
+    };
+    const labels: Record<string, string> = {
+      pending: 'მოლოდინში',
+      processing: 'მუშავდება',
+      shipped: 'გაგზავნილი',
+      delivered: 'მიწოდებული',
+      cancelled: 'გაუქმებული',
+    };
+    return (
+      <span className={`px-2 py-1 rounded-full text-xs font-medium ${styles[status] || styles.pending}`}>
+        {labels[status] || status}
+      </span>
+    );
   };
 
   const handleStockReduce = async () => {
@@ -517,13 +573,15 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
               )}
             </div>
 
-            {/* Collapsible Orders Tab (Placeholder) */}
+            {/* Collapsible Orders Tab */}
             <div className="border-t dark:border-gray-700">
               <button
-                onClick={() => setOrdersOpen(!ordersOpen)}
+                onClick={toggleOrders}
                 className="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer"
               >
-                <span className="font-medium text-gray-800 dark:text-white">შეკვეთები</span>
+                <span className="font-medium text-gray-800 dark:text-white">
+                  შეკვეთები {orders.length > 0 && `(${orders.length})`}
+                </span>
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
@@ -537,9 +595,42 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
               </button>
               {ordersOpen && (
                 <div className="px-6 pb-4">
-                  <p className="text-gray-500 dark:text-gray-400">
-                    შეკვეთები ჯერ არ არის დაკავშირებული. ეს ფუნქცია მალე დაემატება.
-                  </p>
+                  {ordersLoading ? (
+                    <p className="text-gray-500 dark:text-gray-400">იტვირთება...</p>
+                  ) : orders.length === 0 ? (
+                    <p className="text-gray-500 dark:text-gray-400">ამ პროდუქტზე შეკვეთები არ არის</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {orders.map((order) => (
+                        <Link
+                          key={order.id}
+                          href={`/orders/${order.id}`}
+                          className="block bg-gray-50 dark:bg-gray-700 rounded-lg p-3 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors cursor-pointer"
+                        >
+                          <div className="flex justify-between items-start mb-2">
+                            <div>
+                              <span className="font-medium text-gray-800 dark:text-white">
+                                {order.fb_name}
+                              </span>
+                              <span className="text-gray-500 dark:text-gray-400 text-sm ml-2">
+                                ({order.recipient_name})
+                              </span>
+                            </div>
+                            {getOrderStatusBadge(order.status)}
+                          </div>
+                          <div className="flex justify-between items-center text-sm">
+                            <span className="text-gray-500 dark:text-gray-400">{order.phone}</span>
+                            <span className="text-gray-800 dark:text-gray-300 font-medium">
+                              ₾{Number(order.total_price).toFixed(2)}
+                            </span>
+                          </div>
+                          <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                            {new Date(order.created_at).toLocaleString('ka-GE')}
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
