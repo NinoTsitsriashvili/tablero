@@ -52,28 +52,28 @@ export default function ProductForm({ product, onSave, onCancel }: ProductFormPr
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || 'Failed to save product');
+        throw new Error(data.error || 'პროდუქტის შენახვა ვერ მოხერხდა');
       }
 
       onSave();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      setError(err instanceof Error ? err.message : 'შეცდომა მოხდა');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <h2 className="text-lg font-semibold text-gray-800 mb-4">
-        {product ? 'Edit Product' : 'Add New Product'}
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+      <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
+        {product ? 'პროდუქტის რედაქტირება' : 'ახალი პროდუქტის დამატება'}
       </h2>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-              Name *
+            <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              დასახელება *
             </label>
             <input
               id="name"
@@ -81,14 +81,14 @@ export default function ProductForm({ product, onSave, onCancel }: ProductFormPr
               type="text"
               value={formData.name}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700"
               required
             />
           </div>
 
           <div>
-            <label htmlFor="barcode" className="block text-sm font-medium text-gray-700 mb-1">
-              Barcode
+            <label htmlFor="barcode" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              შტრიხკოდი
             </label>
             <input
               id="barcode"
@@ -96,13 +96,13 @@ export default function ProductForm({ product, onSave, onCancel }: ProductFormPr
               type="text"
               value={formData.barcode}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700"
             />
           </div>
 
           <div>
-            <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-1">
-              Price *
+            <label htmlFor="price" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              ფასი *
             </label>
             <input
               id="price"
@@ -112,14 +112,14 @@ export default function ProductForm({ product, onSave, onCancel }: ProductFormPr
               min="0"
               value={formData.price}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700"
               required
             />
           </div>
 
           <div>
-            <label htmlFor="cost_price" className="block text-sm font-medium text-gray-700 mb-1">
-              Cost Price
+            <label htmlFor="cost_price" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              თვითღირებულება
             </label>
             <input
               id="cost_price"
@@ -129,13 +129,13 @@ export default function ProductForm({ product, onSave, onCancel }: ProductFormPr
               min="0"
               value={formData.cost_price}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700"
             />
           </div>
 
           <div>
-            <label htmlFor="quantity" className="block text-sm font-medium text-gray-700 mb-1">
-              Quantity in Stock
+            <label htmlFor="quantity" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              რაოდენობა მარაგში
             </label>
             <input
               id="quantity"
@@ -144,13 +144,13 @@ export default function ProductForm({ product, onSave, onCancel }: ProductFormPr
               min="0"
               value={formData.quantity}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700"
             />
           </div>
 
           <div>
-            <label htmlFor="photo_url" className="block text-sm font-medium text-gray-700 mb-1">
-              Photo URL
+            <label htmlFor="photo_url" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              ფოტოს ბმული
             </label>
             <input
               id="photo_url"
@@ -159,14 +159,14 @@ export default function ProductForm({ product, onSave, onCancel }: ProductFormPr
               value={formData.photo_url}
               onChange={handleChange}
               placeholder="https://..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700"
             />
           </div>
         </div>
 
         <div>
-          <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
-            Description
+          <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            აღწერა
           </label>
           <textarea
             id="description"
@@ -174,26 +174,26 @@ export default function ProductForm({ product, onSave, onCancel }: ProductFormPr
             rows={3}
             value={formData.description}
             onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700"
           />
         </div>
 
-        {error && <p className="text-red-500 text-sm">{error}</p>}
+        {error && <p className="text-red-500 dark:text-red-400 text-sm">{error}</p>}
 
         <div className="flex justify-end space-x-3">
           <button
             type="button"
             onClick={onCancel}
-            className="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors"
+            className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
           >
-            Cancel
+            გაუქმება
           </button>
           <button
             type="submit"
             disabled={loading}
             className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 transition-colors"
           >
-            {loading ? 'Saving...' : product ? 'Update' : 'Add Product'}
+            {loading ? 'შენახვა...' : product ? 'განახლება' : 'დამატება'}
           </button>
         </div>
       </form>

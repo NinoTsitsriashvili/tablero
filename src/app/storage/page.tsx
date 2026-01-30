@@ -66,7 +66,7 @@ export default function StoragePage() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this product?')) {
+    if (!confirm('ნამდვილად გსურთ პროდუქტის წაშლა?')) {
       return;
     }
 
@@ -85,21 +85,21 @@ export default function StoragePage() {
 
   if (status === 'loading' || loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <Navbar />
         <main className="max-w-7xl mx-auto px-4 py-8">
-          <p className="text-gray-600">Loading...</p>
+          <p className="text-gray-600 dark:text-gray-400">იტვირთება...</p>
         </main>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navbar />
       <main className="max-w-7xl mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-gray-800">Storage</h1>
+          <h1 className="text-2xl font-bold text-gray-800 dark:text-white">საწყობი</h1>
           <button
             onClick={() => {
               setEditingProduct(null);
@@ -107,7 +107,7 @@ export default function StoragePage() {
             }}
             className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
           >
-            Add Product
+            პროდუქტის დამატება
           </button>
         </div>
 
@@ -125,8 +125,8 @@ export default function StoragePage() {
         )}
 
         {products.length === 0 ? (
-          <div className="bg-white rounded-lg shadow p-6 text-center">
-            <p className="text-gray-600">No products yet. Add your first product!</p>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 text-center">
+            <p className="text-gray-600 dark:text-gray-400">პროდუქტები არ არის. დაამატეთ პირველი პროდუქტი!</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
