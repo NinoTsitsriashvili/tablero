@@ -138,6 +138,7 @@ export default function StoragePage() {
             <table className="w-full">
               <thead className="bg-gray-50 dark:bg-gray-700">
                 <tr>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300 w-16"></th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">დასახელება</th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">მარაგი</th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">ფასი</th>
@@ -147,6 +148,30 @@ export default function StoragePage() {
               <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                 {products.map((product) => (
                   <tr key={product.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                    <td className="px-4 py-3">
+                      <div className="w-10 h-10 rounded-md overflow-hidden bg-gray-100 dark:bg-gray-700 flex-shrink-0">
+                        {product.photo_url ? (
+                          <img
+                            src={product.photo_url}
+                            alt={product.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              strokeWidth={1.5}
+                              stroke="currentColor"
+                              className="w-5 h-5 text-gray-400 dark:text-gray-500"
+                            >
+                              <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+                            </svg>
+                          </div>
+                        )}
+                      </div>
+                    </td>
                     <td className="px-4 py-3 text-gray-800 dark:text-white font-medium">
                       {product.name}
                     </td>
@@ -198,6 +223,7 @@ export default function StoragePage() {
                 <table className="w-full">
                   <thead className="bg-gray-200 dark:bg-gray-700">
                     <tr>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400 w-16"></th>
                       <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400">დასახელება</th>
                       <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400">ფასი</th>
                       <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400">წაშლის თარიღი</th>
@@ -207,6 +233,30 @@ export default function StoragePage() {
                   <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                     {deletedProducts.map((product) => (
                       <tr key={product.id} className="hover:bg-gray-200/50 dark:hover:bg-gray-700/30">
+                        <td className="px-4 py-3">
+                          <div className="w-10 h-10 rounded-md overflow-hidden bg-gray-200 dark:bg-gray-600 flex-shrink-0 opacity-60">
+                            {product.photo_url ? (
+                              <img
+                                src={product.photo_url}
+                                alt={product.name}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  strokeWidth={1.5}
+                                  stroke="currentColor"
+                                  className="w-5 h-5 text-gray-400 dark:text-gray-500"
+                                >
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+                                </svg>
+                              </div>
+                            )}
+                          </div>
+                        </td>
                         <td className="px-4 py-3 text-gray-500 dark:text-gray-400">
                           {product.name}
                         </td>
