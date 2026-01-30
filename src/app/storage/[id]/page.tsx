@@ -31,6 +31,11 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   const [ordersOpen, setOrdersOpen] = useState(false);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [showStockModal, setShowStockModal] = useState(false);
+  const [stockReduceAmount, setStockReduceAmount] = useState('');
+  const [stockReduceNote, setStockReduceNote] = useState('');
+  const [stockReduceLoading, setStockReduceLoading] = useState(false);
+  const [stockReduceError, setStockReduceError] = useState('');
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -107,6 +112,46 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
       fetchHistory();
     }
     setHistoryOpen(!historyOpen);
+  };
+
+  const handleStockReduce = async () => {
+    const amount = parseInt(stockReduceAmount, 10);
+    if (!amount || amount <= 0) {
+      setStockReduceError('შეიყვანეთ დადებითი რიცხვი');
+      return;
+    }
+
+    setStockReduceLoading(true);
+    setStockReduceError('');
+
+    try {
+      const res = await fetch(`/api/products/${id}/stock`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          quantity: amount,
+          note: stockReduceNote || null,
+        }),
+      });
+
+      if (res.ok) {
+        setShowStockModal(false);
+        setStockReduceAmount('');
+        setStockReduceNote('');
+        fetchProduct();
+        if (historyOpen) {
+          fetchHistory();
+        }
+      } else {
+        const data = await res.json();
+        setStockReduceError(data.error || 'შეცდომა მოხდა');
+      }
+    } catch (error) {
+      console.error('Error reducing stock:', error);
+      setStockReduceError('შეცდომა მოხდა');
+    } finally {
+      setStockReduceLoading(false);
+    }
   };
 
   const getFieldLabel = (field: string | null): string => {
@@ -218,6 +263,20 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
           {' → '}
           <span className="text-green-600 dark:text-green-400">{entry.new_value || '--'}</span>
         </span>
+      );
+    }
+
+    if (entry.action === 'stock_removed') {
+      const reducedBy = Number(entry.old_value) - Number(entry.new_value);
+      return (
+        <div className="text-sm">
+          <span className="text-red-500 dark:text-red-400">-{reducedBy}</span>
+          <span className="text-gray-500 dark:text-gray-400"> (</span>
+          <span className="text-gray-600 dark:text-gray-300">{entry.old_value}</span>
+          <span className="text-gray-500 dark:text-gray-400"> → </span>
+          <span className="text-gray-600 dark:text-gray-300">{entry.new_value}</span>
+          <span className="text-gray-500 dark:text-gray-400">)</span>
+        </div>
       );
     }
 
@@ -335,9 +394,22 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
 
                 <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
                   <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">მარაგი</p>
-                  <p className={`text-xl font-bold ${product.quantity > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                    {product.quantity}
-                  </p>
+                  <div className="flex items-center justify-between">
+                    <p className={`text-xl font-bold ${product.quantity > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                      {product.quantity}
+                    </p>
+                    {product.quantity > 0 && (
+                      <button
+                        onClick={() => setShowStockModal(true)}
+                        className="p-1.5 text-orange-600 dark:text-orange-400 hover:bg-orange-100 dark:hover:bg-orange-900/30 rounded transition-colors cursor-pointer"
+                        title="მარაგის ჩამოწერა"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14" />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
@@ -470,6 +542,81 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                   </p>
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* Stock Reduction Modal */}
+        {showStockModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md mx-4">
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
+                მარაგის ჩამოწერა
+              </h3>
+
+              <div className="mb-4">
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                  მიმდინარე მარაგი: <span className="font-medium text-gray-800 dark:text-white">{product?.quantity}</span>
+                </p>
+              </div>
+
+              <div className="mb-4">
+                <label htmlFor="reduceAmount" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  რაოდენობა *
+                </label>
+                <input
+                  id="reduceAmount"
+                  type="number"
+                  min="1"
+                  max={product?.quantity}
+                  value={stockReduceAmount}
+                  onChange={(e) => {
+                    setStockReduceAmount(e.target.value);
+                    setStockReduceError('');
+                  }}
+                  placeholder="რამდენი ერთეული?"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 text-gray-900 dark:text-white dark:bg-gray-700"
+                />
+              </div>
+
+              <div className="mb-4">
+                <label htmlFor="reduceNote" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  მიზეზი / კომენტარი
+                </label>
+                <textarea
+                  id="reduceNote"
+                  value={stockReduceNote}
+                  onChange={(e) => setStockReduceNote(e.target.value)}
+                  placeholder="მაგ: დაზიანებული საქონელი, ვადაგასული..."
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 text-gray-900 dark:text-white dark:bg-gray-700 resize-none"
+                />
+              </div>
+
+              {stockReduceError && (
+                <p className="text-red-500 dark:text-red-400 text-sm mb-4">{stockReduceError}</p>
+              )}
+
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={() => {
+                    setShowStockModal(false);
+                    setStockReduceAmount('');
+                    setStockReduceNote('');
+                    setStockReduceError('');
+                  }}
+                  className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors cursor-pointer"
+                >
+                  გაუქმება
+                </button>
+                <button
+                  onClick={handleStockReduce}
+                  disabled={stockReduceLoading || !stockReduceAmount}
+                  className="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 disabled:opacity-50 transition-colors cursor-pointer"
+                >
+                  {stockReduceLoading ? 'მიმდინარეობს...' : 'ჩამოწერა'}
+                </button>
+              </div>
             </div>
           </div>
         )}
