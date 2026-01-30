@@ -12,6 +12,7 @@ export default function Navbar() {
   const navItems = [
     { href: '/dashboard', label: 'მთავარი' },
     { href: '/storage', label: 'საწყობი' },
+    { href: '/orders', label: 'შეკვეთები' },
   ];
 
   return (
