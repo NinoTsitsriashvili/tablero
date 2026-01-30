@@ -10,7 +10,9 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product, onEdit, onDelete }: ProductCardProps) {
-  const profit = product.cost_price ? product.price - product.cost_price : null;
+  const price = Number(product.price);
+  const costPrice = product.cost_price ? Number(product.cost_price) : null;
+  const profit = costPrice !== null ? price - costPrice : null;
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
@@ -45,12 +47,12 @@ export default function ProductCard({ product, onEdit, onDelete }: ProductCardPr
         <div className="grid grid-cols-2 gap-2 text-sm mb-3">
           <div>
             <span className="text-gray-500 dark:text-gray-400">ფასი:</span>
-            <span className="ml-1 font-medium text-gray-800 dark:text-white">₾{product.price.toFixed(2)}</span>
+            <span className="ml-1 font-medium text-gray-800 dark:text-white">₾{price.toFixed(2)}</span>
           </div>
-          {product.cost_price && (
+          {costPrice !== null && (
             <div>
               <span className="text-gray-500 dark:text-gray-400">თვითღირ.:</span>
-              <span className="ml-1 text-gray-800 dark:text-gray-300">₾{product.cost_price.toFixed(2)}</span>
+              <span className="ml-1 text-gray-800 dark:text-gray-300">₾{costPrice.toFixed(2)}</span>
             </div>
           )}
           <div>
