@@ -84,6 +84,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'At least one product is required' }, { status: 400 });
     }
 
+    // Validate stock availability for all items
+    for (const item of items) {
+      const productResult = await sql`
+        SELECT id, name, quantity FROM products WHERE id = ${item.product_id}
+      `;
+
+      if (productResult.length === 0) {
+        return NextResponse.json({ error: `პროდუქტი ვერ მოიძებნა` }, { status: 400 });
+      }
+
+      const product = productResult[0];
+      const requestedQty = item.quantity || 1;
+
+      if (product.quantity < requestedQty) {
+        return NextResponse.json({
+          error: `არასაკმარისი მარაგი: ${product.name} (მარაგში: ${product.quantity}, მოთხოვნილი: ${requestedQty})`
+        }, { status: 400 });
+      }
+    }
+
     // Create the order
     const orderResult = await sql`
       INSERT INTO orders (fb_name, recipient_name, phone, address, comment)
@@ -93,11 +113,41 @@ export async function POST(request: NextRequest) {
 
     const order = orderResult[0];
 
-    // Insert order items
+    // Insert order items and reduce stock
     for (const item of items) {
+      const quantity = item.quantity || 1;
+
+      // Insert order item
       await sql`
         INSERT INTO order_items (order_id, product_id, quantity, unit_price, courier_price)
-        VALUES (${order.id}, ${item.product_id}, ${item.quantity || 1}, ${item.unit_price}, ${item.courier_price || 0})
+        VALUES (${order.id}, ${item.product_id}, ${quantity}, ${item.unit_price}, ${item.courier_price || 0})
+      `;
+
+      // Get current product quantity
+      const productResult = await sql`
+        SELECT quantity FROM products WHERE id = ${item.product_id}
+      `;
+      const oldQuantity = productResult[0].quantity;
+      const newQuantity = oldQuantity - quantity;
+
+      // Reduce product stock
+      await sql`
+        UPDATE products
+        SET quantity = ${newQuantity}, updated_at = CURRENT_TIMESTAMP
+        WHERE id = ${item.product_id}
+      `;
+
+      // Log to product history
+      await sql`
+        INSERT INTO product_history (product_id, action, field_name, old_value, new_value, note)
+        VALUES (
+          ${item.product_id},
+          'stock_removed',
+          'quantity',
+          ${oldQuantity.toString()},
+          ${newQuantity.toString()},
+          ${'შეკვეთა #' + order.id + ' - გაყიდვა'}
+        )
       `;
     }
 

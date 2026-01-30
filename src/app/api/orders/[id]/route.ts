@@ -3,6 +3,43 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { getDb } from '@/lib/db';
 
+// Helper function to restore stock for order items
+async function restoreStockForOrder(sql: ReturnType<typeof getDb>, orderId: number, reason: string) {
+  // Get order items
+  const items = await sql`
+    SELECT oi.product_id, oi.quantity, p.quantity as current_stock
+    FROM order_items oi
+    JOIN products p ON oi.product_id = p.id
+    WHERE oi.order_id = ${orderId}
+  `;
+
+  // Restore stock for each item
+  for (const item of items) {
+    const oldQuantity = item.current_stock;
+    const newQuantity = Number(oldQuantity) + Number(item.quantity);
+
+    // Update product stock
+    await sql`
+      UPDATE products
+      SET quantity = ${newQuantity}, updated_at = CURRENT_TIMESTAMP
+      WHERE id = ${item.product_id}
+    `;
+
+    // Log to product history
+    await sql`
+      INSERT INTO product_history (product_id, action, field_name, old_value, new_value, note)
+      VALUES (
+        ${item.product_id},
+        'stock_added',
+        'quantity',
+        ${oldQuantity.toString()},
+        ${newQuantity.toString()},
+        ${reason}
+      )
+    `;
+  }
+}
+
 // GET single order with items
 export async function GET(
   request: NextRequest,
@@ -82,17 +119,74 @@ export async function PUT(
 
     // If only status is being updated
     if (body.status !== undefined && Object.keys(body).length === 1) {
+      // Get current order status
+      const currentOrder = await sql`
+        SELECT status FROM orders WHERE id = ${id}
+      `;
+
+      if (currentOrder.length === 0) {
+        return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+      }
+
+      const oldStatus = currentOrder[0].status;
+      const newStatus = body.status;
+
+      // If changing TO cancelled (and wasn't already cancelled), restore stock
+      if (newStatus === 'cancelled' && oldStatus !== 'cancelled') {
+        await restoreStockForOrder(sql, Number(id), `შეკვეთა #${id} - გაუქმება`);
+      }
+
+      // If changing FROM cancelled to something else, reduce stock again
+      if (oldStatus === 'cancelled' && newStatus !== 'cancelled') {
+        // Get order items
+        const items = await sql`
+          SELECT oi.product_id, oi.quantity, p.quantity as current_stock, p.name
+          FROM order_items oi
+          JOIN products p ON oi.product_id = p.id
+          WHERE oi.order_id = ${id}
+        `;
+
+        // Check stock availability
+        for (const item of items) {
+          if (Number(item.current_stock) < Number(item.quantity)) {
+            return NextResponse.json({
+              error: `არასაკმარისი მარაგი: ${item.name} (მარაგში: ${item.current_stock}, საჭირო: ${item.quantity})`
+            }, { status: 400 });
+          }
+        }
+
+        // Reduce stock for each item
+        for (const item of items) {
+          const oldQuantity = item.current_stock;
+          const newQuantity = Number(oldQuantity) - Number(item.quantity);
+
+          await sql`
+            UPDATE products
+            SET quantity = ${newQuantity}, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ${item.product_id}
+          `;
+
+          await sql`
+            INSERT INTO product_history (product_id, action, field_name, old_value, new_value, note)
+            VALUES (
+              ${item.product_id},
+              'stock_removed',
+              'quantity',
+              ${oldQuantity.toString()},
+              ${newQuantity.toString()},
+              ${'შეკვეთა #' + id + ' - აღდგენა გაუქმებიდან'}
+            )
+          `;
+        }
+      }
+
       const result = await sql`
         UPDATE orders
-        SET status = ${body.status},
+        SET status = ${newStatus},
             updated_at = CURRENT_TIMESTAMP
         WHERE id = ${id}
         RETURNING *
       `;
-
-      if (result.length === 0) {
-        return NextResponse.json({ error: 'Order not found' }, { status: 404 });
-      }
 
       return NextResponse.json(result[0]);
     }
@@ -124,7 +218,7 @@ export async function PUT(
   }
 }
 
-// DELETE order (cascades to order_items)
+// DELETE order - restores stock before deleting
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -139,15 +233,26 @@ export async function DELETE(
 
   try {
     const sql = getDb();
-    const result = await sql`
-      DELETE FROM orders
-      WHERE id = ${id}
-      RETURNING id
+
+    // Check if order exists and get its status
+    const orderCheck = await sql`
+      SELECT id, status FROM orders WHERE id = ${id}
     `;
 
-    if (result.length === 0) {
+    if (orderCheck.length === 0) {
       return NextResponse.json({ error: 'Order not found' }, { status: 404 });
     }
+
+    // Only restore stock if order wasn't already cancelled
+    if (orderCheck[0].status !== 'cancelled') {
+      await restoreStockForOrder(sql, Number(id), `შეკვეთა #${id} - წაშლა`);
+    }
+
+    // Delete order (order_items will cascade delete)
+    await sql`
+      DELETE FROM orders
+      WHERE id = ${id}
+    `;
 
     return NextResponse.json({ message: 'Order deleted successfully' });
   } catch (error) {
