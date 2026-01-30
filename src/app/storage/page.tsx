@@ -18,14 +18,18 @@ export interface Product {
   photo_url: string | null;
   created_at: string;
   updated_at: string;
+  deleted_at?: string | null;
 }
 
 export default function StoragePage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [products, setProducts] = useState<Product[]>([]);
+  const [deletedProducts, setDeletedProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [showDeleted, setShowDeleted] = useState(false);
+  const [restoringId, setRestoringId] = useState<number | null>(null);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -36,6 +40,7 @@ export default function StoragePage() {
   useEffect(() => {
     if (session) {
       fetchProducts();
+      fetchDeletedProducts();
     }
   }, [session]);
 
@@ -50,6 +55,37 @@ export default function StoragePage() {
       console.error('Error fetching products:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchDeletedProducts = async () => {
+    try {
+      const res = await fetch('/api/products?deleted=true');
+      const data = await res.json();
+      console.log('Deleted products response:', res.status, data);
+      if (res.ok) {
+        setDeletedProducts(data);
+      }
+    } catch (error) {
+      console.error('Error fetching deleted products:', error);
+    }
+  };
+
+  const handleRestore = async (id: number) => {
+    setRestoringId(id);
+    try {
+      const res = await fetch(`/api/products/${id}/restore`, {
+        method: 'POST',
+      });
+      if (res.ok) {
+        // Refresh both lists
+        fetchProducts();
+        fetchDeletedProducts();
+      }
+    } catch (error) {
+      console.error('Error restoring product:', error);
+    } finally {
+      setRestoringId(null);
     }
   };
 
@@ -134,6 +170,75 @@ export default function StoragePage() {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {/* Deleted Items Section */}
+        {deletedProducts.length > 0 && (
+          <div className="mt-8">
+            <button
+              onClick={() => setShowDeleted(!showDeleted)}
+              className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors mb-3"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={2}
+                stroke="currentColor"
+                className={`w-4 h-4 transition-transform ${showDeleted ? 'rotate-90' : ''}`}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+              </svg>
+              <span className="font-medium">წაშლილი პროდუქტები ({deletedProducts.length})</span>
+            </button>
+
+            {showDeleted && (
+              <div className="bg-gray-100 dark:bg-gray-800/50 rounded-lg shadow overflow-hidden border border-gray-200 dark:border-gray-700">
+                <table className="w-full">
+                  <thead className="bg-gray-200 dark:bg-gray-700">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400">დასახელება</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400">ფასი</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400">წაშლის თარიღი</th>
+                      <th className="px-4 py-3 text-right text-sm font-medium text-gray-600 dark:text-gray-400"></th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                    {deletedProducts.map((product) => (
+                      <tr key={product.id} className="hover:bg-gray-200/50 dark:hover:bg-gray-700/30">
+                        <td className="px-4 py-3 text-gray-500 dark:text-gray-400">
+                          {product.name}
+                        </td>
+                        <td className="px-4 py-3 text-gray-500 dark:text-gray-400">
+                          ₾{Number(product.price).toFixed(2)}
+                        </td>
+                        <td className="px-4 py-3 text-gray-500 dark:text-gray-400 text-sm">
+                          {product.deleted_at
+                            ? new Date(product.deleted_at).toLocaleDateString('ka-GE', {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })
+                            : '-'}
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <button
+                            onClick={() => handleRestore(product.id)}
+                            disabled={restoringId === product.id}
+                            className="px-3 py-1.5 text-sm bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded-md hover:bg-green-200 dark:hover:bg-green-800 transition-colors disabled:opacity-50"
+                          >
+                            {restoringId === product.id ? 'აღდგენა...' : 'აღდგენა'}
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         )}
       </main>

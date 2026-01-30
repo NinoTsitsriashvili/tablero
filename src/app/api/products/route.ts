@@ -3,8 +3,8 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { getDb } from '@/lib/db';
 
-// GET all products (excluding deleted)
-export async function GET() {
+// GET all products (excluding deleted) or deleted products with ?deleted=true
+export async function GET(request: NextRequest) {
   const session = await getServerSession(authOptions);
 
   if (!session) {
@@ -13,6 +13,20 @@ export async function GET() {
 
   try {
     const sql = getDb();
+    const { searchParams } = new URL(request.url);
+    const showDeleted = searchParams.get('deleted') === 'true';
+
+    if (showDeleted) {
+      // Return only deleted products
+      const products = await sql`
+        SELECT * FROM products
+        WHERE deleted_at IS NOT NULL
+        ORDER BY deleted_at DESC
+      `;
+      return NextResponse.json(products);
+    }
+
+    // Return only active products
     const products = await sql`
       SELECT * FROM products
       WHERE deleted_at IS NULL
