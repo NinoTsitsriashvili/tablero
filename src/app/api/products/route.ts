@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { getDb } from '@/lib/db';
 
-// GET all products
+// GET all products (excluding deleted)
 export async function GET() {
   const session = await getServerSession(authOptions);
 
@@ -14,7 +14,9 @@ export async function GET() {
   try {
     const sql = getDb();
     const products = await sql`
-      SELECT * FROM products ORDER BY created_at DESC
+      SELECT * FROM products
+      WHERE deleted_at IS NULL
+      ORDER BY created_at DESC
     `;
     return NextResponse.json(products);
   } catch (error) {

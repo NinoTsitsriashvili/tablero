@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { getDb } from '@/lib/db';
 
-// GET single product
+// GET single product (only if not deleted)
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -19,7 +19,8 @@ export async function GET(
   try {
     const sql = getDb();
     const products = await sql`
-      SELECT * FROM products WHERE id = ${id}
+      SELECT * FROM products
+      WHERE id = ${id} AND deleted_at IS NULL
     `;
 
     if (products.length === 0) {
@@ -65,7 +66,7 @@ export async function PUT(
           barcode = ${barcode || null},
           photo_url = ${photo_url || null},
           updated_at = CURRENT_TIMESTAMP
-      WHERE id = ${id}
+      WHERE id = ${id} AND deleted_at IS NULL
       RETURNING *
     `;
 
@@ -80,7 +81,7 @@ export async function PUT(
   }
 }
 
-// DELETE product
+// DELETE product (soft delete - sets deleted_at timestamp)
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -96,7 +97,10 @@ export async function DELETE(
   try {
     const sql = getDb();
     const result = await sql`
-      DELETE FROM products WHERE id = ${id} RETURNING id
+      UPDATE products
+      SET deleted_at = CURRENT_TIMESTAMP
+      WHERE id = ${id} AND deleted_at IS NULL
+      RETURNING id
     `;
 
     if (result.length === 0) {

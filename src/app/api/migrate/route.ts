@@ -1,0 +1,27 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { getDb } from '@/lib/db';
+
+// POST - run database migrations
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { setupKey } = body;
+
+    if (setupKey !== process.env.SETUP_KEY) {
+      return NextResponse.json({ error: 'Invalid setup key' }, { status: 403 });
+    }
+
+    const sql = getDb();
+
+    // Add deleted_at column if it doesn't exist
+    await sql`
+      ALTER TABLE products
+      ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP DEFAULT NULL
+    `;
+
+    return NextResponse.json({ message: 'Migration completed successfully' }, { status: 200 });
+  } catch (error) {
+    console.error('Migration error:', error);
+    return NextResponse.json({ error: 'Migration failed' }, { status: 500 });
+  }
+}
