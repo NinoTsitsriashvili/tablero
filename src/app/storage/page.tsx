@@ -3,9 +3,9 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import ProductForm from '@/components/ProductForm';
-import ProductCard from '@/components/ProductCard';
 
 export interface Product {
   id: number;
@@ -26,7 +26,6 @@ export default function StoragePage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -56,31 +55,7 @@ export default function StoragePage() {
 
   const handleProductSaved = () => {
     setShowForm(false);
-    setEditingProduct(null);
     fetchProducts();
-  };
-
-  const handleEdit = (product: Product) => {
-    setEditingProduct(product);
-    setShowForm(true);
-  };
-
-  const handleDelete = async (id: number) => {
-    if (!confirm('ნამდვილად გსურთ პროდუქტის წაშლა?')) {
-      return;
-    }
-
-    try {
-      const res = await fetch(`/api/products/${id}`, {
-        method: 'DELETE',
-      });
-
-      if (res.ok) {
-        fetchProducts();
-      }
-    } catch (error) {
-      console.error('Error deleting product:', error);
-    }
   };
 
   if (status === 'loading' || loading) {
@@ -101,10 +76,7 @@ export default function StoragePage() {
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-gray-800 dark:text-white">საწყობი</h1>
           <button
-            onClick={() => {
-              setEditingProduct(null);
-              setShowForm(true);
-            }}
+            onClick={() => setShowForm(true)}
             className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
           >
             პროდუქტის დამატება
@@ -114,12 +86,9 @@ export default function StoragePage() {
         {showForm && (
           <div className="mb-6">
             <ProductForm
-              product={editingProduct}
+              product={null}
               onSave={handleProductSaved}
-              onCancel={() => {
-                setShowForm(false);
-                setEditingProduct(null);
-              }}
+              onCancel={() => setShowForm(false)}
             />
           </div>
         )}
@@ -129,15 +98,42 @@ export default function StoragePage() {
             <p className="text-gray-600 dark:text-gray-400">პროდუქტები არ არის. დაამატეთ პირველი პროდუქტი!</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {products.map((product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-              />
-            ))}
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+            <table className="w-full">
+              <thead className="bg-gray-50 dark:bg-gray-700">
+                <tr>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">დასახელება</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">მარაგი</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">ფასი</th>
+                  <th className="px-4 py-3 text-right text-sm font-medium text-gray-700 dark:text-gray-300"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                {products.map((product) => (
+                  <tr key={product.id} className="hover:bg-gray-50 dark:hover:bg-gray-750">
+                    <td className="px-4 py-3 text-gray-800 dark:text-white font-medium">
+                      {product.name}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`font-medium ${product.quantity > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                        {product.quantity}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-gray-800 dark:text-gray-300">
+                      ₾{Number(product.price).toFixed(2)}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <Link
+                        href={`/storage/${product.id}`}
+                        className="px-3 py-1.5 text-sm bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-md hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
+                      >
+                        დეტალები
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </main>
