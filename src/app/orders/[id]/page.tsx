@@ -5,13 +5,37 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
-import { Order } from '../page';
+
+interface OrderItem {
+  id: number;
+  order_id: number;
+  product_id: number;
+  product_name: string | null;
+  product_photo_url: string | null;
+  quantity: number;
+  unit_price: number;
+  courier_price: number;
+}
+
+interface OrderWithItems {
+  id: number;
+  fb_name: string;
+  recipient_name: string;
+  phone: string;
+  address: string;
+  comment: string | null;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  items: OrderItem[];
+  total_price: number;
+}
 
 export default function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [order, setOrder] = useState<Order | null>(null);
+  const [order, setOrder] = useState<OrderWithItems | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [updatingStatus, setUpdatingStatus] = useState(false);
@@ -111,6 +135,10 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
     { value: 'delivered', label: 'მიწოდებული' },
     { value: 'cancelled', label: 'გაუქმებული' },
   ];
+
+  const calculateItemSubtotal = (item: OrderItem) => {
+    return (Number(item.unit_price) * Number(item.quantity)) + Number(item.courier_price || 0);
+  };
 
   if (status === 'loading' || loading) {
     return (
@@ -218,55 +246,77 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
               </div>
             </div>
 
-            {/* Product Info */}
+            {/* Products */}
             <div className="mb-6">
-              <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-3">პროდუქტი</h2>
-              <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                <div className="flex items-center gap-4">
-                  {order.product_photo_url && (
-                    <div className="w-16 h-16 bg-gray-200 dark:bg-gray-600 rounded-lg overflow-hidden flex-shrink-0">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={order.product_photo_url}
-                        alt={order.product_name || 'Product'}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.style.display = 'none';
-                        }}
-                      />
+              <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-3">
+                პროდუქტები ({order.items?.length || 0})
+              </h2>
+              <div className="space-y-3">
+                {order.items?.map((item, index) => (
+                  <div key={item.id || index} className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                    <div className="flex items-start gap-4">
+                      {item.product_photo_url && (
+                        <div className="w-16 h-16 bg-gray-200 dark:bg-gray-600 rounded-lg overflow-hidden flex-shrink-0">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={item.product_photo_url}
+                            alt={item.product_name || 'Product'}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                            }}
+                          />
+                        </div>
+                      )}
+                      <div className="flex-1">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <p className="text-gray-800 dark:text-white font-medium">
+                              {item.product_name || 'N/A'}
+                            </p>
+                            <Link
+                              href={`/storage/${item.product_id}`}
+                              className="text-blue-600 dark:text-blue-400 hover:underline text-sm"
+                            >
+                              პროდუქტის ნახვა
+                            </Link>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-gray-800 dark:text-white font-bold">
+                              ₾{calculateItemSubtotal(item).toFixed(2)}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="mt-2 grid grid-cols-3 gap-2 text-sm">
+                          <div>
+                            <span className="text-gray-500 dark:text-gray-400">ფასი: </span>
+                            <span className="text-gray-800 dark:text-gray-300">₾{Number(item.unit_price).toFixed(2)}</span>
+                          </div>
+                          <div>
+                            <span className="text-gray-500 dark:text-gray-400">რაოდენობა: </span>
+                            <span className="text-gray-800 dark:text-gray-300">{item.quantity}</span>
+                          </div>
+                          <div>
+                            <span className="text-gray-500 dark:text-gray-400">კურიერი: </span>
+                            <span className="text-gray-800 dark:text-gray-300">₾{Number(item.courier_price || 0).toFixed(2)}</span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                  )}
-                  <div className="flex-1">
-                    <p className="text-gray-800 dark:text-white font-medium">
-                      {order.product_name || 'N/A'}
-                    </p>
-                    <Link
-                      href={`/storage/${order.product_id}`}
-                      className="text-blue-600 dark:text-blue-400 hover:underline text-sm"
-                    >
-                      პროდუქტის ნახვა
-                    </Link>
                   </div>
-                </div>
+                ))}
               </div>
             </div>
 
-            {/* Price Info */}
+            {/* Total */}
             <div className="mb-6">
-              <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-3">ფასები</h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">პროდუქტის ფასი</p>
-                  <p className="text-xl font-bold text-gray-800 dark:text-white">₾{Number(order.product_price).toFixed(2)}</p>
-                </div>
-                <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">კურიერის ფასი</p>
-                  <p className="text-xl font-bold text-gray-800 dark:text-white">₾{Number(order.courier_price).toFixed(2)}</p>
-                </div>
-                <div className="bg-green-50 dark:bg-green-900/30 rounded-lg p-4">
-                  <p className="text-sm text-green-600 dark:text-green-400 mb-1">ჯამი</p>
-                  <p className="text-xl font-bold text-green-700 dark:text-green-300">₾{Number(order.total_price).toFixed(2)}</p>
+              <div className="bg-green-50 dark:bg-green-900/30 rounded-lg p-4">
+                <div className="flex justify-between items-center">
+                  <p className="text-lg font-semibold text-green-700 dark:text-green-300">სულ ჯამი</p>
+                  <p className="text-2xl font-bold text-green-700 dark:text-green-300">
+                    ₾{Number(order.total_price).toFixed(2)}
+                  </p>
                 </div>
               </div>
             </div>

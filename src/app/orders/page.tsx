@@ -23,6 +23,7 @@ export interface Order {
   status: string;
   created_at: string;
   updated_at: string;
+  items_count: number;
 }
 
 export default function OrdersPage() {
@@ -152,6 +153,11 @@ export default function OrdersPage() {
                       </td>
                       <td className="px-4 py-3 text-gray-800 dark:text-gray-300">
                         {order.product_name || 'N/A'}
+                        {order.items_count > 1 && (
+                          <span className="ml-1 text-xs text-gray-500 dark:text-gray-400">
+                            (+{order.items_count - 1})
+                          </span>
+                        )}
                       </td>
                       <td className="px-4 py-3 text-gray-800 dark:text-gray-300">
                         ₾{Number(order.total_price).toFixed(2)}
