@@ -82,9 +82,8 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   const handleProductSaved = () => {
     setShowEditForm(false);
     fetchProduct();
-    if (historyOpen) {
-      fetchHistory();
-    }
+    // Always refresh history after save
+    fetchHistory();
   };
 
   const fetchHistory = async () => {
@@ -103,7 +102,8 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   };
 
   const toggleHistory = () => {
-    if (!historyOpen && history.length === 0) {
+    if (!historyOpen) {
+      // Always fetch fresh history when opening
       fetchHistory();
     }
     setHistoryOpen(!historyOpen);
