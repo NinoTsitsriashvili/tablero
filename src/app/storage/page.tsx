@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import Navbar from '@/components/Navbar';
 import ProductForm from '@/components/ProductForm';
 
@@ -19,6 +20,29 @@ export interface Product {
   created_at: string;
   updated_at: string;
   deleted_at?: string | null;
+}
+
+// Skeleton loader for table rows
+function ProductRowSkeleton() {
+  return (
+    <tr className="animate-pulse">
+      <td className="px-4 py-3">
+        <div className="w-10 h-10 rounded-md bg-gray-200 dark:bg-gray-700"></div>
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-32"></div>
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-12"></div>
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-16"></div>
+      </td>
+      <td className="px-4 py-3 text-right">
+        <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-20 ml-auto"></div>
+      </td>
+    </tr>
+  );
 }
 
 export default function StoragePage() {
@@ -39,35 +63,23 @@ export default function StoragePage() {
 
   useEffect(() => {
     if (session) {
-      fetchProducts();
-      fetchDeletedProducts();
+      fetchAllProducts();
     }
   }, [session]);
 
-  const fetchProducts = async () => {
+  // Fetch both active and deleted products in a single API call
+  const fetchAllProducts = async () => {
     try {
-      const res = await fetch('/api/products');
+      const res = await fetch('/api/products?all=true');
       if (res.ok) {
         const data = await res.json();
-        setProducts(data);
+        setProducts(data.active || []);
+        setDeletedProducts(data.deleted || []);
       }
     } catch (error) {
       console.error('Error fetching products:', error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const fetchDeletedProducts = async () => {
-    try {
-      const res = await fetch('/api/products?deleted=true');
-      const data = await res.json();
-      console.log('Deleted products response:', res.status, data);
-      if (res.ok) {
-        setDeletedProducts(data);
-      }
-    } catch (error) {
-      console.error('Error fetching deleted products:', error);
     }
   };
 
@@ -78,9 +90,8 @@ export default function StoragePage() {
         method: 'POST',
       });
       if (res.ok) {
-        // Refresh both lists
-        fetchProducts();
-        fetchDeletedProducts();
+        // Refresh both lists with a single call
+        fetchAllProducts();
       }
     } catch (error) {
       console.error('Error restoring product:', error);
@@ -91,15 +102,38 @@ export default function StoragePage() {
 
   const handleProductSaved = () => {
     setShowForm(false);
-    fetchProducts();
+    fetchAllProducts();
   };
 
-  if (status === 'loading' || loading) {
+  if (status === 'loading') {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <Navbar />
         <main className="max-w-7xl mx-auto px-4 py-8">
-          <p className="text-gray-600 dark:text-gray-400">იტვირთება...</p>
+          <div className="flex justify-between items-center mb-6">
+            <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-32 animate-pulse"></div>
+            <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded w-40 animate-pulse"></div>
+          </div>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+            <table className="w-full">
+              <thead className="bg-gray-50 dark:bg-gray-700">
+                <tr>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300 w-16"></th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">დასახელება</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">მარაგი</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">ფასი</th>
+                  <th className="px-4 py-3 text-right text-sm font-medium text-gray-700 dark:text-gray-300"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                <ProductRowSkeleton />
+                <ProductRowSkeleton />
+                <ProductRowSkeleton />
+                <ProductRowSkeleton />
+                <ProductRowSkeleton />
+              </tbody>
+            </table>
+          </div>
         </main>
       </div>
     );
@@ -129,7 +163,28 @@ export default function StoragePage() {
           </div>
         )}
 
-        {products.length === 0 ? (
+        {loading ? (
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+            <table className="w-full">
+              <thead className="bg-gray-50 dark:bg-gray-700">
+                <tr>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300 w-16"></th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">დასახელება</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">მარაგი</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">ფასი</th>
+                  <th className="px-4 py-3 text-right text-sm font-medium text-gray-700 dark:text-gray-300"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                <ProductRowSkeleton />
+                <ProductRowSkeleton />
+                <ProductRowSkeleton />
+                <ProductRowSkeleton />
+                <ProductRowSkeleton />
+              </tbody>
+            </table>
+          </div>
+        ) : products.length === 0 ? (
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 text-center">
             <p className="text-gray-600 dark:text-gray-400">პროდუქტები არ არის. დაამატეთ პირველი პროდუქტი!</p>
           </div>
@@ -149,12 +204,14 @@ export default function StoragePage() {
                 {products.map((product) => (
                   <tr key={product.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                     <td className="px-4 py-3">
-                      <div className="w-10 h-10 rounded-md overflow-hidden bg-gray-100 dark:bg-gray-700 flex-shrink-0">
+                      <div className="w-10 h-10 rounded-md overflow-hidden bg-gray-100 dark:bg-gray-700 flex-shrink-0 relative">
                         {product.photo_url ? (
-                          <img
+                          <Image
                             src={product.photo_url}
                             alt={product.name}
-                            className="w-full h-full object-cover"
+                            fill
+                            sizes="40px"
+                            className="object-cover"
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
@@ -234,12 +291,14 @@ export default function StoragePage() {
                     {deletedProducts.map((product) => (
                       <tr key={product.id} className="hover:bg-gray-200/50 dark:hover:bg-gray-700/30">
                         <td className="px-4 py-3">
-                          <div className="w-10 h-10 rounded-md overflow-hidden bg-gray-200 dark:bg-gray-600 flex-shrink-0 opacity-60">
+                          <div className="w-10 h-10 rounded-md overflow-hidden bg-gray-200 dark:bg-gray-600 flex-shrink-0 opacity-60 relative">
                             {product.photo_url ? (
-                              <img
+                              <Image
                                 src={product.photo_url}
                                 alt={product.name}
-                                className="w-full h-full object-cover"
+                                fill
+                                sizes="40px"
+                                className="object-cover"
                               />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center">

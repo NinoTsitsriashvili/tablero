@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
     // Check if user already exists
     const existingUsers = await sql`
       SELECT id FROM users WHERE username = ${username}
-    `;
+    ` as Record<string, unknown>[];
 
     if (existingUsers.length > 0) {
       return NextResponse.json({ error: 'User already exists' }, { status: 400 });

@@ -114,7 +114,7 @@ export async function GET(
     const products = await sql`
       SELECT * FROM products
       WHERE id = ${id} AND deleted_at IS NULL
-    `;
+    ` as Record<string, unknown>[];
 
     if (products.length === 0) {
       return NextResponse.json({ error: 'Product not found' }, { status: 404 });
@@ -154,7 +154,7 @@ export async function PUT(
     // Fetch old product to compare changes
     const oldProducts = await sql`
       SELECT * FROM products WHERE id = ${id} AND deleted_at IS NULL
-    `;
+    ` as Record<string, unknown>[];
 
     if (oldProducts.length === 0) {
       return NextResponse.json({ error: 'Product not found' }, { status: 404 });
@@ -174,7 +174,7 @@ export async function PUT(
           updated_at = CURRENT_TIMESTAMP
       WHERE id = ${id} AND deleted_at IS NULL
       RETURNING *
-    `;
+    ` as Record<string, unknown>[];
 
     // Helper to normalize values for comparison
     const normalizeValue = (val: unknown, isNumeric: boolean): string | null => {
@@ -275,7 +275,7 @@ export async function DELETE(
       SET deleted_at = CURRENT_TIMESTAMP
       WHERE id = ${id} AND deleted_at IS NULL
       RETURNING id
-    `;
+    ` as Record<string, unknown>[];
 
     if (result.length === 0) {
       return NextResponse.json({ error: 'Product not found' }, { status: 404 });

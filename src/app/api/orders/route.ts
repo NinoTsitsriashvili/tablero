@@ -149,7 +149,7 @@ export async function GET() {
       SELECT *
       FROM orders
       ORDER BY created_at DESC
-    `;
+    ` as Record<string, unknown>[];
 
     // Get all order items with product info
     const orderIds = orders.map((o) => o.id);
@@ -166,7 +166,7 @@ export async function GET() {
       FROM order_items oi
       LEFT JOIN products p ON oi.product_id = p.id
       WHERE oi.order_id = ANY(${orderIds})
-    `;
+    ` as Record<string, unknown>[];
 
     // Calculate total for each order and attach items
     const ordersWithItems = orders.map((order) => {
@@ -216,7 +216,7 @@ export async function POST(request: NextRequest) {
     for (const item of items) {
       const productResult = await sql`
         SELECT id, name, quantity FROM products WHERE id = ${item.product_id}
-      `;
+      ` as Record<string, unknown>[];
 
       if (productResult.length === 0) {
         return NextResponse.json({ error: `პროდუქტი ვერ მოიძებნა` }, { status: 400 });
@@ -225,7 +225,7 @@ export async function POST(request: NextRequest) {
       const product = productResult[0];
       const requestedQty = item.quantity || 1;
 
-      if (product.quantity < requestedQty) {
+      if (Number(product.quantity) < requestedQty) {
         return NextResponse.json({
           error: `არასაკმარისი მარაგი: ${product.name} (მარაგში: ${product.quantity}, მოთხოვნილი: ${requestedQty})`
         }, { status: 400 });
@@ -237,7 +237,7 @@ export async function POST(request: NextRequest) {
       INSERT INTO orders (fb_name, recipient_name, phone, address, comment)
       VALUES (${fb_name}, ${recipient_name}, ${phone}, ${address}, ${comment || null})
       RETURNING *
-    `;
+    ` as Record<string, unknown>[];
 
     const order = orderResult[0];
 
@@ -254,8 +254,8 @@ export async function POST(request: NextRequest) {
       // Get current product quantity
       const productResult = await sql`
         SELECT quantity FROM products WHERE id = ${item.product_id}
-      `;
-      const oldQuantity = productResult[0].quantity;
+      ` as Record<string, unknown>[];
+      const oldQuantity = Number(productResult[0].quantity);
       const newQuantity = oldQuantity - quantity;
 
       // Reduce product stock
@@ -288,7 +288,7 @@ export async function POST(request: NextRequest) {
       FROM order_items oi
       LEFT JOIN products p ON oi.product_id = p.id
       WHERE oi.order_id = ${order.id}
-    `;
+    ` as Record<string, unknown>[];
 
     const total_price = orderItems.reduce((sum, item) => {
       return sum + (Number(item.unit_price) * Number(item.quantity)) + Number(item.courier_price || 0);

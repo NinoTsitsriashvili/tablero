@@ -4,6 +4,7 @@ import { useState, useEffect, use } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import Navbar from '@/components/Navbar';
 import ProductForm from '@/components/ProductForm';
 import { Product } from '../page';
@@ -344,7 +345,40 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <Navbar />
         <main className="max-w-4xl mx-auto px-4 py-8">
-          <p className="text-gray-600 dark:text-gray-400">იტვირთება...</p>
+          <div className="mb-6">
+            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-40 animate-pulse"></div>
+          </div>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden animate-pulse">
+            <div className="h-64 bg-gray-200 dark:bg-gray-700"></div>
+            <div className="p-6">
+              <div className="flex justify-between items-start mb-4">
+                <div>
+                  <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-48 mb-2"></div>
+                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-20"></div>
+                </div>
+                <div className="flex gap-2">
+                  <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded w-28"></div>
+                  <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded w-20"></div>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                    <div className="h-3 bg-gray-200 dark:bg-gray-600 rounded w-16 mb-2"></div>
+                    <div className="h-6 bg-gray-200 dark:bg-gray-600 rounded w-20"></div>
+                  </div>
+                ))}
+              </div>
+              <div className="mb-4">
+                <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-20 mb-2"></div>
+                <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-32"></div>
+              </div>
+              <div className="mb-4">
+                <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-16 mb-2"></div>
+                <div className="h-16 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
+              </div>
+            </div>
+          </div>
         </main>
       </div>
     );
@@ -392,24 +426,15 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
         ) : (
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
             {product.photo_url && (
-              <div className="relative w-full bg-gray-100 dark:bg-gray-700">
-                <div className="h-64 flex items-center justify-center">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={product.photo_url}
-                    alt={product.name}
-                    className="max-h-full max-w-full object-contain"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.style.display = 'none';
-                      target.nextElementSibling?.classList.remove('hidden');
-                    }}
-                  />
-                  <div className="hidden text-center p-4">
-                    <p className="text-red-500 dark:text-red-400 mb-2">სურათი ვერ ჩაიტვირთა</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 break-all">{product.photo_url}</p>
-                  </div>
-                </div>
+              <div className="relative w-full h-64 bg-gray-100 dark:bg-gray-700">
+                <Image
+                  src={product.photo_url}
+                  alt={product.name}
+                  fill
+                  sizes="(max-width: 768px) 100vw, 768px"
+                  className="object-contain"
+                  priority
+                />
               </div>
             )}
 

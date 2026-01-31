@@ -35,7 +35,7 @@ export async function GET(
       INNER JOIN order_items oi ON o.id = oi.order_id
       WHERE oi.product_id = ${id}
       ORDER BY o.created_at DESC
-    `;
+    ` as Record<string, unknown>[];
 
     // Calculate total price for each order item
     const ordersWithTotal = orders.map((order) => ({

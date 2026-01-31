@@ -53,7 +53,7 @@ export async function POST(
     // Find the product first
     const products = await sql`
       SELECT * FROM products WHERE id = ${id} AND deleted_at IS NULL
-    `;
+    ` as Record<string, unknown>[];
 
     if (products.length === 0) {
       return NextResponse.json({ error: 'პროდუქტი ვერ მოიძებნა' }, { status: 404 });
@@ -79,7 +79,7 @@ export async function POST(
           updated_at = CURRENT_TIMESTAMP
       WHERE id = ${id}
       RETURNING *
-    `;
+    ` as Record<string, unknown>[];
 
     // Log the stock reduction in history
     await sql`

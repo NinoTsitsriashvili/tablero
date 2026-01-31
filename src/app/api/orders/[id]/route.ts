@@ -92,7 +92,7 @@ async function restoreStockForOrder(sql: ReturnType<typeof getDb>, orderId: numb
     FROM order_items oi
     JOIN products p ON oi.product_id = p.id
     WHERE oi.order_id = ${orderId}
-  `;
+  ` as Record<string, unknown>[];
 
   // Restore stock for each item
   for (const item of items) {
@@ -113,7 +113,7 @@ async function restoreStockForOrder(sql: ReturnType<typeof getDb>, orderId: numb
         ${item.product_id},
         'stock_added',
         'quantity',
-        ${oldQuantity.toString()},
+        ${String(oldQuantity)},
         ${newQuantity.toString()},
         ${reason}
       )
@@ -142,7 +142,7 @@ export async function GET(
       SELECT *
       FROM orders
       WHERE id = ${id}
-    `;
+    ` as Record<string, unknown>[];
 
     if (orders.length === 0) {
       return NextResponse.json({ error: 'Order not found' }, { status: 404 });
@@ -160,7 +160,7 @@ export async function GET(
       FROM order_items oi
       LEFT JOIN products p ON oi.product_id = p.id
       WHERE oi.order_id = ${id}
-    `;
+    ` as Record<string, unknown>[];
 
     const total_price = items.reduce((sum, item) => {
       return sum + (Number(item.unit_price) * Number(item.quantity)) + Number(item.courier_price || 0);
@@ -209,7 +209,7 @@ export async function PUT(
       // Get current order status
       const currentOrder = await sql`
         SELECT status FROM orders WHERE id = ${id}
-      `;
+      ` as Record<string, unknown>[];
 
       if (currentOrder.length === 0) {
         return NextResponse.json({ error: 'Order not found' }, { status: 404 });
@@ -231,7 +231,7 @@ export async function PUT(
           FROM order_items oi
           JOIN products p ON oi.product_id = p.id
           WHERE oi.order_id = ${id}
-        `;
+        ` as Record<string, unknown>[];
 
         // Check stock availability
         for (const item of items) {
@@ -259,7 +259,7 @@ export async function PUT(
               ${item.product_id},
               'stock_removed',
               'quantity',
-              ${oldQuantity.toString()},
+              ${String(oldQuantity)},
               ${newQuantity.toString()},
               ${'შეკვეთა #' + id + ' - აღდგენა გაუქმებიდან'}
             )
@@ -273,7 +273,7 @@ export async function PUT(
             updated_at = CURRENT_TIMESTAMP
         WHERE id = ${id}
         RETURNING *
-      `;
+      ` as Record<string, unknown>[];
 
       return NextResponse.json(result[0]);
     }
@@ -292,7 +292,7 @@ export async function PUT(
           updated_at = CURRENT_TIMESTAMP
       WHERE id = ${id}
       RETURNING *
-    `;
+    ` as Record<string, unknown>[];
 
     if (result.length === 0) {
       return NextResponse.json({ error: 'Order not found' }, { status: 404 });
@@ -324,7 +324,7 @@ export async function DELETE(
     // Check if order exists and get its status
     const orderCheck = await sql`
       SELECT id, status FROM orders WHERE id = ${id}
-    `;
+    ` as Record<string, unknown>[];
 
     if (orderCheck.length === 0) {
       return NextResponse.json({ error: 'Order not found' }, { status: 404 });

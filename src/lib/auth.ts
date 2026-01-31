@@ -22,14 +22,14 @@ export const authOptions: NextAuthOptions = {
             SELECT id, username, password_hash
             FROM users
             WHERE username = ${credentials.username}
-          `;
+          ` as Record<string, unknown>[];
 
           if (users.length === 0) {
             return null;
           }
 
           const user = users[0];
-          const isValid = await bcrypt.compare(credentials.password, user.password_hash);
+          const isValid = await bcrypt.compare(credentials.password, user.password_hash as string);
 
           if (!isValid) {
             return null;
@@ -37,7 +37,7 @@ export const authOptions: NextAuthOptions = {
 
           return {
             id: String(user.id),
-            name: user.username,
+            name: user.username as string,
           };
         } catch (error) {
           console.error('Auth error:', error);

@@ -97,6 +97,7 @@ function validateProductInput(body: Record<string, unknown>): { valid: boolean; 
 }
 
 // GET all products (excluding deleted) or deleted products with ?deleted=true
+// Use ?all=true to get both active and deleted in a single response (for performance)
 export async function GET(request: NextRequest) {
   const session = await getServerSession(authOptions);
 
@@ -108,6 +109,24 @@ export async function GET(request: NextRequest) {
     const sql = getDb();
     const { searchParams } = new URL(request.url);
     const showDeleted = searchParams.get('deleted') === 'true';
+    const showAll = searchParams.get('all') === 'true';
+
+    // Return both active and deleted products in a single response
+    if (showAll) {
+      const [activeProducts, deletedProducts] = await Promise.all([
+        sql`
+          SELECT * FROM products
+          WHERE deleted_at IS NULL
+          ORDER BY created_at DESC
+        `,
+        sql`
+          SELECT * FROM products
+          WHERE deleted_at IS NOT NULL
+          ORDER BY deleted_at DESC
+        `
+      ]);
+      return NextResponse.json({ active: activeProducts, deleted: deletedProducts });
+    }
 
     if (showDeleted) {
       // Return only deleted products
@@ -155,7 +174,7 @@ export async function POST(request: NextRequest) {
       INSERT INTO products (name, price, cost_price, quantity, description, barcode, photo_url)
       VALUES (${name}, ${price}, ${cost_price || null}, ${quantity || 0}, ${description || null}, ${barcode || null}, ${photo_url || null})
       RETURNING *
-    `;
+    ` as Record<string, unknown>[];
 
     const product = result[0];
 

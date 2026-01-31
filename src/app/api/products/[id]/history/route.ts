@@ -52,7 +52,7 @@ export async function POST(
       INSERT INTO product_history (product_id, action, field_name, old_value, new_value, note)
       VALUES (${id}, ${action}, ${field_name || null}, ${old_value || null}, ${new_value || null}, ${note || null})
       RETURNING *
-    `;
+    ` as Record<string, unknown>[];
 
     return NextResponse.json(result[0], { status: 201 });
   } catch (error) {

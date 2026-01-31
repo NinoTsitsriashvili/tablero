@@ -22,7 +22,7 @@ export async function POST(
     // Find the deleted product first
     const deletedProducts = await sql`
       SELECT * FROM products WHERE id = ${id} AND deleted_at IS NOT NULL
-    `;
+    ` as Record<string, unknown>[];
 
     if (deletedProducts.length === 0) {
       return NextResponse.json({ error: 'Deleted product not found' }, { status: 404 });
@@ -35,7 +35,7 @@ export async function POST(
           updated_at = CURRENT_TIMESTAMP
       WHERE id = ${id}
       RETURNING *
-    `;
+    ` as Record<string, unknown>[];
 
     // Log restore action in history
     await sql`
