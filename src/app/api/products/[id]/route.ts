@@ -3,6 +3,99 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { getDb } from '@/lib/db';
 
+// Validation constants
+const VALIDATION = {
+  NAME_MIN: 2,
+  NAME_MAX: 255,
+  PRICE_MAX: 99999.99,
+  QUANTITY_MAX: 99999,
+  BARCODE_MAX: 50,
+  DESCRIPTION_MAX: 2000,
+};
+
+// Validation helper function
+function validateProductInput(body: Record<string, unknown>): { valid: boolean; error?: string } {
+  const { name, price, cost_price, quantity, barcode, description, photo_url } = body;
+
+  // Name validation (required)
+  if (!name || typeof name !== 'string') {
+    return { valid: false, error: 'დასახელება სავალდებულოა' };
+  }
+  if (name.trim().length < VALIDATION.NAME_MIN) {
+    return { valid: false, error: `დასახელება მინიმუმ ${VALIDATION.NAME_MIN} სიმბოლო` };
+  }
+  if (name.length > VALIDATION.NAME_MAX) {
+    return { valid: false, error: `დასახელება მაქსიმუმ ${VALIDATION.NAME_MAX} სიმბოლო` };
+  }
+
+  // Price validation (required)
+  if (price === undefined || price === null) {
+    return { valid: false, error: 'ფასი სავალდებულოა' };
+  }
+  const priceNum = Number(price);
+  if (isNaN(priceNum)) {
+    return { valid: false, error: 'ფასი უნდა იყოს რიცხვი' };
+  }
+  if (priceNum < 0) {
+    return { valid: false, error: 'ფასი არ შეიძლება იყოს უარყოფითი' };
+  }
+  if (priceNum > VALIDATION.PRICE_MAX) {
+    return { valid: false, error: `ფასი მაქსიმუმ ${VALIDATION.PRICE_MAX}` };
+  }
+
+  // Cost price validation (optional)
+  if (cost_price !== undefined && cost_price !== null && cost_price !== '') {
+    const costNum = Number(cost_price);
+    if (isNaN(costNum)) {
+      return { valid: false, error: 'თვითღირებულება უნდა იყოს რიცხვი' };
+    }
+    if (costNum < 0) {
+      return { valid: false, error: 'თვითღირებულება არ შეიძლება იყოს უარყოფითი' };
+    }
+    if (costNum > VALIDATION.PRICE_MAX) {
+      return { valid: false, error: `თვითღირებულება მაქსიმუმ ${VALIDATION.PRICE_MAX}` };
+    }
+    if (costNum >= priceNum) {
+      return { valid: false, error: 'თვითღირებულება უნდა იყოს ფასზე ნაკლები' };
+    }
+  }
+
+  // Quantity validation (optional)
+  if (quantity !== undefined && quantity !== null && quantity !== '') {
+    const qtyNum = Number(quantity);
+    if (isNaN(qtyNum) || !Number.isInteger(qtyNum)) {
+      return { valid: false, error: 'რაოდენობა უნდა იყოს მთელი რიცხვი' };
+    }
+    if (qtyNum < 0) {
+      return { valid: false, error: 'რაოდენობა არ შეიძლება იყოს უარყოფითი' };
+    }
+    if (qtyNum > VALIDATION.QUANTITY_MAX) {
+      return { valid: false, error: `რაოდენობა მაქსიმუმ ${VALIDATION.QUANTITY_MAX}` };
+    }
+  }
+
+  // Barcode validation (optional)
+  if (barcode && typeof barcode === 'string' && barcode.length > VALIDATION.BARCODE_MAX) {
+    return { valid: false, error: `შტრიხკოდი მაქსიმუმ ${VALIDATION.BARCODE_MAX} სიმბოლო` };
+  }
+
+  // Description validation (optional)
+  if (description && typeof description === 'string' && description.length > VALIDATION.DESCRIPTION_MAX) {
+    return { valid: false, error: `აღწერა მაქსიმუმ ${VALIDATION.DESCRIPTION_MAX} სიმბოლო` };
+  }
+
+  // Photo URL validation (optional)
+  if (photo_url && typeof photo_url === 'string') {
+    try {
+      new URL(photo_url);
+    } catch {
+      return { valid: false, error: 'არასწორი URL ფორმატი' };
+    }
+  }
+
+  return { valid: true };
+}
+
 // GET single product (only if not deleted)
 export async function GET(
   request: NextRequest,
@@ -52,8 +145,10 @@ export async function PUT(
     const body = await request.json();
     const { name, price, cost_price, quantity, description, barcode, photo_url } = body;
 
-    if (!name || price === undefined) {
-      return NextResponse.json({ error: 'Name and price are required' }, { status: 400 });
+    // Validate input
+    const validation = validateProductInput(body);
+    if (!validation.valid) {
+      return NextResponse.json({ error: validation.error }, { status: 400 });
     }
 
     // Fetch old product to compare changes

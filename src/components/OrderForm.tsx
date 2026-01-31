@@ -19,6 +19,31 @@ interface OrderItem {
   showDropdown: boolean;
 }
 
+interface FieldErrors {
+  fb_name?: string;
+  recipient_name?: string;
+  phone?: string;
+  address?: string;
+  comment?: string;
+  items?: string;
+}
+
+// Validation constants
+const VALIDATION_LIMITS = {
+  NAME_MIN: 2,
+  NAME_MAX: 255,
+  PHONE_MIN: 9,
+  PHONE_MAX: 15,
+  ADDRESS_MIN: 5,
+  ADDRESS_MAX: 500,
+  COMMENT_MAX: 1000,
+  QUANTITY_MAX: 999,
+  COURIER_PRICE_MAX: 999.99,
+};
+
+// Georgian phone pattern: starts with 5 and has 9 digits, or with +995 prefix
+const GEORGIAN_PHONE_REGEX = /^(\+995\s?)?5\d{8}$/;
+
 export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
   const [formData, setFormData] = useState({
     fb_name: '',
@@ -44,7 +69,72 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const dropdownRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+
+  // Validation functions
+  const validateName = (value: string, fieldLabel: string): string | undefined => {
+    if (!value || value.trim().length === 0) {
+      return `${fieldLabel} სავალდებულოა`;
+    }
+    if (value.trim().length < VALIDATION_LIMITS.NAME_MIN) {
+      return `${fieldLabel} მინიმუმ ${VALIDATION_LIMITS.NAME_MIN} სიმბოლო`;
+    }
+    if (value.length > VALIDATION_LIMITS.NAME_MAX) {
+      return `${fieldLabel} მაქსიმუმ ${VALIDATION_LIMITS.NAME_MAX} სიმბოლო`;
+    }
+    return undefined;
+  };
+
+  const validatePhone = (value: string): string | undefined => {
+    if (!value || value.trim().length === 0) {
+      return 'ტელეფონი სავალდებულოა';
+    }
+    // Remove spaces for validation
+    const cleanPhone = value.replace(/\s/g, '');
+    if (cleanPhone.length < VALIDATION_LIMITS.PHONE_MIN) {
+      return `ტელეფონი მინიმუმ ${VALIDATION_LIMITS.PHONE_MIN} ციფრი`;
+    }
+    if (cleanPhone.length > VALIDATION_LIMITS.PHONE_MAX) {
+      return `ტელეფონი მაქსიმუმ ${VALIDATION_LIMITS.PHONE_MAX} სიმბოლო`;
+    }
+    if (!GEORGIAN_PHONE_REGEX.test(cleanPhone)) {
+      return 'არასწორი ფორმატი (მაგ: 5XXXXXXXX)';
+    }
+    return undefined;
+  };
+
+  const validateAddress = (value: string): string | undefined => {
+    if (!value || value.trim().length === 0) {
+      return 'მისამართი სავალდებულოა';
+    }
+    if (value.trim().length < VALIDATION_LIMITS.ADDRESS_MIN) {
+      return `მისამართი მინიმუმ ${VALIDATION_LIMITS.ADDRESS_MIN} სიმბოლო`;
+    }
+    if (value.length > VALIDATION_LIMITS.ADDRESS_MAX) {
+      return `მისამართი მაქსიმუმ ${VALIDATION_LIMITS.ADDRESS_MAX} სიმბოლო`;
+    }
+    return undefined;
+  };
+
+  const validateComment = (value: string): string | undefined => {
+    if (!value) return undefined;
+    if (value.length > VALIDATION_LIMITS.COMMENT_MAX) {
+      return `კომენტარი მაქსიმუმ ${VALIDATION_LIMITS.COMMENT_MAX} სიმბოლო`;
+    }
+    return undefined;
+  };
+
+  const validateQuantity = (value: string): boolean => {
+    const num = parseInt(value, 10);
+    return !isNaN(num) && num >= 1 && num <= VALIDATION_LIMITS.QUANTITY_MAX;
+  };
+
+  const validateCourierPrice = (value: string): boolean => {
+    if (!value) return true;
+    const num = parseFloat(value);
+    return !isNaN(num) && num >= 0 && num <= VALIDATION_LIMITS.COURIER_PRICE_MAX;
+  };
 
   useEffect(() => {
     fetchProducts();
@@ -106,6 +196,31 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
   };
 
   const handleItemChange = (itemId: string, field: keyof OrderItem, value: string) => {
+    // Validate quantity - only allow positive integers up to max
+    if (field === 'quantity') {
+      // Remove any non-digit characters
+      const digitsOnly = value.replace(/[^0-9]/g, '');
+      const num = parseInt(digitsOnly, 10);
+      // Limit to max quantity
+      if (num > VALIDATION_LIMITS.QUANTITY_MAX) {
+        return;
+      }
+      setOrderItems((prev) =>
+        prev.map((item) =>
+          item.id === itemId ? { ...item, [field]: digitsOnly || '1' } : item
+        )
+      );
+      return;
+    }
+
+    // Validate courier_price - only allow positive decimals up to max
+    if (field === 'courier_price') {
+      const num = parseFloat(value);
+      if (!isNaN(num) && num > VALIDATION_LIMITS.COURIER_PRICE_MAX) {
+        return;
+      }
+    }
+
     setOrderItems((prev) =>
       prev.map((item) =>
         item.id === itemId ? { ...item, [field]: value } : item
@@ -153,20 +268,82 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+
+    // Validate on change
+    let error: string | undefined;
+    switch (name) {
+      case 'fb_name':
+        error = validateName(value, 'FB სახელი');
+        break;
+      case 'recipient_name':
+        error = validateName(value, 'ადრესატის სახელი');
+        break;
+      case 'phone':
+        error = validatePhone(value);
+        break;
+      case 'address':
+        error = validateAddress(value);
+        break;
+      case 'comment':
+        error = validateComment(value);
+        break;
+    }
+    setFieldErrors((prev) => ({ ...prev, [name]: error }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
-    if (!formData.fb_name || !formData.recipient_name || !formData.phone || !formData.address) {
-      setError('შეავსეთ ყველა სავალდებულო ველი');
-      return;
-    }
+    // Validate all fields
+    const errors: FieldErrors = {};
 
+    const fbNameError = validateName(formData.fb_name, 'FB სახელი');
+    if (fbNameError) errors.fb_name = fbNameError;
+
+    const recipientNameError = validateName(formData.recipient_name, 'ადრესატის სახელი');
+    if (recipientNameError) errors.recipient_name = recipientNameError;
+
+    const phoneError = validatePhone(formData.phone);
+    if (phoneError) errors.phone = phoneError;
+
+    const addressError = validateAddress(formData.address);
+    if (addressError) errors.address = addressError;
+
+    const commentError = validateComment(formData.comment);
+    if (commentError) errors.comment = commentError;
+
+    // Validate items
     const validItems = orderItems.filter((item) => item.product_id);
     if (validItems.length === 0) {
-      setError('დაამატეთ მინიმუმ ერთი პროდუქტი');
+      errors.items = 'დაამატეთ მინიმუმ ერთი პროდუქტი';
+    } else {
+      // Check for duplicate products
+      const productIds = validItems.map((item) => item.product_id);
+      const hasDuplicates = productIds.length !== new Set(productIds).size;
+      if (hasDuplicates) {
+        errors.items = 'ერთი პროდუქტი მხოლოდ ერთხელ შეიძლება დაემატოს';
+      }
+
+      // Validate each item's quantity and courier price
+      for (const item of validItems) {
+        if (!validateQuantity(item.quantity)) {
+          errors.items = `რაოდენობა უნდა იყოს 1-დან ${VALIDATION_LIMITS.QUANTITY_MAX}-მდე`;
+          break;
+        }
+        if (!validateCourierPrice(item.courier_price)) {
+          errors.items = `კურიერის ფასი მაქსიმუმ ${VALIDATION_LIMITS.COURIER_PRICE_MAX}`;
+          break;
+        }
+      }
+    }
+
+    // If there are errors, show them and don't submit
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      if (errors.items) {
+        setError(errors.items);
+      }
       return;
     }
 
@@ -224,7 +401,7 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label htmlFor="fb_name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              FB სახელი *
+              FB სახელი * <span className="text-gray-400 font-normal">({formData.fb_name.length}/{VALIDATION_LIMITS.NAME_MAX})</span>
             </label>
             <input
               id="fb_name"
@@ -232,15 +409,21 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
               type="text"
               value={formData.fb_name}
               onChange={handleChange}
+              maxLength={VALIDATION_LIMITS.NAME_MAX}
               placeholder="Facebook-ის სახელი"
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700"
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700 ${
+                fieldErrors.fb_name ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'
+              }`}
               required
             />
+            {fieldErrors.fb_name && (
+              <p className="text-red-500 dark:text-red-400 text-xs mt-1">{fieldErrors.fb_name}</p>
+            )}
           </div>
 
           <div>
             <label htmlFor="recipient_name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              ადრესატის სახელი *
+              ადრესატის სახელი * <span className="text-gray-400 font-normal">({formData.recipient_name.length}/{VALIDATION_LIMITS.NAME_MAX})</span>
             </label>
             <input
               id="recipient_name"
@@ -248,15 +431,21 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
               type="text"
               value={formData.recipient_name}
               onChange={handleChange}
+              maxLength={VALIDATION_LIMITS.NAME_MAX}
               placeholder="მიმღების სრული სახელი"
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700"
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700 ${
+                fieldErrors.recipient_name ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'
+              }`}
               required
             />
+            {fieldErrors.recipient_name && (
+              <p className="text-red-500 dark:text-red-400 text-xs mt-1">{fieldErrors.recipient_name}</p>
+            )}
           </div>
 
           <div>
             <label htmlFor="phone" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              ტელეფონი *
+              ტელეფონი * <span className="text-gray-400 font-normal">(5XXXXXXXX)</span>
             </label>
             <input
               id="phone"
@@ -264,15 +453,21 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
               type="tel"
               value={formData.phone}
               onChange={handleChange}
-              placeholder="599 XX XX XX"
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700"
+              maxLength={VALIDATION_LIMITS.PHONE_MAX}
+              placeholder="5XX XXX XXX"
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700 ${
+                fieldErrors.phone ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'
+              }`}
               required
             />
+            {fieldErrors.phone && (
+              <p className="text-red-500 dark:text-red-400 text-xs mt-1">{fieldErrors.phone}</p>
+            )}
           </div>
 
           <div>
             <label htmlFor="address" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              მისამართი *
+              მისამართი * <span className="text-gray-400 font-normal">({formData.address.length}/{VALIDATION_LIMITS.ADDRESS_MAX})</span>
             </label>
             <input
               id="address"
@@ -280,10 +475,16 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
               type="text"
               value={formData.address}
               onChange={handleChange}
+              maxLength={VALIDATION_LIMITS.ADDRESS_MAX}
               placeholder="მიწოდების მისამართი"
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700"
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700 ${
+                fieldErrors.address ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'
+              }`}
               required
             />
+            {fieldErrors.address && (
+              <p className="text-red-500 dark:text-red-400 text-xs mt-1">{fieldErrors.address}</p>
+            )}
           </div>
         </div>
 
@@ -438,17 +639,23 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
         {/* Comment */}
         <div>
           <label htmlFor="comment" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            კომენტარი
+            კომენტარი <span className="text-gray-400 font-normal">({formData.comment.length}/{VALIDATION_LIMITS.COMMENT_MAX})</span>
           </label>
           <textarea
             id="comment"
             name="comment"
             value={formData.comment}
             onChange={handleChange}
+            maxLength={VALIDATION_LIMITS.COMMENT_MAX}
             placeholder="დამატებითი ინფორმაცია..."
             rows={3}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700 resize-none"
+            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700 resize-none ${
+              fieldErrors.comment ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'
+            }`}
           />
+          {fieldErrors.comment && (
+            <p className="text-red-500 dark:text-red-400 text-xs mt-1">{fieldErrors.comment}</p>
+          )}
         </div>
 
         {error && (

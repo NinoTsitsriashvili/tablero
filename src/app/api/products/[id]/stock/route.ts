@@ -3,6 +3,12 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { getDb } from '@/lib/db';
 
+// Validation constants
+const VALIDATION = {
+  QUANTITY_MAX: 99999,
+  NOTE_MAX: 500,
+};
+
 // POST - reduce stock quantity (for damaged goods, etc.)
 export async function POST(
   request: NextRequest,
@@ -21,9 +27,27 @@ export async function POST(
     const body = await request.json();
     const { quantity, note } = body;
 
-    // Validate quantity
-    if (!quantity || quantity <= 0) {
+    // Validate quantity - must be a positive integer
+    if (quantity === undefined || quantity === null) {
+      return NextResponse.json({ error: 'რაოდენობა სავალდებულოა' }, { status: 400 });
+    }
+
+    const qtyNum = Number(quantity);
+    if (isNaN(qtyNum) || !Number.isInteger(qtyNum)) {
+      return NextResponse.json({ error: 'რაოდენობა უნდა იყოს მთელი რიცხვი' }, { status: 400 });
+    }
+
+    if (qtyNum <= 0) {
       return NextResponse.json({ error: 'რაოდენობა უნდა იყოს დადებითი რიცხვი' }, { status: 400 });
+    }
+
+    if (qtyNum > VALIDATION.QUANTITY_MAX) {
+      return NextResponse.json({ error: `რაოდენობა მაქსიმუმ ${VALIDATION.QUANTITY_MAX}` }, { status: 400 });
+    }
+
+    // Validate note length if provided
+    if (note && typeof note === 'string' && note.length > VALIDATION.NOTE_MAX) {
+      return NextResponse.json({ error: `შენიშვნა მაქსიმუმ ${VALIDATION.NOTE_MAX} სიმბოლო` }, { status: 400 });
     }
 
     // Find the product first

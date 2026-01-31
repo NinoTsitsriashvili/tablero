@@ -3,6 +3,87 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { getDb } from '@/lib/db';
 
+// Allowed order statuses
+const VALID_STATUSES = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
+
+// Validation constants
+const VALIDATION = {
+  NAME_MIN: 2,
+  NAME_MAX: 255,
+  PHONE_MIN: 9,
+  PHONE_MAX: 15,
+  ADDRESS_MIN: 5,
+  ADDRESS_MAX: 500,
+  COMMENT_MAX: 1000,
+};
+
+// Georgian phone pattern
+const GEORGIAN_PHONE_REGEX = /^(\+995\s?)?5\d{8}$/;
+
+// Validation helper for partial order updates
+function validateOrderUpdate(body: Record<string, unknown>): { valid: boolean; error?: string } {
+  const { fb_name, recipient_name, phone, address, comment, status } = body;
+
+  // Status validation
+  if (status !== undefined && !VALID_STATUSES.includes(status as string)) {
+    return { valid: false, error: `არასწორი სტატუსი. დაშვებულია: ${VALID_STATUSES.join(', ')}` };
+  }
+
+  // FB name validation (if provided)
+  if (fb_name !== undefined) {
+    if (typeof fb_name !== 'string' || fb_name.trim().length < VALIDATION.NAME_MIN) {
+      return { valid: false, error: `FB სახელი მინიმუმ ${VALIDATION.NAME_MIN} სიმბოლო` };
+    }
+    if (fb_name.length > VALIDATION.NAME_MAX) {
+      return { valid: false, error: `FB სახელი მაქსიმუმ ${VALIDATION.NAME_MAX} სიმბოლო` };
+    }
+  }
+
+  // Recipient name validation (if provided)
+  if (recipient_name !== undefined) {
+    if (typeof recipient_name !== 'string' || recipient_name.trim().length < VALIDATION.NAME_MIN) {
+      return { valid: false, error: `ადრესატის სახელი მინიმუმ ${VALIDATION.NAME_MIN} სიმბოლო` };
+    }
+    if (recipient_name.length > VALIDATION.NAME_MAX) {
+      return { valid: false, error: `ადრესატის სახელი მაქსიმუმ ${VALIDATION.NAME_MAX} სიმბოლო` };
+    }
+  }
+
+  // Phone validation (if provided)
+  if (phone !== undefined) {
+    if (typeof phone !== 'string') {
+      return { valid: false, error: 'ტელეფონი უნდა იყოს ტექსტი' };
+    }
+    const cleanPhone = phone.replace(/\s/g, '');
+    if (cleanPhone.length < VALIDATION.PHONE_MIN) {
+      return { valid: false, error: `ტელეფონი მინიმუმ ${VALIDATION.PHONE_MIN} ციფრი` };
+    }
+    if (cleanPhone.length > VALIDATION.PHONE_MAX) {
+      return { valid: false, error: `ტელეფონი მაქსიმუმ ${VALIDATION.PHONE_MAX} სიმბოლო` };
+    }
+    if (!GEORGIAN_PHONE_REGEX.test(cleanPhone)) {
+      return { valid: false, error: 'არასწორი ტელეფონის ფორმატი (მაგ: 5XXXXXXXX)' };
+    }
+  }
+
+  // Address validation (if provided)
+  if (address !== undefined) {
+    if (typeof address !== 'string' || address.trim().length < VALIDATION.ADDRESS_MIN) {
+      return { valid: false, error: `მისამართი მინიმუმ ${VALIDATION.ADDRESS_MIN} სიმბოლო` };
+    }
+    if (address.length > VALIDATION.ADDRESS_MAX) {
+      return { valid: false, error: `მისამართი მაქსიმუმ ${VALIDATION.ADDRESS_MAX} სიმბოლო` };
+    }
+  }
+
+  // Comment validation (if provided)
+  if (comment !== undefined && comment !== null && typeof comment === 'string' && comment.length > VALIDATION.COMMENT_MAX) {
+    return { valid: false, error: `კომენტარი მაქსიმუმ ${VALIDATION.COMMENT_MAX} სიმბოლო` };
+  }
+
+  return { valid: true };
+}
+
 // Helper function to restore stock for order items
 async function restoreStockForOrder(sql: ReturnType<typeof getDb>, orderId: number, reason: string) {
   // Get order items
@@ -116,6 +197,12 @@ export async function PUT(
   try {
     const sql = getDb();
     const body = await request.json();
+
+    // Validate input
+    const validation = validateOrderUpdate(body);
+    if (!validation.valid) {
+      return NextResponse.json({ error: validation.error }, { status: 400 });
+    }
 
     // If only status is being updated
     if (body.status !== undefined && Object.keys(body).length === 1) {

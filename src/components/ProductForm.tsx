@@ -10,10 +10,24 @@ interface ProductFormProps {
 }
 
 interface FieldErrors {
+  name?: string;
   price?: string;
   cost_price?: string;
   quantity?: string;
+  barcode?: string;
+  description?: string;
+  photo_url?: string;
 }
+
+// Validation constants
+const VALIDATION_LIMITS = {
+  NAME_MIN: 2,
+  NAME_MAX: 255,
+  PRICE_MAX: 99999.99,
+  QUANTITY_MAX: 99999,
+  BARCODE_MAX: 50,
+  DESCRIPTION_MAX: 2000,
+};
 
 export default function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
   const [formData, setFormData] = useState({
@@ -47,9 +61,25 @@ export default function ProductForm({ product, onSave, onCancel }: ProductFormPr
     return value.replace(',', '.');
   };
 
+  // Validate name field
+  const validateName = (value: string): string | undefined => {
+    if (!value || value.trim().length === 0) {
+      return 'დასახელება სავალდებულოა';
+    }
+    if (value.trim().length < VALIDATION_LIMITS.NAME_MIN) {
+      return `დასახელება მინიმუმ ${VALIDATION_LIMITS.NAME_MIN} სიმბოლო`;
+    }
+    if (value.length > VALIDATION_LIMITS.NAME_MAX) {
+      return `დასახელება მაქსიმუმ ${VALIDATION_LIMITS.NAME_MAX} სიმბოლო`;
+    }
+    return undefined;
+  };
+
   // Validate price field (positive decimal with max 2 decimal places)
-  const validatePrice = (value: string, fieldName: string): string | undefined => {
-    if (!value) return undefined; // Empty is ok for optional fields
+  const validatePrice = (value: string, fieldName: string, isRequired: boolean = false): string | undefined => {
+    if (!value) {
+      return isRequired ? `${fieldName} სავალდებულოა` : undefined;
+    }
     const normalized = normalizeDecimal(value);
     const num = parseFloat(normalized);
     if (isNaN(num)) {
@@ -57,6 +87,9 @@ export default function ProductForm({ product, onSave, onCancel }: ProductFormPr
     }
     if (num < 0) {
       return `${fieldName} არ შეიძლება იყოს უარყოფითი`;
+    }
+    if (num > VALIDATION_LIMITS.PRICE_MAX) {
+      return `${fieldName} მაქსიმუმ ${VALIDATION_LIMITS.PRICE_MAX}`;
     }
     // Check for more than 2 decimal places
     if (normalized.includes('.') && normalized.split('.')[1]?.length > 2) {
@@ -75,8 +108,51 @@ export default function ProductForm({ product, onSave, onCancel }: ProductFormPr
     if (num < 0) {
       return 'რაოდენობა არ შეიძლება იყოს უარყოფითი';
     }
+    if (num > VALIDATION_LIMITS.QUANTITY_MAX) {
+      return `რაოდენობა მაქსიმუმ ${VALIDATION_LIMITS.QUANTITY_MAX}`;
+    }
     if (value.includes('.') || value.includes(',')) {
       return 'რაოდენობა უნდა იყოს მთელი რიცხვი';
+    }
+    return undefined;
+  };
+
+  // Validate barcode field
+  const validateBarcode = (value: string): string | undefined => {
+    if (!value) return undefined;
+    if (value.length > VALIDATION_LIMITS.BARCODE_MAX) {
+      return `შტრიხკოდი მაქსიმუმ ${VALIDATION_LIMITS.BARCODE_MAX} სიმბოლო`;
+    }
+    return undefined;
+  };
+
+  // Validate description field
+  const validateDescription = (value: string): string | undefined => {
+    if (!value) return undefined;
+    if (value.length > VALIDATION_LIMITS.DESCRIPTION_MAX) {
+      return `აღწერა მაქსიმუმ ${VALIDATION_LIMITS.DESCRIPTION_MAX} სიმბოლო`;
+    }
+    return undefined;
+  };
+
+  // Validate URL field
+  const validateUrl = (value: string): string | undefined => {
+    if (!value) return undefined;
+    try {
+      new URL(value);
+      return undefined;
+    } catch {
+      return 'არასწორი URL ფორმატი';
+    }
+  };
+
+  // Validate cost_price vs price relationship
+  const validateCostPriceRelation = (costPrice: string, price: string): string | undefined => {
+    if (!costPrice || !price) return undefined;
+    const cost = parseFloat(normalizeDecimal(costPrice));
+    const sell = parseFloat(normalizeDecimal(price));
+    if (!isNaN(cost) && !isNaN(sell) && cost >= sell) {
+      return 'თვითღირებულება უნდა იყოს ფასზე ნაკლები';
     }
     return undefined;
   };
@@ -124,6 +200,22 @@ export default function ProductForm({ product, onSave, onCancel }: ProductFormPr
         const error = validateQuantity(digitsOnly);
         setFieldErrors((prev) => ({ ...prev, [name]: error }));
       }
+    } else if (name === 'name') {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+      const error = validateName(value);
+      setFieldErrors((prev) => ({ ...prev, name: error }));
+    } else if (name === 'barcode') {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+      const error = validateBarcode(value);
+      setFieldErrors((prev) => ({ ...prev, barcode: error }));
+    } else if (name === 'description') {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+      const error = validateDescription(value);
+      setFieldErrors((prev) => ({ ...prev, description: error }));
+    } else if (name === 'photo_url') {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+      const error = validateUrl(value);
+      setFieldErrors((prev) => ({ ...prev, photo_url: error }));
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
     }
@@ -136,23 +228,41 @@ export default function ProductForm({ product, onSave, onCancel }: ProductFormPr
     // Validate all fields before submission
     const errors: FieldErrors = {};
 
+    // Name validation (required)
+    const nameError = validateName(formData.name);
+    if (nameError) errors.name = nameError;
+
     // Price is required
-    if (!formData.price) {
-      errors.price = 'ფასი სავალდებულოა';
-    } else {
-      const priceError = validatePrice(formData.price, 'ფასი');
-      if (priceError) errors.price = priceError;
-    }
+    const priceError = validatePrice(formData.price, 'ფასი', true);
+    if (priceError) errors.price = priceError;
 
     // Cost price is optional but must be valid if provided
     if (formData.cost_price) {
       const costPriceError = validatePrice(formData.cost_price, 'თვითღირებულება');
       if (costPriceError) errors.cost_price = costPriceError;
+
+      // Check cost_price < price
+      const relationError = validateCostPriceRelation(formData.cost_price, formData.price);
+      if (relationError && !errors.cost_price) errors.cost_price = relationError;
     }
 
     // Quantity validation
     const quantityError = validateQuantity(formData.quantity || '0');
     if (quantityError) errors.quantity = quantityError;
+
+    // Barcode validation
+    const barcodeError = validateBarcode(formData.barcode);
+    if (barcodeError) errors.barcode = barcodeError;
+
+    // Description validation
+    const descriptionError = validateDescription(formData.description);
+    if (descriptionError) errors.description = descriptionError;
+
+    // Photo URL validation
+    if (formData.photo_url) {
+      const urlError = validateUrl(formData.photo_url);
+      if (urlError) errors.photo_url = urlError;
+    }
 
     // If there are errors, show them and don't submit
     if (Object.keys(errors).length > 0) {
@@ -224,7 +334,7 @@ export default function ProductForm({ product, onSave, onCancel }: ProductFormPr
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              დასახელება *
+              დასახელება * <span className="text-gray-400 font-normal">({formData.name.length}/{VALIDATION_LIMITS.NAME_MAX})</span>
             </label>
             <input
               id="name"
@@ -232,14 +342,20 @@ export default function ProductForm({ product, onSave, onCancel }: ProductFormPr
               type="text"
               value={formData.name}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700"
+              maxLength={VALIDATION_LIMITS.NAME_MAX}
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700 ${
+                fieldErrors.name ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'
+              }`}
               required
             />
+            {fieldErrors.name && (
+              <p className="text-red-500 dark:text-red-400 text-xs mt-1">{fieldErrors.name}</p>
+            )}
           </div>
 
           <div>
             <label htmlFor="barcode" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              შტრიხკოდი
+              შტრიხკოდი <span className="text-gray-400 font-normal">(მაქს. {VALIDATION_LIMITS.BARCODE_MAX})</span>
             </label>
             <input
               id="barcode"
@@ -247,8 +363,14 @@ export default function ProductForm({ product, onSave, onCancel }: ProductFormPr
               type="text"
               value={formData.barcode}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700"
+              maxLength={VALIDATION_LIMITS.BARCODE_MAX}
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700 ${
+                fieldErrors.barcode ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'
+              }`}
             />
+            {fieldErrors.barcode && (
+              <p className="text-red-500 dark:text-red-400 text-xs mt-1">{fieldErrors.barcode}</p>
+            )}
           </div>
 
           <div>
@@ -326,14 +448,19 @@ export default function ProductForm({ product, onSave, onCancel }: ProductFormPr
               value={formData.photo_url}
               onChange={handleChange}
               placeholder="https://..."
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700"
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700 ${
+                fieldErrors.photo_url ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'
+              }`}
             />
+            {fieldErrors.photo_url && (
+              <p className="text-red-500 dark:text-red-400 text-xs mt-1">{fieldErrors.photo_url}</p>
+            )}
           </div>
         </div>
 
         <div>
           <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            აღწერა
+            აღწერა <span className="text-gray-400 font-normal">({formData.description.length}/{VALIDATION_LIMITS.DESCRIPTION_MAX})</span>
           </label>
           <textarea
             id="description"
@@ -341,8 +468,14 @@ export default function ProductForm({ product, onSave, onCancel }: ProductFormPr
             rows={3}
             value={formData.description}
             onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700"
+            maxLength={VALIDATION_LIMITS.DESCRIPTION_MAX}
+            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700 ${
+              fieldErrors.description ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'
+            }`}
           />
+          {fieldErrors.description && (
+            <p className="text-red-500 dark:text-red-400 text-xs mt-1">{fieldErrors.description}</p>
+          )}
         </div>
 
         {error && <p className="text-red-500 dark:text-red-400 text-sm">{error}</p>}
