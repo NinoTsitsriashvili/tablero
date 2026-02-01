@@ -557,8 +557,8 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
             )}
 
             {/* Status & Payment Section */}
-            <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">სტატუსი</p>
@@ -581,18 +581,16 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                     </select>
                   </div>
                 </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">გადახდის ტიპი</p>
-                    {getPaymentTypeBadge(order.payment_type || 'cash')}
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">გაგზავნის თარიღი</p>
-                    <p className="text-gray-800 dark:text-white font-medium">
-                      {order.send_date ? new Date(order.send_date).toLocaleDateString('ka-GE') : '--'}
-                    </p>
-                  </div>
-                </div>
+              </div>
+              <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">გადახდის ტიპი</p>
+                {getPaymentTypeBadge(order.payment_type || 'cash')}
+              </div>
+              <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">გაგზავნის თარიღი</p>
+                <p className="text-gray-800 dark:text-white font-medium">
+                  {order.send_date ? new Date(order.send_date).toLocaleDateString('ka-GE') : '--'}
+                </p>
               </div>
             </div>
 
