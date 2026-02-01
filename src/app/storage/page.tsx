@@ -53,6 +53,27 @@ export default function StoragePage() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [showDeleted, setShowDeleted] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Filter products based on search query (name, price, barcode)
+  const filteredProducts = products.filter((product) => {
+    if (!searchQuery.trim()) return true;
+    const query = searchQuery.toLowerCase().trim();
+    const nameMatch = product.name.toLowerCase().includes(query);
+    const priceMatch = product.price.toString().includes(query);
+    const barcodeMatch = product.barcode?.toLowerCase().includes(query);
+    return nameMatch || priceMatch || barcodeMatch;
+  });
+
+  // Filter deleted products based on search query
+  const filteredDeletedProducts = deletedProducts.filter((product) => {
+    if (!searchQuery.trim()) return true;
+    const query = searchQuery.toLowerCase().trim();
+    const nameMatch = product.name.toLowerCase().includes(query);
+    const priceMatch = product.price.toString().includes(query);
+    const barcodeMatch = product.barcode?.toLowerCase().includes(query);
+    return nameMatch || priceMatch || barcodeMatch;
+  });
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -135,6 +156,54 @@ export default function StoragePage() {
           </button>
         </div>
 
+        {/* Search Input */}
+        <div className="mb-6">
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+                className="w-5 h-5 text-gray-400"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+              </svg>
+            </div>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="ძებნა სახელით, ფასით ან შტრიხკოდით..."
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-800"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="w-5 h-5"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+          </div>
+          {searchQuery && (
+            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+              ნაპოვნია: {filteredProducts.length} პროდუქტი
+              {filteredDeletedProducts.length > 0 && `, ${filteredDeletedProducts.length} წაშლილი`}
+            </p>
+          )}
+        </div>
+
         {showForm && (
           <div className="mb-6">
             <ProductForm
@@ -170,6 +239,10 @@ export default function StoragePage() {
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 text-center">
             <p className="text-gray-600 dark:text-gray-400">პროდუქტები არ არის. დაამატეთ პირველი პროდუქტი!</p>
           </div>
+        ) : filteredProducts.length === 0 ? (
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 text-center">
+            <p className="text-gray-600 dark:text-gray-400">პროდუქტი ვერ მოიძებნა &quot;{searchQuery}&quot;</p>
+          </div>
         ) : (
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
             <table className="w-full">
@@ -183,7 +256,7 @@ export default function StoragePage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                {products.map((product) => (
+                {filteredProducts.map((product) => (
                   <tr key={product.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                     <td className="px-4 py-3">
                       <div className="w-10 h-10 rounded-md overflow-hidden bg-gray-100 dark:bg-gray-700 flex-shrink-0 relative">
@@ -254,11 +327,16 @@ export default function StoragePage() {
               >
                 <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
               </svg>
-              <span className="font-medium">წაშლილი პროდუქტები ({deletedProducts.length})</span>
+              <span className="font-medium">წაშლილი პროდუქტები ({searchQuery ? filteredDeletedProducts.length : deletedProducts.length})</span>
             </button>
 
             {showDeleted && (
               <div className="bg-gray-100 dark:bg-gray-800/50 rounded-lg shadow overflow-hidden border border-gray-200 dark:border-gray-700">
+                {filteredDeletedProducts.length === 0 ? (
+                  <div className="p-6 text-center">
+                    <p className="text-gray-500 dark:text-gray-400">წაშლილი პროდუქტი ვერ მოიძებნა &quot;{searchQuery}&quot;</p>
+                  </div>
+                ) : (
                 <table className="w-full">
                   <thead className="bg-gray-200 dark:bg-gray-700">
                     <tr>
@@ -270,7 +348,7 @@ export default function StoragePage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                    {deletedProducts.map((product) => (
+                    {filteredDeletedProducts.map((product) => (
                       <tr key={product.id} className="hover:bg-gray-200/50 dark:hover:bg-gray-700/30">
                         <td className="px-4 py-3">
                           <div className="w-10 h-10 rounded-md overflow-hidden bg-gray-200 dark:bg-gray-600 flex-shrink-0 opacity-60 relative">
@@ -327,6 +405,7 @@ export default function StoragePage() {
                     ))}
                   </tbody>
                 </table>
+                )}
               </div>
             )}
           </div>
