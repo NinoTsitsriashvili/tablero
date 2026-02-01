@@ -3,8 +3,11 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { getDb } from '@/lib/db';
 
-// Allowed order statuses
-const VALID_STATUSES = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
+// Allowed order statuses (removed 'processing')
+const VALID_STATUSES = ['pending', 'shipped', 'delivered', 'cancelled'];
+
+// Allowed payment types
+const VALID_PAYMENT_TYPES = ['cash', 'transfer'];
 
 // Validation constants
 const VALIDATION = {
@@ -22,7 +25,7 @@ const GEORGIAN_PHONE_REGEX = /^(\+995\s?)?5\d{8}$/;
 
 // Validation helper for partial order updates
 function validateOrderUpdate(body: Record<string, unknown>): { valid: boolean; error?: string } {
-  const { fb_name, recipient_name, phone, address, comment, status } = body;
+  const { fb_name, recipient_name, phone, phone2, address, comment, status, payment_type } = body;
 
   // Status validation
   if (status !== undefined && !VALID_STATUSES.includes(status as string)) {
@@ -64,6 +67,25 @@ function validateOrderUpdate(body: Record<string, unknown>): { valid: boolean; e
     if (!GEORGIAN_PHONE_REGEX.test(cleanPhone)) {
       return { valid: false, error: 'არასწორი ტელეფონის ფორმატი (მაგ: 5XXXXXXXX)' };
     }
+  }
+
+  // Phone2 validation (optional, if provided)
+  if (phone2 !== undefined && phone2 !== null && typeof phone2 === 'string' && phone2.trim().length > 0) {
+    const cleanPhone2 = phone2.replace(/\s/g, '');
+    if (cleanPhone2.length < VALIDATION.PHONE_MIN) {
+      return { valid: false, error: `ტელეფონი 2 მინიმუმ ${VALIDATION.PHONE_MIN} ციფრი` };
+    }
+    if (cleanPhone2.length > VALIDATION.PHONE_MAX) {
+      return { valid: false, error: `ტელეფონი 2 მაქსიმუმ ${VALIDATION.PHONE_MAX} სიმბოლო` };
+    }
+    if (!GEORGIAN_PHONE_REGEX.test(cleanPhone2)) {
+      return { valid: false, error: 'ტელეფონი 2: არასწორი ფორმატი (მაგ: 5XXXXXXXX)' };
+    }
+  }
+
+  // Payment type validation (if provided)
+  if (payment_type !== undefined && !VALID_PAYMENT_TYPES.includes(payment_type as string)) {
+    return { valid: false, error: 'არასწორი გადახდის ტიპი' };
   }
 
   // Address validation (if provided)
@@ -279,16 +301,19 @@ export async function PUT(
     }
 
     // Full update (customer info only - items are managed separately)
-    const { fb_name, recipient_name, phone, address, comment, status } = body;
+    const { fb_name, recipient_name, phone, phone2, address, comment, status, payment_type, send_date } = body;
 
     const result = await sql`
       UPDATE orders
       SET fb_name = ${fb_name},
           recipient_name = ${recipient_name},
           phone = ${phone},
+          phone2 = ${phone2 || null},
           address = ${address},
           comment = ${comment || null},
           status = ${status || 'pending'},
+          payment_type = ${payment_type || 'cash'},
+          send_date = ${send_date || null},
           updated_at = CURRENT_TIMESTAMP
       WHERE id = ${id}
       RETURNING *

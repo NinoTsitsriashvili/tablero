@@ -35,6 +35,31 @@ interface OrderWithItems {
   total_price: number;
 }
 
+// Validation constants
+const VALIDATION_LIMITS = {
+  NAME_MIN: 2,
+  NAME_MAX: 255,
+  PHONE_MIN: 9,
+  PHONE_MAX: 15,
+  ADDRESS_MIN: 5,
+  ADDRESS_MAX: 500,
+  COMMENT_MAX: 1000,
+};
+
+// Georgian phone pattern
+const GEORGIAN_PHONE_REGEX = /^(\+995\s?)?5\d{8}$/;
+
+interface EditFormData {
+  fb_name: string;
+  recipient_name: string;
+  phone: string;
+  phone2: string;
+  address: string;
+  comment: string;
+  payment_type: string;
+  send_date: string;
+}
+
 export default function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { data: session, status } = useSession();
@@ -43,6 +68,19 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editLoading, setEditLoading] = useState(false);
+  const [editError, setEditError] = useState('');
+  const [editForm, setEditForm] = useState<EditFormData>({
+    fb_name: '',
+    recipient_name: '',
+    phone: '',
+    phone2: '',
+    address: '',
+    comment: '',
+    payment_type: 'cash',
+    send_date: '',
+  });
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -108,6 +146,111 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
     } finally {
       setUpdatingStatus(false);
     }
+  };
+
+  const startEditing = () => {
+    if (order) {
+      setEditForm({
+        fb_name: order.fb_name,
+        recipient_name: order.recipient_name,
+        phone: order.phone,
+        phone2: order.phone2 || '',
+        address: order.address,
+        comment: order.comment || '',
+        payment_type: order.payment_type || 'cash',
+        send_date: order.send_date ? order.send_date.split('T')[0] : '',
+      });
+      setEditError('');
+      setIsEditing(true);
+    }
+  };
+
+  const cancelEditing = () => {
+    setIsEditing(false);
+    setEditError('');
+  };
+
+  const validateEditForm = (): string | null => {
+    // FB name
+    if (!editForm.fb_name || editForm.fb_name.trim().length < VALIDATION_LIMITS.NAME_MIN) {
+      return `FB სახელი მინიმუმ ${VALIDATION_LIMITS.NAME_MIN} სიმბოლო`;
+    }
+    // Recipient name
+    if (!editForm.recipient_name || editForm.recipient_name.trim().length < VALIDATION_LIMITS.NAME_MIN) {
+      return `ადრესატის სახელი მინიმუმ ${VALIDATION_LIMITS.NAME_MIN} სიმბოლო`;
+    }
+    // Phone
+    const cleanPhone = editForm.phone.replace(/\s/g, '');
+    if (cleanPhone.length < VALIDATION_LIMITS.PHONE_MIN) {
+      return `ტელეფონი მინიმუმ ${VALIDATION_LIMITS.PHONE_MIN} ციფრი`;
+    }
+    if (!GEORGIAN_PHONE_REGEX.test(cleanPhone)) {
+      return 'არასწორი ტელეფონის ფორმატი (მაგ: 5XXXXXXXX)';
+    }
+    // Phone2 (optional)
+    if (editForm.phone2 && editForm.phone2.trim().length > 0) {
+      const cleanPhone2 = editForm.phone2.replace(/\s/g, '');
+      if (cleanPhone2.length < VALIDATION_LIMITS.PHONE_MIN) {
+        return `ტელეფონი 2 მინიმუმ ${VALIDATION_LIMITS.PHONE_MIN} ციფრი`;
+      }
+      if (!GEORGIAN_PHONE_REGEX.test(cleanPhone2)) {
+        return 'ტელეფონი 2: არასწორი ფორმატი (მაგ: 5XXXXXXXX)';
+      }
+    }
+    // Address
+    if (!editForm.address || editForm.address.trim().length < VALIDATION_LIMITS.ADDRESS_MIN) {
+      return `მისამართი მინიმუმ ${VALIDATION_LIMITS.ADDRESS_MIN} სიმბოლო`;
+    }
+    return null;
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const validationError = validateEditForm();
+    if (validationError) {
+      setEditError(validationError);
+      return;
+    }
+
+    setEditLoading(true);
+    setEditError('');
+
+    try {
+      const res = await fetch(`/api/orders/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fb_name: editForm.fb_name,
+          recipient_name: editForm.recipient_name,
+          phone: editForm.phone,
+          phone2: editForm.phone2 || null,
+          address: editForm.address,
+          comment: editForm.comment || null,
+          payment_type: editForm.payment_type,
+          send_date: editForm.send_date || null,
+          status: order?.status || 'pending',
+        }),
+      });
+
+      if (res.ok) {
+        setIsEditing(false);
+        fetchOrder();
+      } else {
+        const data = await res.json();
+        setEditError(data.error || 'შენახვა ვერ მოხერხდა');
+      }
+    } catch (error) {
+      console.error('Error updating order:', error);
+      setEditError('შეცდომა მოხდა');
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
+  const handleEditChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setEditForm((prev) => ({ ...prev, [name]: value }));
   };
 
   const getStatusBadge = (status: string) => {
@@ -244,13 +387,174 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                   შექმნილია: {new Date(order.created_at).toLocaleString('ka-GE')}
                 </p>
               </div>
-              <button
-                onClick={handleDelete}
-                className="px-4 py-2 text-sm bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 rounded-md hover:bg-red-200 dark:hover:bg-red-800 transition-colors cursor-pointer"
-              >
-                წაშლა
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={startEditing}
+                  className="px-4 py-2 text-sm bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-md hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors cursor-pointer"
+                >
+                  რედაქტირება
+                </button>
+                <button
+                  onClick={handleDelete}
+                  className="px-4 py-2 text-sm bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 rounded-md hover:bg-red-200 dark:hover:bg-red-800 transition-colors cursor-pointer"
+                >
+                  წაშლა
+                </button>
+              </div>
             </div>
+
+            {/* Edit Form */}
+            {isEditing && (
+              <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">შეკვეთის რედაქტირება</h2>
+                <form onSubmit={handleEditSubmit}>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <label htmlFor="edit_fb_name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        FB სახელი *
+                      </label>
+                      <input
+                        id="edit_fb_name"
+                        name="fb_name"
+                        type="text"
+                        value={editForm.fb_name}
+                        onChange={handleEditChange}
+                        maxLength={VALIDATION_LIMITS.NAME_MAX}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="edit_recipient_name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        ადრესატის სახელი *
+                      </label>
+                      <input
+                        id="edit_recipient_name"
+                        name="recipient_name"
+                        type="text"
+                        value={editForm.recipient_name}
+                        onChange={handleEditChange}
+                        maxLength={VALIDATION_LIMITS.NAME_MAX}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="edit_phone" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        ტელეფონი *
+                      </label>
+                      <input
+                        id="edit_phone"
+                        name="phone"
+                        type="tel"
+                        value={editForm.phone}
+                        onChange={handleEditChange}
+                        maxLength={VALIDATION_LIMITS.PHONE_MAX}
+                        placeholder="5XX XXX XXX"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="edit_phone2" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        ტელეფონი 2 <span className="text-gray-400 font-normal">(არასავალდებულო)</span>
+                      </label>
+                      <input
+                        id="edit_phone2"
+                        name="phone2"
+                        type="tel"
+                        value={editForm.phone2}
+                        onChange={handleEditChange}
+                        maxLength={VALIDATION_LIMITS.PHONE_MAX}
+                        placeholder="5XX XXX XXX"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="edit_payment_type" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        გადახდის ტიპი *
+                      </label>
+                      <select
+                        id="edit_payment_type"
+                        name="payment_type"
+                        value={editForm.payment_type}
+                        onChange={handleEditChange}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700 cursor-pointer"
+                      >
+                        <option value="cash">ხელზე გადახდა</option>
+                        <option value="transfer">ჩარიცხვა</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label htmlFor="edit_send_date" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        გაგზავნის თარიღი <span className="text-gray-400 font-normal">(არასავალდებულო)</span>
+                      </label>
+                      <input
+                        id="edit_send_date"
+                        name="send_date"
+                        type="date"
+                        value={editForm.send_date}
+                        onChange={handleEditChange}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="mb-4">
+                    <label htmlFor="edit_address" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      მისამართი *
+                    </label>
+                    <textarea
+                      id="edit_address"
+                      name="address"
+                      value={editForm.address}
+                      onChange={handleEditChange}
+                      maxLength={VALIDATION_LIMITS.ADDRESS_MAX}
+                      rows={3}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700 resize-none"
+                      required
+                    />
+                  </div>
+
+                  <div className="mb-4">
+                    <label htmlFor="edit_comment" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      კომენტარი <span className="text-gray-400 font-normal">(არასავალდებულო)</span>
+                    </label>
+                    <textarea
+                      id="edit_comment"
+                      name="comment"
+                      value={editForm.comment}
+                      onChange={handleEditChange}
+                      maxLength={VALIDATION_LIMITS.COMMENT_MAX}
+                      rows={3}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700 resize-none"
+                    />
+                  </div>
+
+                  {editError && (
+                    <p className="text-red-500 dark:text-red-400 text-sm mb-4">{editError}</p>
+                  )}
+
+                  <div className="flex gap-3 justify-end">
+                    <button
+                      type="button"
+                      onClick={cancelEditing}
+                      disabled={editLoading}
+                      className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors cursor-pointer"
+                    >
+                      გაუქმება
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={editLoading}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 transition-colors cursor-pointer"
+                    >
+                      {editLoading ? 'შენახვა...' : 'შენახვა'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
 
             {/* Status & Payment Section */}
             <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
