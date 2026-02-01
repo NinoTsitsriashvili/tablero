@@ -54,6 +54,9 @@ export default function StoragePage() {
   const [showForm, setShowForm] = useState(false);
   const [showDeleted, setShowDeleted] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [deletedCurrentPage, setDeletedCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
 
   // Filter products based on search query (name, price, barcode)
   const filteredProducts = products.filter((product) => {
@@ -74,6 +77,26 @@ export default function StoragePage() {
     const barcodeMatch = product.barcode?.toLowerCase().includes(query);
     return nameMatch || priceMatch || barcodeMatch;
   });
+
+  // Pagination for active products
+  const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
+  const paginatedProducts = filteredProducts.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
+  // Pagination for deleted products
+  const deletedTotalPages = Math.ceil(filteredDeletedProducts.length / ITEMS_PER_PAGE);
+  const paginatedDeletedProducts = filteredDeletedProducts.slice(
+    (deletedCurrentPage - 1) * ITEMS_PER_PAGE,
+    deletedCurrentPage * ITEMS_PER_PAGE
+  );
+
+  // Reset to page 1 when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+    setDeletedCurrentPage(1);
+  }, [searchQuery]);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -256,7 +279,7 @@ export default function StoragePage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                {filteredProducts.map((product) => (
+                {paginatedProducts.map((product) => (
                   <tr key={product.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                     <td className="px-4 py-3">
                       <div className="w-10 h-10 rounded-md overflow-hidden bg-gray-100 dark:bg-gray-700 flex-shrink-0 relative">
@@ -307,6 +330,57 @@ export default function StoragePage() {
                 ))}
               </tbody>
             </table>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="px-4 py-3 bg-gray-50 dark:bg-gray-700 border-t border-gray-200 dark:border-gray-600 flex items-center justify-between">
+                <div className="text-sm text-gray-500 dark:text-gray-400">
+                  ნაჩვენებია {(currentPage - 1) * ITEMS_PER_PAGE + 1}-{Math.min(currentPage * ITEMS_PER_PAGE, filteredProducts.length)} / {filteredProducts.length}
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="px-3 py-1.5 text-sm bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded-md hover:bg-gray-50 dark:hover:bg-gray-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-gray-700 dark:text-gray-200"
+                  >
+                    წინა
+                  </button>
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1)
+                      .filter(page => {
+                        if (totalPages <= 7) return true;
+                        if (page === 1 || page === totalPages) return true;
+                        if (Math.abs(page - currentPage) <= 1) return true;
+                        return false;
+                      })
+                      .map((page, index, array) => (
+                        <span key={page}>
+                          {index > 0 && array[index - 1] !== page - 1 && (
+                            <span className="px-1 text-gray-400">...</span>
+                          )}
+                          <button
+                            onClick={() => setCurrentPage(page)}
+                            className={`w-8 h-8 text-sm rounded-md transition-colors ${
+                              currentPage === page
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-500'
+                            }`}
+                          >
+                            {page}
+                          </button>
+                        </span>
+                      ))}
+                  </div>
+                  <button
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                    className="px-3 py-1.5 text-sm bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded-md hover:bg-gray-50 dark:hover:bg-gray-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-gray-700 dark:text-gray-200"
+                  >
+                    შემდეგი
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -337,6 +411,7 @@ export default function StoragePage() {
                     <p className="text-gray-500 dark:text-gray-400">წაშლილი პროდუქტი ვერ მოიძებნა &quot;{searchQuery}&quot;</p>
                   </div>
                 ) : (
+                <>
                 <table className="w-full">
                   <thead className="bg-gray-200 dark:bg-gray-700">
                     <tr>
@@ -348,7 +423,7 @@ export default function StoragePage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                    {filteredDeletedProducts.map((product) => (
+                    {paginatedDeletedProducts.map((product) => (
                       <tr key={product.id} className="hover:bg-gray-200/50 dark:hover:bg-gray-700/30">
                         <td className="px-4 py-3">
                           <div className="w-10 h-10 rounded-md overflow-hidden bg-gray-200 dark:bg-gray-600 flex-shrink-0 opacity-60 relative">
@@ -405,6 +480,58 @@ export default function StoragePage() {
                     ))}
                   </tbody>
                 </table>
+
+                {/* Deleted Products Pagination */}
+                {deletedTotalPages > 1 && (
+                  <div className="px-4 py-3 bg-gray-200 dark:bg-gray-700 border-t border-gray-300 dark:border-gray-600 flex items-center justify-between">
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                      ნაჩვენებია {(deletedCurrentPage - 1) * ITEMS_PER_PAGE + 1}-{Math.min(deletedCurrentPage * ITEMS_PER_PAGE, filteredDeletedProducts.length)} / {filteredDeletedProducts.length}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setDeletedCurrentPage(p => Math.max(1, p - 1))}
+                        disabled={deletedCurrentPage === 1}
+                        className="px-3 py-1.5 text-sm bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded-md hover:bg-gray-50 dark:hover:bg-gray-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-gray-700 dark:text-gray-200"
+                      >
+                        წინა
+                      </button>
+                      <div className="flex items-center gap-1">
+                        {Array.from({ length: deletedTotalPages }, (_, i) => i + 1)
+                          .filter(page => {
+                            if (deletedTotalPages <= 7) return true;
+                            if (page === 1 || page === deletedTotalPages) return true;
+                            if (Math.abs(page - deletedCurrentPage) <= 1) return true;
+                            return false;
+                          })
+                          .map((page, index, array) => (
+                            <span key={page}>
+                              {index > 0 && array[index - 1] !== page - 1 && (
+                                <span className="px-1 text-gray-400">...</span>
+                              )}
+                              <button
+                                onClick={() => setDeletedCurrentPage(page)}
+                                className={`w-8 h-8 text-sm rounded-md transition-colors ${
+                                  deletedCurrentPage === page
+                                    ? 'bg-blue-600 text-white'
+                                    : 'bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-500'
+                                }`}
+                              >
+                                {page}
+                              </button>
+                            </span>
+                          ))}
+                      </div>
+                      <button
+                        onClick={() => setDeletedCurrentPage(p => Math.min(deletedTotalPages, p + 1))}
+                        disabled={deletedCurrentPage === deletedTotalPages}
+                        className="px-3 py-1.5 text-sm bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded-md hover:bg-gray-50 dark:hover:bg-gray-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-gray-700 dark:text-gray-200"
+                      >
+                        შემდეგი
+                      </button>
+                    </div>
+                  </div>
+                )}
+                </>
                 )}
               </div>
             )}
