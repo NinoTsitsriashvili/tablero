@@ -74,6 +74,17 @@ export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Filter orders based on search query (FB name, recipient name, phone)
+  const filteredOrders = orders.filter((order) => {
+    if (!searchQuery.trim()) return true;
+    const query = searchQuery.toLowerCase().trim();
+    const fbNameMatch = order.fb_name.toLowerCase().includes(query);
+    const recipientMatch = order.recipient_name.toLowerCase().includes(query);
+    const phoneMatch = order.phone.includes(query);
+    return fbNameMatch || recipientMatch || phoneMatch;
+  });
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -178,6 +189,53 @@ export default function OrdersPage() {
           </button>
         </div>
 
+        {/* Search Input */}
+        <div className="mb-6">
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+                className="w-5 h-5 text-gray-400"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+              </svg>
+            </div>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="ძებნა FB სახელით, ადრესატით ან ტელეფონით..."
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-800"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="w-5 h-5"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+          </div>
+          {searchQuery && (
+            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+              ნაპოვნია: {filteredOrders.length} შეკვეთა
+            </p>
+          )}
+        </div>
+
         {showForm && (
           <div className="mb-6">
             <OrderForm
@@ -216,6 +274,10 @@ export default function OrdersPage() {
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 text-center">
             <p className="text-gray-600 dark:text-gray-400">შეკვეთები არ არის. დაამატეთ პირველი შეკვეთა!</p>
           </div>
+        ) : filteredOrders.length === 0 ? (
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 text-center">
+            <p className="text-gray-600 dark:text-gray-400">შეკვეთა ვერ მოიძებნა &quot;{searchQuery}&quot;</p>
+          </div>
         ) : (
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
             <div className="overflow-x-auto">
@@ -232,7 +294,7 @@ export default function OrdersPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {orders.map((order) => (
+                  {filteredOrders.map((order) => (
                     <tr key={order.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                       <td className="px-4 py-3">
                         <Link href={`/orders/${order.id}`} className="text-gray-800 dark:text-white font-medium hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer">
