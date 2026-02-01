@@ -23,6 +23,7 @@ interface FieldErrors {
   fb_name?: string;
   recipient_name?: string;
   phone?: string;
+  phone2?: string;
   address?: string;
   comment?: string;
   items?: string;
@@ -49,8 +50,11 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
     fb_name: '',
     recipient_name: '',
     phone: '',
+    phone2: '',
     address: '',
     comment: '',
+    payment_type: 'cash',
+    send_date: '',
   });
 
   const [orderItems, setOrderItems] = useState<OrderItem[]>([
@@ -86,9 +90,9 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
     return undefined;
   };
 
-  const validatePhone = (value: string): string | undefined => {
+  const validatePhone = (value: string, required: boolean = true): string | undefined => {
     if (!value || value.trim().length === 0) {
-      return 'ტელეფონი სავალდებულოა';
+      return required ? 'ტელეფონი სავალდებულოა' : undefined;
     }
     // Remove spaces for validation
     const cleanPhone = value.replace(/\s/g, '');
@@ -265,7 +269,7 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
 
@@ -279,7 +283,10 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
         error = validateName(value, 'ადრესატის სახელი');
         break;
       case 'phone':
-        error = validatePhone(value);
+        error = validatePhone(value, true);
+        break;
+      case 'phone2':
+        error = validatePhone(value, false);
         break;
       case 'address':
         error = validateAddress(value);
@@ -304,8 +311,11 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
     const recipientNameError = validateName(formData.recipient_name, 'ადრესატის სახელი');
     if (recipientNameError) errors.recipient_name = recipientNameError;
 
-    const phoneError = validatePhone(formData.phone);
+    const phoneError = validatePhone(formData.phone, true);
     if (phoneError) errors.phone = phoneError;
+
+    const phone2Error = validatePhone(formData.phone2, false);
+    if (phone2Error) errors.phone2 = phone2Error;
 
     const addressError = validateAddress(formData.address);
     if (addressError) errors.address = addressError;
@@ -357,8 +367,11 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
           fb_name: formData.fb_name,
           recipient_name: formData.recipient_name,
           phone: formData.phone,
+          phone2: formData.phone2 || null,
           address: formData.address,
           comment: formData.comment || null,
+          payment_type: formData.payment_type,
+          send_date: formData.send_date || null,
           items: validItems.map((item) => ({
             product_id: parseInt(item.product_id, 10),
             unit_price: parseFloat(item.unit_price),
@@ -466,26 +479,78 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
           </div>
 
           <div>
-            <label htmlFor="address" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              მისამართი * <span className="text-gray-400 font-normal">({formData.address.length}/{VALIDATION_LIMITS.ADDRESS_MAX})</span>
+            <label htmlFor="phone2" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              ტელეფონი 2 <span className="text-gray-400 font-normal">(არასავალდებულო)</span>
             </label>
             <input
-              id="address"
-              name="address"
-              type="text"
-              value={formData.address}
+              id="phone2"
+              name="phone2"
+              type="tel"
+              value={formData.phone2}
               onChange={handleChange}
-              maxLength={VALIDATION_LIMITS.ADDRESS_MAX}
-              placeholder="მიწოდების მისამართი"
+              maxLength={VALIDATION_LIMITS.PHONE_MAX}
+              placeholder="5XX XXX XXX"
               className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700 ${
-                fieldErrors.address ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'
+                fieldErrors.phone2 ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'
               }`}
-              required
             />
-            {fieldErrors.address && (
-              <p className="text-red-500 dark:text-red-400 text-xs mt-1">{fieldErrors.address}</p>
+            {fieldErrors.phone2 && (
+              <p className="text-red-500 dark:text-red-400 text-xs mt-1">{fieldErrors.phone2}</p>
             )}
           </div>
+
+          <div>
+            <label htmlFor="payment_type" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              გადახდის ტიპი *
+            </label>
+            <select
+              id="payment_type"
+              name="payment_type"
+              value={formData.payment_type}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700 cursor-pointer"
+            >
+              <option value="cash">ხელზე გადახდა</option>
+              <option value="transfer">ჩარიცხვა</option>
+            </select>
+          </div>
+
+          <div>
+            <label htmlFor="send_date" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              გაგზავნის თარიღი <span className="text-gray-400 font-normal">(არასავალდებულო)</span>
+            </label>
+            <input
+              id="send_date"
+              name="send_date"
+              type="date"
+              value={formData.send_date}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700"
+            />
+          </div>
+        </div>
+
+        {/* Address - Full width textarea */}
+        <div>
+          <label htmlFor="address" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            მისამართი * <span className="text-gray-400 font-normal">({formData.address.length}/{VALIDATION_LIMITS.ADDRESS_MAX})</span>
+          </label>
+          <textarea
+            id="address"
+            name="address"
+            value={formData.address}
+            onChange={handleChange}
+            maxLength={VALIDATION_LIMITS.ADDRESS_MAX}
+            placeholder="მიწოდების მისამართი"
+            rows={3}
+            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700 resize-none ${
+              fieldErrors.address ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'
+            }`}
+            required
+          />
+          {fieldErrors.address && (
+            <p className="text-red-500 dark:text-red-400 text-xs mt-1">{fieldErrors.address}</p>
+          )}
         </div>
 
         {/* Products Section */}

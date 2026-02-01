@@ -33,6 +33,22 @@ export async function POST(request: NextRequest) {
       )
     `;
 
+    // Add new order fields
+    await sql`
+      ALTER TABLE orders
+      ADD COLUMN IF NOT EXISTS phone2 VARCHAR(20) DEFAULT NULL
+    `;
+
+    await sql`
+      ALTER TABLE orders
+      ADD COLUMN IF NOT EXISTS payment_type VARCHAR(20) DEFAULT 'cash'
+    `;
+
+    await sql`
+      ALTER TABLE orders
+      ADD COLUMN IF NOT EXISTS send_date DATE DEFAULT NULL
+    `;
+
     return NextResponse.json({ message: 'Migration completed successfully' }, { status: 200 });
   } catch (error) {
     console.error('Migration error:', error);

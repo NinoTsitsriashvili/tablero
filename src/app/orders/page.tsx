@@ -109,14 +109,12 @@ export default function OrdersPage() {
   const getStatusBadge = (status: string) => {
     const styles: Record<string, string> = {
       pending: 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200',
-      processing: 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200',
       shipped: 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200',
       delivered: 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200',
       cancelled: 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200',
     };
     const labels: Record<string, string> = {
       pending: 'მოლოდინში',
-      processing: 'მუშავდება',
       shipped: 'გაგზავნილი',
       delivered: 'მიწოდებული',
       cancelled: 'გაუქმებული',

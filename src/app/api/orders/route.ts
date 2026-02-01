@@ -19,8 +19,11 @@ const VALIDATION = {
 // Georgian phone pattern: starts with 5 and has 9 digits, or with +995 prefix
 const GEORGIAN_PHONE_REGEX = /^(\+995\s?)?5\d{8}$/;
 
-// Allowed order statuses
-const VALID_STATUSES = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
+// Allowed order statuses (removed 'processing')
+const VALID_STATUSES = ['pending', 'shipped', 'delivered', 'cancelled'];
+
+// Allowed payment types
+const VALID_PAYMENT_TYPES = ['cash', 'transfer'];
 
 interface OrderItemInput {
   product_id: number;
@@ -31,7 +34,7 @@ interface OrderItemInput {
 
 // Validation helper function for order input
 function validateOrderInput(body: Record<string, unknown>): { valid: boolean; error?: string } {
-  const { fb_name, recipient_name, phone, address, comment, items } = body;
+  const { fb_name, recipient_name, phone, phone2, address, comment, items, payment_type } = body;
 
   // FB name validation (required)
   if (!fb_name || typeof fb_name !== 'string') {
@@ -68,6 +71,25 @@ function validateOrderInput(body: Record<string, unknown>): { valid: boolean; er
   }
   if (!GEORGIAN_PHONE_REGEX.test(cleanPhone)) {
     return { valid: false, error: 'არასწორი ტელეფონის ფორმატი (მაგ: 5XXXXXXXX)' };
+  }
+
+  // Phone2 validation (optional)
+  if (phone2 && typeof phone2 === 'string' && phone2.trim().length > 0) {
+    const cleanPhone2 = phone2.replace(/\s/g, '');
+    if (cleanPhone2.length < VALIDATION.PHONE_MIN) {
+      return { valid: false, error: `ტელეფონი 2 მინიმუმ ${VALIDATION.PHONE_MIN} ციფრი` };
+    }
+    if (cleanPhone2.length > VALIDATION.PHONE_MAX) {
+      return { valid: false, error: `ტელეფონი 2 მაქსიმუმ ${VALIDATION.PHONE_MAX} სიმბოლო` };
+    }
+    if (!GEORGIAN_PHONE_REGEX.test(cleanPhone2)) {
+      return { valid: false, error: 'ტელეფონი 2: არასწორი ფორმატი (მაგ: 5XXXXXXXX)' };
+    }
+  }
+
+  // Payment type validation
+  if (payment_type && !VALID_PAYMENT_TYPES.includes(payment_type as string)) {
+    return { valid: false, error: 'არასწორი გადახდის ტიპი' };
   }
 
   // Address validation (required)
@@ -204,7 +226,7 @@ export async function POST(request: NextRequest) {
   try {
     const sql = getDb();
     const body = await request.json();
-    const { fb_name, recipient_name, phone, address, comment, items } = body;
+    const { fb_name, recipient_name, phone, phone2, address, comment, items, payment_type, send_date } = body;
 
     // Validate input
     const validation = validateOrderInput(body);
@@ -234,8 +256,8 @@ export async function POST(request: NextRequest) {
 
     // Create the order
     const orderResult = await sql`
-      INSERT INTO orders (fb_name, recipient_name, phone, address, comment)
-      VALUES (${fb_name}, ${recipient_name}, ${phone}, ${address}, ${comment || null})
+      INSERT INTO orders (fb_name, recipient_name, phone, phone2, address, comment, payment_type, send_date)
+      VALUES (${fb_name}, ${recipient_name}, ${phone}, ${phone2 || null}, ${address}, ${comment || null}, ${payment_type || 'cash'}, ${send_date || null})
       RETURNING *
     ` as Record<string, unknown>[];
 

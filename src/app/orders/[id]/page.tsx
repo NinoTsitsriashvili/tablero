@@ -23,9 +23,12 @@ interface OrderWithItems {
   fb_name: string;
   recipient_name: string;
   phone: string;
+  phone2: string | null;
   address: string;
   comment: string | null;
   status: string;
+  payment_type: string;
+  send_date: string | null;
   created_at: string;
   updated_at: string;
   items: OrderItem[];
@@ -110,14 +113,12 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   const getStatusBadge = (status: string) => {
     const styles: Record<string, string> = {
       pending: 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200',
-      processing: 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200',
       shipped: 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200',
       delivered: 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200',
       cancelled: 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200',
     };
     const labels: Record<string, string> = {
       pending: 'მოლოდინში',
-      processing: 'მუშავდება',
       shipped: 'გაგზავნილი',
       delivered: 'მიწოდებული',
       cancelled: 'გაუქმებული',
@@ -129,9 +130,24 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
     );
   };
 
+  const getPaymentTypeBadge = (paymentType: string) => {
+    const styles: Record<string, string> = {
+      cash: 'bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200',
+      transfer: 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200',
+    };
+    const labels: Record<string, string> = {
+      cash: 'ხელზე გადახდა',
+      transfer: 'ჩარიცხვა',
+    };
+    return (
+      <span className={`px-3 py-1 rounded-full text-sm font-medium ${styles[paymentType] || styles.cash}`}>
+        {labels[paymentType] || paymentType}
+      </span>
+    );
+  };
+
   const statusOptions = [
     { value: 'pending', label: 'მოლოდინში' },
-    { value: 'processing', label: 'მუშავდება' },
     { value: 'shipped', label: 'გაგზავნილი' },
     { value: 'delivered', label: 'მიწოდებული' },
     { value: 'cancelled', label: 'გაუქმებული' },
@@ -236,28 +252,44 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
               </button>
             </div>
 
-            {/* Status Section */}
+            {/* Status & Payment Section */}
             <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">სტატუსი</p>
-                  {getStatusBadge(order.status)}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">სტატუსი</p>
+                    {getStatusBadge(order.status)}
+                  </div>
+                  <div>
+                    <label htmlFor="statusSelect" className="sr-only">სტატუსის შეცვლა</label>
+                    <select
+                      id="statusSelect"
+                      value={order.status}
+                      onChange={(e) => handleStatusChange(e.target.value)}
+                      disabled={updatingStatus}
+                      className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-600 cursor-pointer"
+                    >
+                      {statusOptions.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
-                <div>
-                  <label htmlFor="statusSelect" className="sr-only">სტატუსის შეცვლა</label>
-                  <select
-                    id="statusSelect"
-                    value={order.status}
-                    onChange={(e) => handleStatusChange(e.target.value)}
-                    disabled={updatingStatus}
-                    className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-600 cursor-pointer"
-                  >
-                    {statusOptions.map((opt) => (
-                      <option key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </option>
-                    ))}
-                  </select>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">გადახდის ტიპი</p>
+                    {getPaymentTypeBadge(order.payment_type || 'cash')}
+                  </div>
+                  {order.send_date && (
+                    <div>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">გაგზავნის თარიღი</p>
+                      <p className="text-gray-800 dark:text-white font-medium">
+                        {new Date(order.send_date).toLocaleDateString('ka-GE')}
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -278,9 +310,15 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                   <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">ტელეფონი</p>
                   <p className="text-gray-800 dark:text-white font-medium">{order.phone}</p>
                 </div>
-                <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                {order.phone2 && (
+                  <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">ტელეფონი 2</p>
+                    <p className="text-gray-800 dark:text-white font-medium">{order.phone2}</p>
+                  </div>
+                )}
+                <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 md:col-span-2">
                   <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">მისამართი</p>
-                  <p className="text-gray-800 dark:text-white font-medium">{order.address}</p>
+                  <p className="text-gray-800 dark:text-white font-medium whitespace-pre-wrap">{order.address}</p>
                 </div>
               </div>
             </div>
