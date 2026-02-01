@@ -282,14 +282,12 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                     <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">გადახდის ტიპი</p>
                     {getPaymentTypeBadge(order.payment_type || 'cash')}
                   </div>
-                  {order.send_date && (
-                    <div>
-                      <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">გაგზავნის თარიღი</p>
-                      <p className="text-gray-800 dark:text-white font-medium">
-                        {new Date(order.send_date).toLocaleDateString('ka-GE')}
-                      </p>
-                    </div>
-                  )}
+                  <div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">გაგზავნის თარიღი</p>
+                    <p className="text-gray-800 dark:text-white font-medium">
+                      {order.send_date ? new Date(order.send_date).toLocaleDateString('ka-GE') : '--'}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -310,12 +308,10 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                   <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">ტელეფონი</p>
                   <p className="text-gray-800 dark:text-white font-medium">{order.phone}</p>
                 </div>
-                {order.phone2 && (
-                  <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">ტელეფონი 2</p>
-                    <p className="text-gray-800 dark:text-white font-medium">{order.phone2}</p>
-                  </div>
-                )}
+                <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">ტელეფონი 2</p>
+                  <p className="text-gray-800 dark:text-white font-medium">{order.phone2 || '--'}</p>
+                </div>
                 <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 md:col-span-2">
                   <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">მისამართი</p>
                   <p className="text-gray-800 dark:text-white font-medium whitespace-pre-wrap">{order.address}</p>
@@ -396,14 +392,12 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
             </div>
 
             {/* Comment */}
-            {order.comment && (
-              <div className="mb-6">
-                <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-3">კომენტარი</h2>
-                <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                  <p className="text-gray-800 dark:text-gray-300 whitespace-pre-wrap">{order.comment}</p>
-                </div>
+            <div className="mb-6">
+              <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-3">კომენტარი</h2>
+              <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                <p className="text-gray-800 dark:text-gray-300 whitespace-pre-wrap">{order.comment || '--'}</p>
               </div>
-            )}
+            </div>
 
             {/* Timestamps */}
             <div className="border-t dark:border-gray-700 pt-4 mt-4">
