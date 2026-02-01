@@ -53,7 +53,6 @@ export default function StoragePage() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [showDeleted, setShowDeleted] = useState(false);
-  const [restoringId, setRestoringId] = useState<number | null>(null);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -80,23 +79,6 @@ export default function StoragePage() {
       console.error('Error fetching products:', error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleRestore = async (id: number) => {
-    setRestoringId(id);
-    try {
-      const res = await fetch(`/api/products/${id}/restore`, {
-        method: 'POST',
-      });
-      if (res.ok) {
-        // Refresh both lists with a single call
-        fetchAllProducts();
-      }
-    } catch (error) {
-      console.error('Error restoring product:', error);
-    } finally {
-      setRestoringId(null);
     }
   };
 
@@ -334,13 +316,12 @@ export default function StoragePage() {
                             : '-'}
                         </td>
                         <td className="px-4 py-3 text-right">
-                          <button
-                            onClick={() => handleRestore(product.id)}
-                            disabled={restoringId === product.id}
-                            className="px-3 py-1.5 text-sm bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded-md hover:bg-green-200 dark:hover:bg-green-800 transition-colors disabled:opacity-50 cursor-pointer"
+                          <Link
+                            href={`/storage/deleted/${product.id}`}
+                            className="px-3 py-1.5 text-sm bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors"
                           >
-                            {restoringId === product.id ? 'აღდგენა...' : 'აღდგენა'}
-                          </button>
+                            ნახვა
+                          </Link>
                         </td>
                       </tr>
                     ))}
