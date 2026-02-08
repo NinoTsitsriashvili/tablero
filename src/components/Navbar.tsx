@@ -13,6 +13,7 @@ export default function Navbar() {
     { href: '/dashboard', label: 'მთავარი' },
     { href: '/storage', label: 'საწყობი' },
     { href: '/orders', label: 'შეკვეთები' },
+    { href: '/ai-orders', label: 'AI შეკვეთები' },
   ];
 
   return (
