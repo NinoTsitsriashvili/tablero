@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
     });
 
     const message = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-3-5-sonnet-20241022',
       max_tokens: 1024,
       system: SYSTEM_PROMPT,
       messages: [
@@ -169,8 +169,9 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error analyzing conversation:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
-      { error: 'ანალიზის შეცდომა' },
+      { error: `ანალიზის შეცდომა: ${errorMessage}` },
       { status: 500 }
     );
   }
