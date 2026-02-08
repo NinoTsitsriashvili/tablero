@@ -4,8 +4,6 @@ import { authOptions } from '@/lib/auth';
 import { getDb } from '@/lib/db';
 import Anthropic from '@anthropic-ai/sdk';
 
-const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
-
 interface ExtractedProduct {
   name: string;
   quantity: number;
@@ -68,7 +66,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  if (!ANTHROPIC_API_KEY) {
+  // Read API key inside the function to ensure it's available in serverless context
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+
+  if (!apiKey) {
+    console.error('ANTHROPIC_API_KEY is not set. Available env vars:', Object.keys(process.env).filter(k => k.includes('ANTHROPIC') || k.includes('API')));
     return NextResponse.json(
       { error: 'AI სერვისი არ არის კონფიგურირებული. დაამატეთ ANTHROPIC_API_KEY გარემოს ცვლადებში.' },
       { status: 500 }
@@ -86,7 +88,7 @@ export async function POST(request: NextRequest) {
     }
 
     const anthropic = new Anthropic({
-      apiKey: ANTHROPIC_API_KEY,
+      apiKey: apiKey,
     });
 
     const message = await anthropic.messages.create({
