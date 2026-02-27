@@ -203,6 +203,86 @@ export async function GET(
   }
 }
 
+// Helper function to reduce stock for an item
+async function reduceStockForItem(
+  sql: ReturnType<typeof getDb>,
+  productId: number,
+  quantity: number,
+  orderId: number
+) {
+  const productResult = await sql`
+    SELECT quantity, name FROM products WHERE id = ${productId}
+  ` as Record<string, unknown>[];
+
+  if (productResult.length === 0) {
+    throw new Error(`პროდუქტი ვერ მოიძებნა`);
+  }
+
+  const product = productResult[0];
+  const currentStock = Number(product.quantity);
+
+  if (currentStock < quantity) {
+    throw new Error(`არასაკმარისი მარაგი: ${product.name} (მარაგში: ${currentStock}, საჭირო: ${quantity})`);
+  }
+
+  const newStock = currentStock - quantity;
+
+  await sql`
+    UPDATE products
+    SET quantity = ${newStock}, updated_at = CURRENT_TIMESTAMP
+    WHERE id = ${productId}
+  `;
+
+  await sql`
+    INSERT INTO product_history (product_id, action, field_name, old_value, new_value, note)
+    VALUES (
+      ${productId},
+      'stock_removed',
+      'quantity',
+      ${currentStock.toString()},
+      ${newStock.toString()},
+      ${'შეკვეთა #' + orderId + ' - რედაქტირება'}
+    )
+  `;
+}
+
+// Helper function to add stock back for an item
+async function addStockForItem(
+  sql: ReturnType<typeof getDb>,
+  productId: number,
+  quantity: number,
+  orderId: number
+) {
+  const productResult = await sql`
+    SELECT quantity FROM products WHERE id = ${productId}
+  ` as Record<string, unknown>[];
+
+  if (productResult.length === 0) {
+    return; // Product might have been deleted
+  }
+
+  const currentStock = Number(productResult[0].quantity);
+  const newStock = currentStock + quantity;
+
+  await sql`
+    UPDATE products
+    SET quantity = ${newStock}, updated_at = CURRENT_TIMESTAMP
+    WHERE id = ${productId}
+  `;
+
+  await sql`
+    INSERT INTO product_history (product_id, action, field_name, old_value, new_value, note)
+    VALUES (
+      ${productId},
+      'stock_added',
+      'quantity',
+      ${currentStock.toString()},
+      ${newStock.toString()},
+      ${'შეკვეთა #' + orderId + ' - რედაქტირება'}
+    )
+  `;
+}
+
 // PUT update order (supports partial updates)
 export async function PUT(
   request: NextRequest,
@@ -300,7 +380,111 @@ export async function PUT(
       return NextResponse.json(result[0]);
     }
 
-    // Full update (customer info only - items are managed separately)
+    // Check if items are being updated
+    if (body.items !== undefined) {
+      const { items } = body;
+
+      // Get current order items
+      const currentItems = await sql`
+        SELECT oi.id, oi.product_id, oi.quantity, oi.unit_price, oi.courier_price
+        FROM order_items oi
+        WHERE oi.order_id = ${id}
+      ` as Record<string, unknown>[];
+
+      // Get current order status
+      const currentOrder = await sql`
+        SELECT status FROM orders WHERE id = ${id}
+      ` as Record<string, unknown>[];
+
+      if (currentOrder.length === 0) {
+        return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+      }
+
+      const orderStatus = currentOrder[0].status;
+
+      // Only manage stock if order is not cancelled
+      if (orderStatus !== 'cancelled') {
+        // Create maps for easy comparison
+        const currentItemsMap = new Map<number, { product_id: number; quantity: number }>();
+        for (const item of currentItems) {
+          currentItemsMap.set(Number(item.product_id), {
+            product_id: Number(item.product_id),
+            quantity: Number(item.quantity),
+          });
+        }
+
+        const newItemsMap = new Map<number, { product_id: number; quantity: number }>();
+        for (const item of items as { product_id: number; quantity: number }[]) {
+          newItemsMap.set(item.product_id, {
+            product_id: item.product_id,
+            quantity: item.quantity || 1,
+          });
+        }
+
+        // First, validate all new/increased items have enough stock
+        for (const [productId, newItem] of newItemsMap) {
+          const currentItem = currentItemsMap.get(productId);
+          const currentQty = currentItem ? currentItem.quantity : 0;
+          const newQty = newItem.quantity;
+          const diff = newQty - currentQty;
+
+          if (diff > 0) {
+            // Need more stock - check availability
+            const productResult = await sql`
+              SELECT quantity, name FROM products WHERE id = ${productId}
+            ` as Record<string, unknown>[];
+
+            if (productResult.length === 0) {
+              return NextResponse.json({ error: 'პროდუქტი ვერ მოიძებნა' }, { status: 400 });
+            }
+
+            const availableStock = Number(productResult[0].quantity);
+            if (availableStock < diff) {
+              return NextResponse.json({
+                error: `არასაკმარისი მარაგი: ${productResult[0].name} (მარაგში: ${availableStock}, საჭირო: ${diff})`
+              }, { status: 400 });
+            }
+          }
+        }
+
+        // Restore stock for removed items
+        for (const [productId, currentItem] of currentItemsMap) {
+          if (!newItemsMap.has(productId)) {
+            // Item was removed - restore stock
+            await addStockForItem(sql, productId, currentItem.quantity, Number(id));
+          }
+        }
+
+        // Adjust stock for modified items
+        for (const [productId, newItem] of newItemsMap) {
+          const currentItem = currentItemsMap.get(productId);
+          const currentQty = currentItem ? currentItem.quantity : 0;
+          const newQty = newItem.quantity;
+          const diff = newQty - currentQty;
+
+          if (diff > 0) {
+            // Need more stock - reduce
+            await reduceStockForItem(sql, productId, diff, Number(id));
+          } else if (diff < 0) {
+            // Returning stock - add back
+            await addStockForItem(sql, productId, Math.abs(diff), Number(id));
+          }
+        }
+      }
+
+      // Delete old order items
+      await sql`DELETE FROM order_items WHERE order_id = ${id}`;
+
+      // Insert new order items
+      for (const item of items as { product_id: number; quantity: number; unit_price: number; courier_price?: number }[]) {
+        await sql`
+          INSERT INTO order_items (order_id, product_id, quantity, unit_price, courier_price)
+          VALUES (${id}, ${item.product_id}, ${item.quantity || 1}, ${item.unit_price}, ${item.courier_price || 0})
+        `;
+      }
+    }
+
+    // Update customer info
     const { fb_name, recipient_name, phone, phone2, address, comment, status, payment_type, send_date } = body;
 
     const result = await sql`
@@ -326,7 +510,8 @@ export async function PUT(
     return NextResponse.json(result[0]);
   } catch (error) {
     console.error('Error updating order:', error);
-    return NextResponse.json({ error: 'Failed to update order' }, { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : 'Failed to update order';
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
 

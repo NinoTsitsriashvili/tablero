@@ -60,6 +60,23 @@ interface EditFormData {
   send_date: string;
 }
 
+interface Product {
+  id: number;
+  name: string;
+  price: number;
+  quantity: number;
+}
+
+interface EditOrderItem {
+  id: string;
+  product_id: number;
+  quantity: string;
+  unit_price: string;
+  courier_price: string;
+  searchQuery: string;
+  showDropdown: boolean;
+}
+
 export default function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { data: session, status } = useSession();
@@ -81,6 +98,8 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
     payment_type: 'cash',
     send_date: '',
   });
+  const [products, setProducts] = useState<Product[]>([]);
+  const [editOrderItems, setEditOrderItems] = useState<EditOrderItem[]>([]);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -148,7 +167,22 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
     }
   };
 
-  const startEditing = () => {
+  const fetchProducts = async () => {
+    try {
+      const res = await fetch('/api/products');
+      if (res.ok) {
+        const data = await res.json();
+        console.log('Fetched products:', data.length);
+        setProducts(data);
+      } else {
+        console.error('Failed to fetch products:', res.status);
+      }
+    } catch (error) {
+      console.error('Error fetching products:', error);
+    }
+  };
+
+  const startEditing = async () => {
     if (order) {
       setEditForm({
         fb_name: order.fb_name,
@@ -160,6 +194,22 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
         payment_type: order.payment_type || 'cash',
         send_date: order.send_date ? order.send_date.split('T')[0] : '',
       });
+
+      // Initialize edit order items from current order items
+      const initialItems: EditOrderItem[] = order.items.map((item, index) => ({
+        id: `existing-${item.id || index}`,
+        product_id: item.product_id,
+        quantity: String(item.quantity),
+        unit_price: String(item.unit_price),
+        courier_price: String(item.courier_price || 0),
+        searchQuery: item.product_name || '',
+        showDropdown: false,
+      }));
+      setEditOrderItems(initialItems);
+
+      // Fetch products for dropdown
+      await fetchProducts();
+
       setEditError('');
       setIsEditing(true);
     }
@@ -168,6 +218,59 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   const cancelEditing = () => {
     setIsEditing(false);
     setEditError('');
+    setEditOrderItems([]);
+  };
+
+  // Edit order items handlers
+  const addEditOrderItem = () => {
+    setEditOrderItems([
+      ...editOrderItems,
+      {
+        id: `new-${Date.now()}`,
+        product_id: 0,
+        quantity: '1',
+        unit_price: '',
+        courier_price: '0',
+        searchQuery: '',
+        showDropdown: false,
+      },
+    ]);
+  };
+
+  const removeEditOrderItem = (id: string) => {
+    if (editOrderItems.length <= 1) {
+      setEditError('შეკვეთას უნდა ჰქონდეს მინიმუმ 1 პროდუქტი');
+      return;
+    }
+    setEditOrderItems(editOrderItems.filter((item) => item.id !== id));
+  };
+
+  const updateEditOrderItem = (id: string, field: keyof EditOrderItem, value: string | number | boolean) => {
+    setEditOrderItems(
+      editOrderItems.map((item) => (item.id === id ? { ...item, [field]: value } : item))
+    );
+  };
+
+  const selectProductForEditItem = (itemId: string, product: Product) => {
+    setEditOrderItems(
+      editOrderItems.map((item) =>
+        item.id === itemId
+          ? {
+              ...item,
+              product_id: product.id,
+              unit_price: String(product.price),
+              searchQuery: product.name,
+              showDropdown: false,
+            }
+          : item
+      )
+    );
+  };
+
+  const getFilteredProductsForEditItem = (searchQuery: string) => {
+    if (!searchQuery.trim()) return products;
+    const query = searchQuery.toLowerCase();
+    return products.filter((p) => p.name.toLowerCase().includes(query));
   };
 
   const validateEditForm = (): string | null => {
@@ -201,6 +304,23 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
     if (!editForm.address || editForm.address.trim().length < VALIDATION_LIMITS.ADDRESS_MIN) {
       return `მისამართი მინიმუმ ${VALIDATION_LIMITS.ADDRESS_MIN} სიმბოლო`;
     }
+    // Order items validation
+    if (editOrderItems.length === 0) {
+      return 'შეკვეთას უნდა ჰქონდეს მინიმუმ 1 პროდუქტი';
+    }
+    for (const item of editOrderItems) {
+      if (!item.product_id || item.product_id === 0) {
+        return 'აირჩიეთ პროდუქტი ყველა პოზიციისთვის';
+      }
+      const qty = parseInt(item.quantity);
+      if (isNaN(qty) || qty < 1) {
+        return 'რაოდენობა უნდა იყოს მინიმუმ 1';
+      }
+      const price = parseFloat(item.unit_price);
+      if (isNaN(price) || price < 0) {
+        return 'ფასი უნდა იყოს დადებითი რიცხვი';
+      }
+    }
     return null;
   };
 
@@ -216,6 +336,14 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
     setEditLoading(true);
     setEditError('');
 
+    // Prepare items for API
+    const items = editOrderItems.map((item) => ({
+      product_id: item.product_id,
+      quantity: parseInt(item.quantity),
+      unit_price: parseFloat(item.unit_price),
+      courier_price: parseFloat(item.courier_price) || 0,
+    }));
+
     try {
       const res = await fetch(`/api/orders/${id}`, {
         method: 'PUT',
@@ -230,11 +358,13 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
           payment_type: editForm.payment_type,
           send_date: editForm.send_date || null,
           status: order?.status || 'pending',
+          items: items,
         }),
       });
 
       if (res.ok) {
         setIsEditing(false);
+        setEditOrderItems([]);
         fetchOrder();
       } else {
         const data = await res.json();
@@ -530,6 +660,168 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                       rows={3}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700 resize-none"
                     />
+                  </div>
+
+                  {/* Product Editing Section */}
+                  <div className="mb-4">
+                    <div className="flex justify-between items-center mb-3">
+                      <h3 className="text-md font-semibold text-gray-800 dark:text-white">პროდუქტები</h3>
+                      <button
+                        type="button"
+                        onClick={addEditOrderItem}
+                        className="px-3 py-1.5 text-sm bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded-md hover:bg-green-200 dark:hover:bg-green-800 transition-colors cursor-pointer"
+                      >
+                        + პროდუქტის დამატება
+                      </button>
+                    </div>
+
+                    <div className="space-y-4">
+                      {editOrderItems.map((item, index) => (
+                        <div key={item.id} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg p-4">
+                          <div className="flex justify-between items-start mb-3">
+                            <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                              პროდუქტი #{index + 1}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => removeEditOrderItem(item.id)}
+                              className="text-red-500 hover:text-red-700 text-sm cursor-pointer"
+                            >
+                              წაშლა
+                            </button>
+                          </div>
+
+                          {/* Product Search */}
+                          <div className="mb-3 relative">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                              პროდუქტი *
+                            </label>
+                            <input
+                              type="text"
+                              value={item.searchQuery}
+                              onChange={(e) => {
+                                updateEditOrderItem(item.id, 'searchQuery', e.target.value);
+                                updateEditOrderItem(item.id, 'showDropdown', true);
+                                // Clear product selection if search changes
+                                if (item.product_id) {
+                                  const selectedProduct = products.find(p => p.id === item.product_id);
+                                  if (selectedProduct && e.target.value !== selectedProduct.name) {
+                                    updateEditOrderItem(item.id, 'product_id', 0);
+                                  }
+                                }
+                              }}
+                              onFocus={() => updateEditOrderItem(item.id, 'showDropdown', true)}
+                              onBlur={() => {
+                                // Delay to allow click on dropdown item
+                                setTimeout(() => updateEditOrderItem(item.id, 'showDropdown', false), 300);
+                              }}
+                              placeholder="მოძებნეთ პროდუქტი..."
+                              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700"
+                            />
+                            {item.showDropdown && (
+                              <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-48 overflow-y-auto">
+                                {getFilteredProductsForEditItem(item.searchQuery).length === 0 ? (
+                                  <div className="px-3 py-2 text-gray-500 dark:text-gray-400 text-sm">
+                                    პროდუქტი ვერ მოიძებნა
+                                  </div>
+                                ) : (
+                                  getFilteredProductsForEditItem(item.searchQuery).map((product) => (
+                                    <div
+                                      key={product.id}
+                                      onMouseDown={(e) => {
+                                        e.preventDefault();
+                                        selectProductForEditItem(item.id, product);
+                                      }}
+                                      className={`px-3 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 ${
+                                        item.product_id === product.id ? 'bg-blue-50 dark:bg-blue-900/30' : ''
+                                      }`}
+                                    >
+                                      <div className="flex justify-between items-center">
+                                        <span className="text-gray-800 dark:text-white">{product.name}</span>
+                                        <span className="text-sm text-gray-500 dark:text-gray-400">
+                                          ₾{product.price} | მარაგი: {product.quantity}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  ))
+                                )}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Quantity, Price, Courier Price */}
+                          <div className="grid grid-cols-3 gap-3">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                რაოდენობა *
+                              </label>
+                              <input
+                                type="number"
+                                min="1"
+                                value={item.quantity}
+                                onChange={(e) => updateEditOrderItem(item.id, 'quantity', e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                ფასი (₾) *
+                              </label>
+                              <input
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                value={item.unit_price}
+                                onChange={(e) => updateEditOrderItem(item.id, 'unit_price', e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                კურიერი (₾)
+                              </label>
+                              <input
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                value={item.courier_price}
+                                onChange={(e) => updateEditOrderItem(item.id, 'courier_price', e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Item Subtotal */}
+                          {item.product_id > 0 && item.unit_price && (
+                            <div className="mt-3 text-right text-sm text-gray-600 dark:text-gray-400">
+                              ჯამი: ₾{(
+                                (parseFloat(item.unit_price) || 0) * (parseInt(item.quantity) || 0) +
+                                (parseFloat(item.courier_price) || 0)
+                              ).toFixed(2)}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Total for all items */}
+                    {editOrderItems.length > 0 && (
+                      <div className="mt-4 p-3 bg-green-50 dark:bg-green-900/30 rounded-lg">
+                        <div className="flex justify-between items-center">
+                          <span className="font-semibold text-green-700 dark:text-green-300">სულ ჯამი:</span>
+                          <span className="text-xl font-bold text-green-700 dark:text-green-300">
+                            ₾{editOrderItems
+                              .reduce((sum, item) => {
+                                const unitPrice = parseFloat(item.unit_price) || 0;
+                                const quantity = parseInt(item.quantity) || 0;
+                                const courierPrice = parseFloat(item.courier_price) || 0;
+                                return sum + (unitPrice * quantity) + courierPrice;
+                              }, 0)
+                              .toFixed(2)}
+                          </span>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {editError && (
