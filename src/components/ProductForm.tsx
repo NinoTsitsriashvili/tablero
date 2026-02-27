@@ -304,19 +304,19 @@ export default function ProductForm({ product, onSave, onCancel }: ProductFormPr
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 relative">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 sm:p-6 relative">
       {/* Warning popup */}
       {warningMessage && (
-        <div className="absolute top-2 left-1/2 transform -translate-x-1/2 z-10 animate-pulse">
-          <div className="bg-yellow-100 dark:bg-yellow-900 border border-yellow-400 dark:border-yellow-600 text-yellow-800 dark:text-yellow-200 px-4 py-2 rounded-lg shadow-lg flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+        <div className="absolute top-2 left-4 right-4 sm:left-1/2 sm:right-auto sm:transform sm:-translate-x-1/2 z-10 animate-pulse">
+          <div className="bg-yellow-100 dark:bg-yellow-900 border border-yellow-400 dark:border-yellow-600 text-yellow-800 dark:text-yellow-200 px-3 sm:px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 text-sm sm:text-base">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 flex-shrink-0">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
             </svg>
-            <span className="font-medium">{warningMessage}</span>
+            <span className="font-medium flex-1">{warningMessage}</span>
             <button
               type="button"
               onClick={() => setWarningMessage('')}
-              className="ml-2 text-yellow-600 dark:text-yellow-400 hover:text-yellow-800 dark:hover:text-yellow-200"
+              className="ml-2 text-yellow-600 dark:text-yellow-400 hover:text-yellow-800 dark:hover:text-yellow-200 flex-shrink-0"
             >
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
@@ -343,7 +343,7 @@ export default function ProductForm({ product, onSave, onCancel }: ProductFormPr
               value={formData.name}
               onChange={handleChange}
               maxLength={VALIDATION_LIMITS.NAME_MAX}
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700 ${
+              className={`w-full px-3 py-2.5 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700 text-base ${
                 fieldErrors.name ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'
               }`}
               required
@@ -364,7 +364,7 @@ export default function ProductForm({ product, onSave, onCancel }: ProductFormPr
               value={formData.barcode}
               onChange={handleChange}
               maxLength={VALIDATION_LIMITS.BARCODE_MAX}
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700 ${
+              className={`w-full px-3 py-2.5 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700 text-base ${
                 fieldErrors.barcode ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'
               }`}
             />
@@ -385,7 +385,7 @@ export default function ProductForm({ product, onSave, onCancel }: ProductFormPr
               value={formData.price}
               onChange={handleChange}
               placeholder="0.00"
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700 ${
+              className={`w-full px-3 py-2.5 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700 text-base ${
                 fieldErrors.price ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'
               }`}
               required
@@ -407,7 +407,7 @@ export default function ProductForm({ product, onSave, onCancel }: ProductFormPr
               value={formData.cost_price}
               onChange={handleChange}
               placeholder="0.00"
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700 ${
+              className={`w-full px-3 py-2.5 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700 text-base ${
                 fieldErrors.cost_price ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'
               }`}
             />
@@ -428,7 +428,7 @@ export default function ProductForm({ product, onSave, onCancel }: ProductFormPr
               value={formData.quantity}
               onChange={handleChange}
               placeholder="0"
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700 ${
+              className={`w-full px-3 py-2.5 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700 text-base ${
                 fieldErrors.quantity ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'
               }`}
             />
@@ -448,7 +448,7 @@ export default function ProductForm({ product, onSave, onCancel }: ProductFormPr
               value={formData.photo_url}
               onChange={handleChange}
               placeholder="https://..."
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700 ${
+              className={`w-full px-3 py-2.5 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700 text-base ${
                 fieldErrors.photo_url ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'
               }`}
             />
@@ -469,7 +469,7 @@ export default function ProductForm({ product, onSave, onCancel }: ProductFormPr
             value={formData.description}
             onChange={handleChange}
             maxLength={VALIDATION_LIMITS.DESCRIPTION_MAX}
-            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700 ${
+            className={`w-full px-3 py-2.5 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700 text-base ${
               fieldErrors.description ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'
             }`}
           />
@@ -480,18 +480,18 @@ export default function ProductForm({ product, onSave, onCancel }: ProductFormPr
 
         {error && <p className="text-red-500 dark:text-red-400 text-sm">{error}</p>}
 
-        <div className="flex justify-end space-x-3">
+        <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-2">
           <button
             type="button"
             onClick={onCancel}
-            className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+            className="w-full sm:w-auto px-4 py-2.5 text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors font-medium"
           >
             გაუქმება
           </button>
           <button
             type="submit"
             disabled={loading}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 transition-colors"
+            className="w-full sm:w-auto px-4 py-2.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 transition-colors font-medium"
           >
             {loading ? 'შენახვა...' : product ? 'განახლება' : 'დამატება'}
           </button>

@@ -404,7 +404,7 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
   const totalPrice = orderItems.reduce((sum, item) => sum + calculateItemTotal(item), 0);
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 sm:p-6">
       <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
         ახალი შეკვეთა
       </h2>
@@ -424,7 +424,7 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
               onChange={handleChange}
               maxLength={VALIDATION_LIMITS.NAME_MAX}
               placeholder="Facebook-ის სახელი"
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700 ${
+              className={`w-full px-3 py-2.5 text-base border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700 ${
                 fieldErrors.fb_name ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'
               }`}
               required
@@ -446,7 +446,7 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
               onChange={handleChange}
               maxLength={VALIDATION_LIMITS.NAME_MAX}
               placeholder="მიმღების სრული სახელი"
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700 ${
+              className={`w-full px-3 py-2.5 text-base border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700 ${
                 fieldErrors.recipient_name ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'
               }`}
               required
@@ -468,7 +468,7 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
               onChange={handleChange}
               maxLength={VALIDATION_LIMITS.PHONE_MAX}
               placeholder="5XX XXX XXX"
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700 ${
+              className={`w-full px-3 py-2.5 text-base border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700 ${
                 fieldErrors.phone ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'
               }`}
               required
@@ -490,7 +490,7 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
               onChange={handleChange}
               maxLength={VALIDATION_LIMITS.PHONE_MAX}
               placeholder="5XX XXX XXX"
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700 ${
+              className={`w-full px-3 py-2.5 text-base border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700 ${
                 fieldErrors.phone2 ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'
               }`}
             />
@@ -508,7 +508,7 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
               name="payment_type"
               value={formData.payment_type}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700 cursor-pointer"
+              className="w-full px-3 py-2.5 text-base border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700 cursor-pointer"
             >
               <option value="cash">ხელზე გადახდა</option>
               <option value="transfer">ჩარიცხვა</option>
@@ -525,7 +525,7 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
               type="date"
               value={formData.send_date}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700"
+              className="w-full px-3 py-2.5 text-base border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700"
             />
           </div>
         </div>
@@ -560,7 +560,7 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
             <button
               type="button"
               onClick={addOrderItem}
-              className="px-3 py-1.5 text-sm bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded-md hover:bg-green-200 dark:hover:bg-green-800 transition-colors cursor-pointer"
+              className="px-4 py-2 text-sm bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded-md hover:bg-green-200 dark:hover:bg-green-800 transition-colors cursor-pointer"
             >
               + დამატება
             </button>
@@ -580,7 +580,7 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
                     <button
                       type="button"
                       onClick={() => removeOrderItem(item.id)}
-                      className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 cursor-pointer"
+                      className="p-1.5 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-md cursor-pointer"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
@@ -604,7 +604,7 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
                       onChange={(e) => handleSearchChange(item.id, e.target.value)}
                       onFocus={() => handleItemChange(item.id, 'showDropdown', 'true')}
                       placeholder="მოძებნეთ პროდუქტი..."
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-600"
+                      className="w-full px-3 py-2.5 text-base border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-600"
                     />
                     {item.showDropdown && getFilteredProducts(item.searchQuery).length > 0 && (
                       <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded-md shadow-lg max-h-48 overflow-y-auto">
@@ -613,7 +613,7 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
                             key={product.id}
                             type="button"
                             onClick={() => handleProductSelect(item.id, product)}
-                            className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-500 flex justify-between items-center cursor-pointer"
+                            className="w-full px-4 py-3 text-left hover:bg-gray-100 dark:hover:bg-gray-500 flex justify-between items-center cursor-pointer"
                           >
                             <span className="text-gray-800 dark:text-white">{product.name}</span>
                             <span className="text-gray-500 dark:text-gray-300 text-sm">₾{Number(product.price).toFixed(2)}</span>
@@ -633,7 +633,7 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
                       min="1"
                       value={item.quantity}
                       onChange={(e) => handleItemChange(item.id, 'quantity', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-600"
+                      className="w-full px-3 py-2.5 text-base border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-600"
                     />
                   </div>
 
@@ -663,7 +663,7 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
                       value={item.courier_price}
                       onChange={(e) => handleItemChange(item.id, 'courier_price', e.target.value)}
                       placeholder="0.00"
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-600"
+                      className="w-full px-3 py-2.5 text-base border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-600"
                     />
                   </div>
 
@@ -727,18 +727,18 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
           <p className="text-red-500 dark:text-red-400 text-sm">{error}</p>
         )}
 
-        <div className="flex gap-3 justify-end">
+        <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end">
           <button
             type="button"
             onClick={onCancel}
-            className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors cursor-pointer"
+            className="w-full sm:w-auto px-4 py-2.5 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors cursor-pointer"
           >
             გაუქმება
           </button>
           <button
             type="submit"
             disabled={loading}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 transition-colors cursor-pointer"
+            className="w-full sm:w-auto px-4 py-2.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 transition-colors cursor-pointer"
           >
             {loading ? 'შენახვა...' : 'დამატება'}
           </button>

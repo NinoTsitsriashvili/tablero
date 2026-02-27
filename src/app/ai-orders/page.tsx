@@ -203,7 +203,7 @@ export default function AIOrdersPage() {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <Navbar />
-        <main className="max-w-4xl mx-auto px-4 py-8">
+        <main className="max-w-4xl mx-auto px-4 py-6 sm:py-8">
           <div className="animate-pulse">
             <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-48 mb-6"></div>
             <div className="h-64 bg-gray-200 dark:bg-gray-700 rounded"></div>
@@ -216,16 +216,16 @@ export default function AIOrdersPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navbar />
-      <main className="max-w-4xl mx-auto px-4 py-8">
+      <main className="max-w-4xl mx-auto px-4 py-6 sm:py-8">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-800 dark:text-white">AI შეკვეთები</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-white">AI შეკვეთები</h1>
+          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mt-1">
             ჩასვით Facebook Messenger საუბარი და AI ავტომატურად ამოიღებს შეკვეთის ინფორმაციას
           </p>
         </div>
 
         {/* Input Section */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 sm:p-6 mb-6">
           <label htmlFor="conversation" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             საუბრის ტექსტი
           </label>
@@ -234,20 +234,20 @@ export default function AIOrdersPage() {
             value={conversation}
             onChange={(e) => setConversation(e.target.value)}
             placeholder="ჩასვით Messenger საუბარი აქ..."
-            rows={10}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700 resize-none"
+            rows={8}
+            className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700 resize-none"
           />
-          <div className="flex gap-3 mt-4">
+          <div className="flex flex-col sm:flex-row gap-3 mt-4">
             <button
               onClick={handleAnalyze}
               disabled={analyzing || !conversation.trim()}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="w-full sm:w-auto px-4 py-2.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
             >
               {analyzing ? 'ანალიზი...' : 'გაანალიზება'}
             </button>
             <button
               onClick={handleClear}
-              className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
+              className="w-full sm:w-auto px-4 py-2.5 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors font-medium"
             >
               გასუფთავება
             </button>
@@ -263,8 +263,8 @@ export default function AIOrdersPage() {
 
         {/* Analysis Result */}
         {analysisResult && (
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-            <div className="flex justify-between items-center mb-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-4">
               <h2 className="text-lg font-semibold text-gray-800 dark:text-white">ანალიზის შედეგი</h2>
               <div className={`text-sm font-medium ${getConfidenceColor(analysisResult.confidence)}`}>
                 სიზუსტე: {Math.round(analysisResult.confidence * 100)}%
@@ -347,40 +347,44 @@ export default function AIOrdersPage() {
                 პროდუქტები
               </label>
               {analysisResult.products.map((product, index) => (
-                <div key={index} className="flex gap-3 items-center mb-2 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                  <div className="flex-1">
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                      მოხსენიებული: &quot;{product.name}&quot;
-                    </p>
-                    <select
-                      value={product.matched_product_id || ''}
-                      onChange={(e) => handleProductMatch(index, Number(e.target.value))}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-600"
-                    >
-                      <option value="">აირჩიეთ პროდუქტი</option>
-                      {products.map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.name} - ₾{p.price} (მარაგი: {p.quantity})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="w-24">
-                    <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">რაოდენობა</label>
-                    <input
-                      type="number"
-                      min="1"
-                      value={product.quantity}
-                      onChange={(e) => handleProductQuantityChange(index, Number(e.target.value))}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-600"
-                    />
-                  </div>
-                  {product.unit_price && (
-                    <div className="text-right">
-                      <p className="text-sm text-gray-500 dark:text-gray-400">ფასი</p>
-                      <p className="font-medium text-gray-800 dark:text-white">₾{product.unit_price}</p>
+                <div key={index} className="mb-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                    მოხსენიებული: &quot;{product.name}&quot;
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <div className="flex-1">
+                      <select
+                        value={product.matched_product_id || ''}
+                        onChange={(e) => handleProductMatch(index, Number(e.target.value))}
+                        className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-600"
+                      >
+                        <option value="">აირჩიეთ პროდუქტი</option>
+                        {products.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.name} - ₾{p.price} (მარაგი: {p.quantity})
+                          </option>
+                        ))}
+                      </select>
                     </div>
-                  )}
+                    <div className="flex gap-3 items-end">
+                      <div className="w-24">
+                        <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">რაოდენობა</label>
+                        <input
+                          type="number"
+                          min="1"
+                          value={product.quantity}
+                          onChange={(e) => handleProductQuantityChange(index, Number(e.target.value))}
+                          className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-600"
+                        />
+                      </div>
+                      {product.unit_price && (
+                        <div className="text-right min-w-[60px]">
+                          <p className="text-xs text-gray-500 dark:text-gray-400">ფასი</p>
+                          <p className="font-medium text-gray-800 dark:text-white">₾{product.unit_price}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
@@ -410,17 +414,17 @@ export default function AIOrdersPage() {
             )}
 
             {/* Create Order Button */}
-            <div className="flex justify-end gap-3">
+            <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
               <button
                 onClick={handleClear}
-                className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
+                className="w-full sm:w-auto px-4 py-2.5 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors font-medium"
               >
                 გაუქმება
               </button>
               <button
                 onClick={handleCreateOrder}
                 disabled={creating}
-                className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="w-full sm:w-auto px-6 py-2.5 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
               >
                 {creating ? 'იქმნება...' : 'შეკვეთის შექმნა'}
               </button>

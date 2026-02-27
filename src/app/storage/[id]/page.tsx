@@ -344,28 +344,28 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <Navbar />
-        <main className="max-w-4xl mx-auto px-4 py-8">
+        <main className="max-w-4xl mx-auto px-4 py-6 sm:py-8">
           <div className="mb-6">
             <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-40 animate-pulse"></div>
           </div>
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden animate-pulse">
-            <div className="h-64 bg-gray-200 dark:bg-gray-700"></div>
-            <div className="p-6">
-              <div className="flex justify-between items-start mb-4">
+            <div className="h-48 sm:h-64 bg-gray-200 dark:bg-gray-700"></div>
+            <div className="p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-4">
                 <div>
-                  <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-48 mb-2"></div>
+                  <div className="h-7 sm:h-8 bg-gray-200 dark:bg-gray-700 rounded w-48 mb-2"></div>
                   <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-20"></div>
                 </div>
                 <div className="flex gap-2">
-                  <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded w-28"></div>
-                  <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded w-20"></div>
+                  <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded flex-1 sm:flex-none sm:w-28"></div>
+                  <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded flex-1 sm:flex-none sm:w-20"></div>
                 </div>
               </div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
                 {[...Array(4)].map((_, i) => (
-                  <div key={i} className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                  <div key={i} className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 sm:p-4">
                     <div className="h-3 bg-gray-200 dark:bg-gray-600 rounded w-16 mb-2"></div>
-                    <div className="h-6 bg-gray-200 dark:bg-gray-600 rounded w-20"></div>
+                    <div className="h-5 sm:h-6 bg-gray-200 dark:bg-gray-600 rounded w-20"></div>
                   </div>
                 ))}
               </div>
@@ -388,8 +388,8 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <Navbar />
-        <main className="max-w-4xl mx-auto px-4 py-8">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <main className="max-w-4xl mx-auto px-4 py-6 sm:py-8">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 sm:p-6">
             <p className="text-red-500 dark:text-red-400">{error || 'პროდუქტი ვერ მოიძებნა'}</p>
             <Link href="/storage" className="text-blue-600 dark:text-blue-400 hover:underline mt-4 inline-block">
               დაბრუნება საწყობში
@@ -407,7 +407,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navbar />
-      <main className="max-w-4xl mx-auto px-4 py-8">
+      <main className="max-w-4xl mx-auto px-4 py-6 sm:py-8">
         <div className="mb-6">
           <Link href="/storage" className="text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
@@ -426,7 +426,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
         ) : (
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
             {product.photo_url && (
-              <div className="relative w-full h-64 bg-gray-100 dark:bg-gray-700">
+              <div className="relative w-full h-48 sm:h-64 bg-gray-100 dark:bg-gray-700">
                 <Image
                   src={product.photo_url}
                   alt={product.name}
@@ -438,45 +438,46 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
               </div>
             )}
 
-            <div className="p-6">
-              <div className="flex justify-between items-start mb-4">
+            <div className="p-4 sm:p-6">
+              {/* Header: stacked on mobile, row on desktop */}
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-4">
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-800 dark:text-white">{product.name}</h1>
+                  <h1 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-white">{product.name}</h1>
                   <p className="text-sm text-gray-500 dark:text-gray-400">ID: {product.id}</p>
                 </div>
                 <div className="flex gap-2">
                   <button
                     onClick={() => setShowEditForm(true)}
-                    className="px-4 py-2 text-sm bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-md hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors cursor-pointer"
+                    className="flex-1 sm:flex-none px-4 py-2.5 text-sm bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-md hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors cursor-pointer font-medium"
                   >
                     რედაქტირება
                   </button>
                   <button
                     onClick={handleDelete}
-                    className="px-4 py-2 text-sm bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 rounded-md hover:bg-red-200 dark:hover:bg-red-800 transition-colors cursor-pointer"
+                    className="flex-1 sm:flex-none px-4 py-2.5 text-sm bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 rounded-md hover:bg-red-200 dark:hover:bg-red-800 transition-colors cursor-pointer font-medium"
                   >
                     წაშლა
                   </button>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">ფასი</p>
-                  <p className="text-xl font-bold text-gray-800 dark:text-white">₾{price.toFixed(2)}</p>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
+                <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 sm:p-4">
+                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-1">ფასი</p>
+                  <p className="text-lg sm:text-xl font-bold text-gray-800 dark:text-white">₾{price.toFixed(2)}</p>
                 </div>
 
-                <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">თვითღირებულება</p>
-                  <p className="text-xl font-bold text-gray-800 dark:text-white">
+                <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 sm:p-4">
+                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-1">თვითღირებულება</p>
+                  <p className="text-lg sm:text-xl font-bold text-gray-800 dark:text-white">
                     {costPrice !== null ? `₾${costPrice.toFixed(2)}` : '--'}
                   </p>
                 </div>
 
-                <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">მარაგი</p>
+                <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 sm:p-4">
+                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-1">მარაგი</p>
                   <div className="flex items-center justify-between">
-                    <p className={`text-xl font-bold ${product.quantity > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                    <p className={`text-lg sm:text-xl font-bold ${product.quantity > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                       {product.quantity}
                     </p>
                     {product.quantity > 0 && (
@@ -493,9 +494,9 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                   </div>
                 </div>
 
-                <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">მოგება</p>
-                  <p className={`text-xl font-bold ${profit !== null ? (profit > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400') : 'text-gray-800 dark:text-white'}`}>
+                <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 sm:p-4">
+                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-1">მოგება</p>
+                  <p className={`text-lg sm:text-xl font-bold ${profit !== null ? (profit > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400') : 'text-gray-800 dark:text-white'}`}>
                     {profit !== null ? `₾${profit.toFixed(2)}` : '--'}
                   </p>
                 </div>
@@ -528,7 +529,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
               </div>
 
               <div className="border-t dark:border-gray-700 pt-4 mt-4">
-                <div className="grid grid-cols-2 gap-4 text-sm text-gray-500 dark:text-gray-400">
+                <div className="flex flex-col sm:flex-row sm:gap-6 gap-2 text-sm text-gray-500 dark:text-gray-400">
                   <div>
                     <span>შექმნილია: </span>
                     <span className="text-gray-800 dark:text-gray-300">
@@ -664,8 +665,8 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
 
         {/* Stock Reduction Modal */}
         {showStockModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md mx-4">
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-4 sm:p-6 w-full max-w-md">
               <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
                 მარაგის ჩამოწერა
               </h3>

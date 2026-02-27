@@ -68,6 +68,31 @@ function OrderRowSkeleton() {
   );
 }
 
+// Skeleton loader for mobile cards
+function OrderCardSkeleton() {
+  return (
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 animate-pulse">
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex-1">
+          <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-32 mb-2"></div>
+          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24 mb-1"></div>
+          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-28"></div>
+        </div>
+        <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded-full w-20"></div>
+      </div>
+      <div className="h-px bg-gray-200 dark:bg-gray-700 my-3"></div>
+      <div className="flex items-center gap-2 mb-2">
+        <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded"></div>
+        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-28"></div>
+      </div>
+      <div className="flex items-center justify-between mt-3">
+        <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-16"></div>
+        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24"></div>
+      </div>
+    </div>
+  );
+}
+
 export default function OrdersPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -151,16 +176,123 @@ export default function OrdersPage() {
     );
   };
 
+  // Pagination component for reuse
+  const PaginationControls = ({
+    currentPage,
+    totalPages,
+    onPageChange,
+    totalItems,
+    itemsPerPage,
+  }: {
+    currentPage: number;
+    totalPages: number;
+    onPageChange: (page: number) => void;
+    totalItems: number;
+    itemsPerPage: number;
+  }) => {
+    if (totalPages <= 1) return null;
+
+    return (
+      <div className="px-4 py-3 bg-gray-50 dark:bg-gray-700 border-t border-gray-200 dark:border-gray-600">
+        {/* Mobile pagination */}
+        <div className="flex md:hidden flex-col items-center gap-3">
+          <div className="text-sm text-gray-500 dark:text-gray-400">
+            {(currentPage - 1) * itemsPerPage + 1}-{Math.min(currentPage * itemsPerPage, totalItems)} / {totalItems}
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+              disabled={currentPage === 1}
+              className="px-4 py-2 text-sm bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded-md hover:bg-gray-50 dark:hover:bg-gray-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-gray-700 dark:text-gray-200"
+            >
+              წინა
+            </button>
+            <span className="text-sm text-gray-600 dark:text-gray-300 px-2">
+              {currentPage} / {totalPages}
+            </span>
+            <button
+              onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
+              disabled={currentPage === totalPages}
+              className="px-4 py-2 text-sm bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded-md hover:bg-gray-50 dark:hover:bg-gray-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-gray-700 dark:text-gray-200"
+            >
+              შემდეგი
+            </button>
+          </div>
+        </div>
+
+        {/* Desktop pagination */}
+        <div className="hidden md:flex items-center justify-between">
+          <div className="text-sm text-gray-500 dark:text-gray-400">
+            ნაჩვენებია {(currentPage - 1) * itemsPerPage + 1}-{Math.min(currentPage * itemsPerPage, totalItems)} / {totalItems}
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-1.5 text-sm bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded-md hover:bg-gray-50 dark:hover:bg-gray-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-gray-700 dark:text-gray-200"
+            >
+              წინა
+            </button>
+            <div className="flex items-center gap-1">
+              {Array.from({ length: totalPages }, (_, i) => i + 1)
+                .filter(page => {
+                  if (totalPages <= 7) return true;
+                  if (page === 1 || page === totalPages) return true;
+                  if (Math.abs(page - currentPage) <= 1) return true;
+                  return false;
+                })
+                .map((page, index, array) => (
+                  <span key={page}>
+                    {index > 0 && array[index - 1] !== page - 1 && (
+                      <span className="px-1 text-gray-400">...</span>
+                    )}
+                    <button
+                      onClick={() => onPageChange(page)}
+                      className={`w-8 h-8 text-sm rounded-md transition-colors ${
+                        currentPage === page
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-500'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  </span>
+                ))}
+            </div>
+            <button
+              onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1.5 text-sm bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded-md hover:bg-gray-50 dark:hover:bg-gray-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-gray-700 dark:text-gray-200"
+            >
+              შემდეგი
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   if (status === 'loading') {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <Navbar />
-        <main className="max-w-7xl mx-auto px-4 py-8">
-          <div className="flex justify-between items-center mb-6">
+        <main className="max-w-7xl mx-auto px-4 py-6 sm:py-8">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
             <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-32 animate-pulse"></div>
-            <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded w-44 animate-pulse"></div>
+            <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded w-full sm:w-44 animate-pulse"></div>
           </div>
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+
+          {/* Mobile skeleton */}
+          <div className="md:hidden space-y-3">
+            <OrderCardSkeleton />
+            <OrderCardSkeleton />
+            <OrderCardSkeleton />
+            <OrderCardSkeleton />
+            <OrderCardSkeleton />
+          </div>
+
+          {/* Desktop skeleton */}
+          <div className="hidden md:block bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-gray-50 dark:bg-gray-700">
@@ -192,12 +324,13 @@ export default function OrdersPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navbar />
-      <main className="max-w-7xl mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-6">
+      <main className="max-w-7xl mx-auto px-4 py-6 sm:py-8">
+        {/* Header - stacked on mobile, row on desktop */}
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
           <h1 className="text-2xl font-bold text-gray-800 dark:text-white">შეკვეთები</h1>
           <button
             onClick={() => setShowForm(true)}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors cursor-pointer"
+            className="w-full sm:w-auto px-4 py-2.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors cursor-pointer font-medium"
           >
             შეკვეთის დამატება
           </button>
@@ -222,8 +355,8 @@ export default function OrdersPage() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="ძებნა FB სახელით, ადრესატით ან ტელეფონით..."
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-800"
+              placeholder="ძებნა..."
+              className="w-full pl-10 pr-10 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-800"
             />
             {searchQuery && (
               <button
@@ -260,30 +393,42 @@ export default function OrdersPage() {
         )}
 
         {loading ? (
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 dark:bg-gray-700">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">FB სახელი</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">ადრესატი</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">პროდუქტი</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">ჯამი</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">სტატუსი</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">თარიღი</th>
-                    <th className="px-4 py-3 text-right text-sm font-medium text-gray-700 dark:text-gray-300"></th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                  <OrderRowSkeleton />
-                  <OrderRowSkeleton />
-                  <OrderRowSkeleton />
-                  <OrderRowSkeleton />
-                  <OrderRowSkeleton />
-                </tbody>
-              </table>
+          <>
+            {/* Mobile skeleton */}
+            <div className="md:hidden space-y-3">
+              <OrderCardSkeleton />
+              <OrderCardSkeleton />
+              <OrderCardSkeleton />
+              <OrderCardSkeleton />
+              <OrderCardSkeleton />
             </div>
-          </div>
+
+            {/* Desktop skeleton */}
+            <div className="hidden md:block bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50 dark:bg-gray-700">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">FB სახელი</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">ადრესატი</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">პროდუქტი</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">ჯამი</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">სტატუსი</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">თარიღი</th>
+                      <th className="px-4 py-3 text-right text-sm font-medium text-gray-700 dark:text-gray-300"></th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                    <OrderRowSkeleton />
+                    <OrderRowSkeleton />
+                    <OrderRowSkeleton />
+                    <OrderRowSkeleton />
+                    <OrderRowSkeleton />
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </>
         ) : orders.length === 0 ? (
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 text-center">
             <p className="text-gray-600 dark:text-gray-400">შეკვეთები არ არის. დაამატეთ პირველი შეკვეთა!</p>
@@ -293,41 +438,183 @@ export default function OrdersPage() {
             <p className="text-gray-600 dark:text-gray-400">შეკვეთა ვერ მოიძებნა &quot;{searchQuery}&quot;</p>
           </div>
         ) : (
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 dark:bg-gray-700">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">FB სახელი</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">ადრესატი</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">პროდუქტი</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">ჯამი</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">სტატუსი</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">თარიღი</th>
-                    <th className="px-4 py-3 text-right text-sm font-medium text-gray-700 dark:text-gray-300"></th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {paginatedOrders.map((order) => (
-                    <tr key={order.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                      <td className="px-4 py-3">
-                        <Link href={`/orders/${order.id}`} className="text-gray-800 dark:text-white font-medium hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer">
-                          {order.fb_name}
-                        </Link>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="text-gray-800 dark:text-white">{order.recipient_name}</div>
-                        <div className="text-sm text-gray-500 dark:text-gray-400">{order.phone}</div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex flex-col gap-2">
-                          {order.items && order.items.length > 0 ? (
-                            order.items.map((item, index) => (
-                              <div key={item.id || index} className="flex items-center gap-2">
-                                {item.product_photo_url ? (
+          <>
+            {/* Mobile Card View */}
+            <div className="md:hidden space-y-3">
+              {paginatedOrders.map((order) => (
+                <Link
+                  key={order.id}
+                  href={`/orders/${order.id}`}
+                  className="block bg-white dark:bg-gray-800 rounded-lg shadow p-4 hover:shadow-md transition-shadow"
+                >
+                  {/* Header: Name and Status */}
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex-1 min-w-0 pr-2">
+                      <h3 className="font-medium text-gray-800 dark:text-white truncate">
+                        {order.fb_name}
+                      </h3>
+                      <div className="text-sm text-gray-500 dark:text-gray-400">
+                        {order.recipient_name}
+                      </div>
+                      <div className="text-sm text-gray-400 dark:text-gray-500">
+                        {order.phone}
+                      </div>
+                    </div>
+                    {getStatusBadge(order.status)}
+                  </div>
+
+                  {/* Divider */}
+                  <div className="h-px bg-gray-200 dark:bg-gray-700 my-3"></div>
+
+                  {/* Products */}
+                  <div className="space-y-2">
+                    {order.items && order.items.length > 0 ? (
+                      order.items.slice(0, 2).map((item, index) => (
+                        <div key={item.id || index} className="flex items-center gap-2">
+                          {item.product_photo_url ? (
+                            <Image
+                              src={item.product_photo_url}
+                              alt={item.product_name || 'პროდუქტი'}
+                              width={32}
+                              height={32}
+                              className="rounded object-cover flex-shrink-0"
+                            />
+                          ) : (
+                            <div className="w-8 h-8 bg-gray-200 dark:bg-gray-600 rounded flex items-center justify-center flex-shrink-0">
+                              <svg className="w-4 h-4 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                              </svg>
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm text-gray-800 dark:text-gray-200 truncate">
+                              {item.product_name || 'უცნობი პროდუქტი'}
+                            </div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400">
+                              {item.quantity} ც. × ₾{Number(item.unit_price).toFixed(2)}
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    ) : order.product_name ? (
+                      <div className="flex items-center gap-2">
+                        {order.product_photo_url ? (
+                          <Image
+                            src={order.product_photo_url}
+                            alt={order.product_name || 'პროდუქტი'}
+                            width={32}
+                            height={32}
+                            className="rounded object-cover flex-shrink-0"
+                          />
+                        ) : (
+                          <div className="w-8 h-8 bg-gray-200 dark:bg-gray-600 rounded flex items-center justify-center flex-shrink-0">
+                            <svg className="w-4 h-4 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                          </div>
+                        )}
+                        <span className="text-sm text-gray-800 dark:text-gray-200 truncate">
+                          {order.product_name}
+                        </span>
+                      </div>
+                    ) : null}
+                    {order.items && order.items.length > 2 && (
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                        +{order.items.length - 2} სხვა პროდუქტი
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Footer: Total and Date */}
+                  <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
+                    <span className="font-medium text-gray-800 dark:text-white">
+                      ₾{Number(order.total_price).toFixed(2)}
+                    </span>
+                    <span className="text-sm text-gray-500 dark:text-gray-400">
+                      {new Date(order.created_at).toLocaleDateString('ka-GE', {
+                        day: 'numeric',
+                        month: 'short',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </span>
+                  </div>
+                </Link>
+              ))}
+
+              {/* Mobile Pagination */}
+              <PaginationControls
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+                totalItems={filteredOrders.length}
+                itemsPerPage={ITEMS_PER_PAGE}
+              />
+            </div>
+
+            {/* Desktop Table View */}
+            <div className="hidden md:block bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50 dark:bg-gray-700">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">FB სახელი</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">ადრესატი</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">პროდუქტი</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">ჯამი</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">სტატუსი</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">თარიღი</th>
+                      <th className="px-4 py-3 text-right text-sm font-medium text-gray-700 dark:text-gray-300"></th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                    {paginatedOrders.map((order) => (
+                      <tr key={order.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                        <td className="px-4 py-3">
+                          <Link href={`/orders/${order.id}`} className="text-gray-800 dark:text-white font-medium hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer">
+                            {order.fb_name}
+                          </Link>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="text-gray-800 dark:text-white">{order.recipient_name}</div>
+                          <div className="text-sm text-gray-500 dark:text-gray-400">{order.phone}</div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex flex-col gap-2">
+                            {order.items && order.items.length > 0 ? (
+                              order.items.map((item, index) => (
+                                <div key={item.id || index} className="flex items-center gap-2">
+                                  {item.product_photo_url ? (
+                                    <Image
+                                      src={item.product_photo_url}
+                                      alt={item.product_name || 'პროდუქტი'}
+                                      width={32}
+                                      height={32}
+                                      className="rounded object-cover flex-shrink-0"
+                                    />
+                                  ) : (
+                                    <div className="w-8 h-8 bg-gray-200 dark:bg-gray-600 rounded flex items-center justify-center flex-shrink-0">
+                                      <svg className="w-4 h-4 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                      </svg>
+                                    </div>
+                                  )}
+                                  <div className="min-w-0">
+                                    <div className="text-sm text-gray-800 dark:text-gray-200 truncate">
+                                      {item.product_name || 'უცნობი პროდუქტი'}
+                                    </div>
+                                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                                      {item.quantity} ც. × ₾{Number(item.unit_price).toFixed(2)}
+                                    </div>
+                                  </div>
+                                </div>
+                              ))
+                            ) : (
+                              <div className="flex items-center gap-2">
+                                {order.product_photo_url ? (
                                   <Image
-                                    src={item.product_photo_url}
-                                    alt={item.product_name || 'პროდუქტი'}
+                                    src={order.product_photo_url}
+                                    alt={order.product_name || 'პროდუქტი'}
                                     width={32}
                                     height={32}
                                     className="rounded object-cover flex-shrink-0"
@@ -339,119 +626,51 @@ export default function OrdersPage() {
                                     </svg>
                                   </div>
                                 )}
-                                <div className="min-w-0">
-                                  <div className="text-sm text-gray-800 dark:text-gray-200 truncate">
-                                    {item.product_name || 'უცნობი პროდუქტი'}
-                                  </div>
-                                  <div className="text-xs text-gray-500 dark:text-gray-400">
-                                    {item.quantity} ც. × ₾{Number(item.unit_price).toFixed(2)}
-                                  </div>
-                                </div>
+                                <span className="text-sm text-gray-800 dark:text-gray-200">
+                                  {order.product_name || 'N/A'}
+                                </span>
                               </div>
-                            ))
-                          ) : (
-                            <div className="flex items-center gap-2">
-                              {order.product_photo_url ? (
-                                <Image
-                                  src={order.product_photo_url}
-                                  alt={order.product_name || 'პროდუქტი'}
-                                  width={32}
-                                  height={32}
-                                  className="rounded object-cover flex-shrink-0"
-                                />
-                              ) : (
-                                <div className="w-8 h-8 bg-gray-200 dark:bg-gray-600 rounded flex items-center justify-center flex-shrink-0">
-                                  <svg className="w-4 h-4 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                  </svg>
-                                </div>
-                              )}
-                              <span className="text-sm text-gray-800 dark:text-gray-200">
-                                {order.product_name || 'N/A'}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-gray-800 dark:text-gray-300">
-                        ₾{Number(order.total_price).toFixed(2)}
-                      </td>
-                      <td className="px-4 py-3">
-                        {getStatusBadge(order.status)}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-                        {new Date(order.created_at).toLocaleDateString('ka-GE', {
-                          day: 'numeric',
-                          month: 'short',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <Link
-                          href={`/orders/${order.id}`}
-                          className="px-3 py-1.5 text-sm bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-md hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors cursor-pointer"
-                        >
-                          ნახვა
-                        </Link>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Pagination Controls */}
-            {totalPages > 1 && (
-              <div className="px-4 py-3 bg-gray-50 dark:bg-gray-700 border-t border-gray-200 dark:border-gray-600 flex items-center justify-between">
-                <div className="text-sm text-gray-500 dark:text-gray-400">
-                  ნაჩვენებია {(currentPage - 1) * ITEMS_PER_PAGE + 1}-{Math.min(currentPage * ITEMS_PER_PAGE, filteredOrders.length)} / {filteredOrders.length}
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                    disabled={currentPage === 1}
-                    className="px-3 py-1.5 text-sm bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded-md hover:bg-gray-50 dark:hover:bg-gray-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-gray-700 dark:text-gray-200"
-                  >
-                    წინა
-                  </button>
-                  <div className="flex items-center gap-1">
-                    {Array.from({ length: totalPages }, (_, i) => i + 1)
-                      .filter(page => {
-                        if (totalPages <= 7) return true;
-                        if (page === 1 || page === totalPages) return true;
-                        if (Math.abs(page - currentPage) <= 1) return true;
-                        return false;
-                      })
-                      .map((page, index, array) => (
-                        <span key={page}>
-                          {index > 0 && array[index - 1] !== page - 1 && (
-                            <span className="px-1 text-gray-400">...</span>
-                          )}
-                          <button
-                            onClick={() => setCurrentPage(page)}
-                            className={`w-8 h-8 text-sm rounded-md transition-colors ${
-                              currentPage === page
-                                ? 'bg-blue-600 text-white'
-                                : 'bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-500'
-                            }`}
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-gray-800 dark:text-gray-300">
+                          ₾{Number(order.total_price).toFixed(2)}
+                        </td>
+                        <td className="px-4 py-3">
+                          {getStatusBadge(order.status)}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+                          {new Date(order.created_at).toLocaleDateString('ka-GE', {
+                            day: 'numeric',
+                            month: 'short',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <Link
+                            href={`/orders/${order.id}`}
+                            className="px-3 py-1.5 text-sm bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-md hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors cursor-pointer"
                           >
-                            {page}
-                          </button>
-                        </span>
-                      ))}
-                  </div>
-                  <button
-                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                    disabled={currentPage === totalPages}
-                    className="px-3 py-1.5 text-sm bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded-md hover:bg-gray-50 dark:hover:bg-gray-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-gray-700 dark:text-gray-200"
-                  >
-                    შემდეგი
-                  </button>
-                </div>
+                            ნახვა
+                          </Link>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            )}
-          </div>
+
+              {/* Desktop Pagination */}
+              <PaginationControls
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+                totalItems={filteredOrders.length}
+                itemsPerPage={ITEMS_PER_PAGE}
+              />
+            </div>
+          </>
         )}
       </main>
     </div>

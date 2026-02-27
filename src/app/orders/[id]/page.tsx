@@ -304,12 +304,12 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <Navbar />
-        <main className="max-w-4xl mx-auto px-4 py-8">
+        <main className="max-w-4xl mx-auto px-4 py-6 sm:py-8">
           <div className="mb-6">
             <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-40 animate-pulse"></div>
           </div>
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-            <div className="p-6 animate-pulse">
+            <div className="p-4 sm:p-6 animate-pulse">
               <div className="flex justify-between items-start mb-6">
                 <div>
                   <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-40 mb-2"></div>
@@ -353,8 +353,8 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <Navbar />
-        <main className="max-w-4xl mx-auto px-4 py-8">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <main className="max-w-4xl mx-auto px-4 py-6 sm:py-8">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 sm:p-6">
             <p className="text-red-500 dark:text-red-400">{error || 'შეკვეთა ვერ მოიძებნა'}</p>
             <Link href="/orders" className="text-blue-600 dark:text-blue-400 hover:underline mt-4 inline-block">
               დაბრუნება შეკვეთებში
@@ -368,7 +368,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navbar />
-      <main className="max-w-4xl mx-auto px-4 py-8">
+      <main className="max-w-4xl mx-auto px-4 py-6 sm:py-8">
         <div className="mb-6">
           <Link href="/orders" className="text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
@@ -379,10 +379,11 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
         </div>
 
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-          <div className="p-6">
-            <div className="flex justify-between items-start mb-6">
+          <div className="p-4 sm:p-6">
+            {/* Header - stacked on mobile, row on desktop */}
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6">
               <div>
-                <h1 className="text-2xl font-bold text-gray-800 dark:text-white">შეკვეთა #{order.id}</h1>
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-white">შეკვეთა #{order.id}</h1>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                   შექმნილია: {new Date(order.created_at).toLocaleString('ka-GE')}
                 </p>
@@ -390,13 +391,13 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
               <div className="flex gap-2">
                 <button
                   onClick={startEditing}
-                  className="px-4 py-2 text-sm bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-md hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors cursor-pointer"
+                  className="flex-1 sm:flex-none px-4 py-2.5 text-sm bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-md hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors cursor-pointer font-medium"
                 >
                   რედაქტირება
                 </button>
                 <button
                   onClick={handleDelete}
-                  className="px-4 py-2 text-sm bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 rounded-md hover:bg-red-200 dark:hover:bg-red-800 transition-colors cursor-pointer"
+                  className="flex-1 sm:flex-none px-4 py-2.5 text-sm bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 rounded-md hover:bg-red-200 dark:hover:bg-red-800 transition-colors cursor-pointer font-medium"
                 >
                   წაშლა
                 </button>
@@ -660,7 +661,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                             </p>
                           </div>
                         </div>
-                        <div className="mt-2 grid grid-cols-3 gap-2 text-sm">
+                        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm">
                           <div>
                             <span className="text-gray-500 dark:text-gray-400">ფასი: </span>
                             <span className="text-gray-800 dark:text-gray-300">₾{Number(item.unit_price).toFixed(2)}</span>
@@ -703,7 +704,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
 
             {/* Timestamps */}
             <div className="border-t dark:border-gray-700 pt-4 mt-4">
-              <div className="grid grid-cols-2 gap-4 text-sm text-gray-500 dark:text-gray-400">
+              <div className="flex flex-col sm:flex-row sm:gap-6 gap-2 text-sm text-gray-500 dark:text-gray-400">
                 <div>
                   <span>შექმნილია: </span>
                   <span className="text-gray-800 dark:text-gray-300">
