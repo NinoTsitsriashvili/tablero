@@ -61,50 +61,200 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status'); // Filter by order status
     const paymentType = searchParams.get('payment_type');
 
-    // Build date condition
-    let dateCondition = '';
-    const dateParams: string[] = [];
+    // Status filter - default to 'all' to show all orders
+    const statusFilter = status || 'all';
 
-    if (startDate) {
-      dateParams.push(`o.created_at >= '${startDate}'::date`);
+    // Build the main query with all filters inline
+    let ordersQuery;
+
+    if (startDate && endDate && statusFilter !== 'all' && paymentType && paymentType !== 'all' && productId) {
+      ordersQuery = await sql`
+        SELECT o.id, o.status, o.payment_type, o.created_at,
+               oi.id as item_id, oi.product_id, p.name as product_name,
+               oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
+        FROM orders o
+        JOIN order_items oi ON o.id = oi.order_id
+        LEFT JOIN products p ON oi.product_id = p.id
+        WHERE o.created_at >= ${startDate}::date
+          AND o.created_at < (${endDate}::date + INTERVAL '1 day')
+          AND o.status = ${statusFilter}
+          AND o.payment_type = ${paymentType}
+          AND oi.product_id = ${parseInt(productId)}
+        ORDER BY o.created_at DESC
+      `;
+    } else if (startDate && endDate && statusFilter !== 'all' && paymentType && paymentType !== 'all') {
+      ordersQuery = await sql`
+        SELECT o.id, o.status, o.payment_type, o.created_at,
+               oi.id as item_id, oi.product_id, p.name as product_name,
+               oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
+        FROM orders o
+        JOIN order_items oi ON o.id = oi.order_id
+        LEFT JOIN products p ON oi.product_id = p.id
+        WHERE o.created_at >= ${startDate}::date
+          AND o.created_at < (${endDate}::date + INTERVAL '1 day')
+          AND o.status = ${statusFilter}
+          AND o.payment_type = ${paymentType}
+        ORDER BY o.created_at DESC
+      `;
+    } else if (startDate && endDate && statusFilter !== 'all' && productId) {
+      ordersQuery = await sql`
+        SELECT o.id, o.status, o.payment_type, o.created_at,
+               oi.id as item_id, oi.product_id, p.name as product_name,
+               oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
+        FROM orders o
+        JOIN order_items oi ON o.id = oi.order_id
+        LEFT JOIN products p ON oi.product_id = p.id
+        WHERE o.created_at >= ${startDate}::date
+          AND o.created_at < (${endDate}::date + INTERVAL '1 day')
+          AND o.status = ${statusFilter}
+          AND oi.product_id = ${parseInt(productId)}
+        ORDER BY o.created_at DESC
+      `;
+    } else if (startDate && endDate && statusFilter !== 'all') {
+      ordersQuery = await sql`
+        SELECT o.id, o.status, o.payment_type, o.created_at,
+               oi.id as item_id, oi.product_id, p.name as product_name,
+               oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
+        FROM orders o
+        JOIN order_items oi ON o.id = oi.order_id
+        LEFT JOIN products p ON oi.product_id = p.id
+        WHERE o.created_at >= ${startDate}::date
+          AND o.created_at < (${endDate}::date + INTERVAL '1 day')
+          AND o.status = ${statusFilter}
+        ORDER BY o.created_at DESC
+      `;
+    } else if (startDate && endDate && paymentType && paymentType !== 'all') {
+      ordersQuery = await sql`
+        SELECT o.id, o.status, o.payment_type, o.created_at,
+               oi.id as item_id, oi.product_id, p.name as product_name,
+               oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
+        FROM orders o
+        JOIN order_items oi ON o.id = oi.order_id
+        LEFT JOIN products p ON oi.product_id = p.id
+        WHERE o.created_at >= ${startDate}::date
+          AND o.created_at < (${endDate}::date + INTERVAL '1 day')
+          AND o.payment_type = ${paymentType}
+        ORDER BY o.created_at DESC
+      `;
+    } else if (startDate && endDate && productId) {
+      ordersQuery = await sql`
+        SELECT o.id, o.status, o.payment_type, o.created_at,
+               oi.id as item_id, oi.product_id, p.name as product_name,
+               oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
+        FROM orders o
+        JOIN order_items oi ON o.id = oi.order_id
+        LEFT JOIN products p ON oi.product_id = p.id
+        WHERE o.created_at >= ${startDate}::date
+          AND o.created_at < (${endDate}::date + INTERVAL '1 day')
+          AND oi.product_id = ${parseInt(productId)}
+        ORDER BY o.created_at DESC
+      `;
+    } else if (startDate && endDate) {
+      ordersQuery = await sql`
+        SELECT o.id, o.status, o.payment_type, o.created_at,
+               oi.id as item_id, oi.product_id, p.name as product_name,
+               oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
+        FROM orders o
+        JOIN order_items oi ON o.id = oi.order_id
+        LEFT JOIN products p ON oi.product_id = p.id
+        WHERE o.created_at >= ${startDate}::date
+          AND o.created_at < (${endDate}::date + INTERVAL '1 day')
+        ORDER BY o.created_at DESC
+      `;
+    } else if (statusFilter !== 'all' && paymentType && paymentType !== 'all' && productId) {
+      ordersQuery = await sql`
+        SELECT o.id, o.status, o.payment_type, o.created_at,
+               oi.id as item_id, oi.product_id, p.name as product_name,
+               oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
+        FROM orders o
+        JOIN order_items oi ON o.id = oi.order_id
+        LEFT JOIN products p ON oi.product_id = p.id
+        WHERE o.status = ${statusFilter}
+          AND o.payment_type = ${paymentType}
+          AND oi.product_id = ${parseInt(productId)}
+        ORDER BY o.created_at DESC
+      `;
+    } else if (statusFilter !== 'all' && paymentType && paymentType !== 'all') {
+      ordersQuery = await sql`
+        SELECT o.id, o.status, o.payment_type, o.created_at,
+               oi.id as item_id, oi.product_id, p.name as product_name,
+               oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
+        FROM orders o
+        JOIN order_items oi ON o.id = oi.order_id
+        LEFT JOIN products p ON oi.product_id = p.id
+        WHERE o.status = ${statusFilter}
+          AND o.payment_type = ${paymentType}
+        ORDER BY o.created_at DESC
+      `;
+    } else if (statusFilter !== 'all' && productId) {
+      ordersQuery = await sql`
+        SELECT o.id, o.status, o.payment_type, o.created_at,
+               oi.id as item_id, oi.product_id, p.name as product_name,
+               oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
+        FROM orders o
+        JOIN order_items oi ON o.id = oi.order_id
+        LEFT JOIN products p ON oi.product_id = p.id
+        WHERE o.status = ${statusFilter}
+          AND oi.product_id = ${parseInt(productId)}
+        ORDER BY o.created_at DESC
+      `;
+    } else if (statusFilter !== 'all') {
+      ordersQuery = await sql`
+        SELECT o.id, o.status, o.payment_type, o.created_at,
+               oi.id as item_id, oi.product_id, p.name as product_name,
+               oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
+        FROM orders o
+        JOIN order_items oi ON o.id = oi.order_id
+        LEFT JOIN products p ON oi.product_id = p.id
+        WHERE o.status = ${statusFilter}
+        ORDER BY o.created_at DESC
+      `;
+    } else if (paymentType && paymentType !== 'all' && productId) {
+      ordersQuery = await sql`
+        SELECT o.id, o.status, o.payment_type, o.created_at,
+               oi.id as item_id, oi.product_id, p.name as product_name,
+               oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
+        FROM orders o
+        JOIN order_items oi ON o.id = oi.order_id
+        LEFT JOIN products p ON oi.product_id = p.id
+        WHERE o.payment_type = ${paymentType}
+          AND oi.product_id = ${parseInt(productId)}
+        ORDER BY o.created_at DESC
+      `;
+    } else if (paymentType && paymentType !== 'all') {
+      ordersQuery = await sql`
+        SELECT o.id, o.status, o.payment_type, o.created_at,
+               oi.id as item_id, oi.product_id, p.name as product_name,
+               oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
+        FROM orders o
+        JOIN order_items oi ON o.id = oi.order_id
+        LEFT JOIN products p ON oi.product_id = p.id
+        WHERE o.payment_type = ${paymentType}
+        ORDER BY o.created_at DESC
+      `;
+    } else if (productId) {
+      ordersQuery = await sql`
+        SELECT o.id, o.status, o.payment_type, o.created_at,
+               oi.id as item_id, oi.product_id, p.name as product_name,
+               oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
+        FROM orders o
+        JOIN order_items oi ON o.id = oi.order_id
+        LEFT JOIN products p ON oi.product_id = p.id
+        WHERE oi.product_id = ${parseInt(productId)}
+        ORDER BY o.created_at DESC
+      `;
+    } else {
+      // No filters - get all orders
+      ordersQuery = await sql`
+        SELECT o.id, o.status, o.payment_type, o.created_at,
+               oi.id as item_id, oi.product_id, p.name as product_name,
+               oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
+        FROM orders o
+        JOIN order_items oi ON o.id = oi.order_id
+        LEFT JOIN products p ON oi.product_id = p.id
+        ORDER BY o.created_at DESC
+      `;
     }
-    if (endDate) {
-      dateParams.push(`o.created_at < ('${endDate}'::date + INTERVAL '1 day')`);
-    }
-    if (dateParams.length > 0) {
-      dateCondition = 'AND ' + dateParams.join(' AND ');
-    }
-
-    // Status filter - default to delivered only for revenue calculations
-    const statusFilter = status || 'delivered';
-    const statusCondition = statusFilter === 'all' ? '' : `AND o.status = '${statusFilter}'`;
-
-    // Payment type filter
-    const paymentCondition = paymentType && paymentType !== 'all' ? `AND o.payment_type = '${paymentType}'` : '';
-
-    // Product filter
-    const productCondition = productId ? `AND oi.product_id = ${productId}` : '';
-
-    // Get all orders with items matching filters
-    const ordersQuery = await sql`
-      SELECT
-        o.id,
-        o.status,
-        o.payment_type,
-        o.created_at,
-        oi.id as item_id,
-        oi.product_id,
-        p.name as product_name,
-        oi.quantity,
-        oi.unit_price,
-        oi.courier_price,
-        p.cost_price
-      FROM orders o
-      JOIN order_items oi ON o.id = oi.order_id
-      LEFT JOIN products p ON oi.product_id = p.id
-      WHERE 1=1 ${sql.unsafe(dateCondition)} ${sql.unsafe(statusCondition)} ${sql.unsafe(paymentCondition)} ${sql.unsafe(productCondition)}
-      ORDER BY o.created_at DESC
-    ` as unknown[];
 
     // Process data
     const ordersMap = new Map<number, Order>();
@@ -200,9 +350,9 @@ export async function GET(request: NextRequest) {
       // Count orders per product
       const productIdsInOrder = new Set(order.items.map(item => item.product_id));
       for (const pid of productIdsInOrder) {
-        const productStats = productStatsMap.get(pid);
-        if (productStats) {
-          productStats.order_count++;
+        const pStats = productStatsMap.get(pid);
+        if (pStats) {
+          pStats.order_count++;
         }
       }
     }
@@ -223,16 +373,15 @@ export async function GET(request: NextRequest) {
       totalItemsSold += stats.total_sold;
     }
 
-    // Get status breakdown
+    // Get status breakdown - always show all statuses
     const statusBreakdownQuery = await sql`
       SELECT
         o.status,
         COUNT(DISTINCT o.id) as order_count,
-        SUM(oi.unit_price * oi.quantity) as revenue,
-        SUM(oi.courier_price) as courier
+        COALESCE(SUM(oi.unit_price * oi.quantity), 0) as revenue,
+        COALESCE(SUM(oi.courier_price), 0) as courier
       FROM orders o
       JOIN order_items oi ON o.id = oi.order_id
-      WHERE 1=1 ${sql.unsafe(dateCondition)} ${sql.unsafe(productCondition)} ${sql.unsafe(paymentCondition)}
       GROUP BY o.status
       ORDER BY order_count DESC
     ` as unknown[];
@@ -242,11 +391,10 @@ export async function GET(request: NextRequest) {
       SELECT
         o.payment_type,
         COUNT(DISTINCT o.id) as order_count,
-        SUM(oi.unit_price * oi.quantity) as revenue,
-        SUM(oi.courier_price) as courier
+        COALESCE(SUM(oi.unit_price * oi.quantity), 0) as revenue,
+        COALESCE(SUM(oi.courier_price), 0) as courier
       FROM orders o
       JOIN order_items oi ON o.id = oi.order_id
-      WHERE 1=1 ${sql.unsafe(dateCondition)} ${sql.unsafe(statusCondition)} ${sql.unsafe(productCondition)}
       GROUP BY o.payment_type
       ORDER BY order_count DESC
     ` as unknown[];
@@ -257,12 +405,12 @@ export async function GET(request: NextRequest) {
     ` as { id: number; name: string }[];
 
     // Sort product stats by revenue
-    const productStats = Array.from(productStatsMap.values()).sort(
+    const productStatsSorted = Array.from(productStatsMap.values()).sort(
       (a, b) => b.total_revenue - a.total_revenue
     );
 
     // Sort daily stats by date descending
-    const dailyStats = Array.from(dailyStatsMap.values()).sort(
+    const dailyStatsSorted = Array.from(dailyStatsMap.values()).sort(
       (a, b) => b.date.localeCompare(a.date)
     );
 
@@ -283,8 +431,8 @@ export async function GET(request: NextRequest) {
         average_order_value: averageOrderValue,
         profit_margin: profitMargin,
       },
-      by_product: productStats,
-      by_date: dailyStats,
+      by_product: productStatsSorted,
+      by_date: dailyStatsSorted,
       by_status: statusBreakdownQuery,
       by_payment_type: paymentBreakdownQuery,
       filters: {

@@ -88,7 +88,7 @@ export default function StatisticsPage() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [selectedProduct, setSelectedProduct] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState('delivered');
+  const [selectedStatus, setSelectedStatus] = useState('all');
   const [selectedPayment, setSelectedPayment] = useState('all');
 
   // View mode
