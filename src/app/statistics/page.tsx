@@ -90,6 +90,7 @@ export default function StatisticsPage() {
   const [selectedProduct, setSelectedProduct] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [selectedPayment, setSelectedPayment] = useState('all');
+  const [selectedPreset, setSelectedPreset] = useState('all');
 
   // View mode
   const [viewMode, setViewMode] = useState<ViewMode>('summary');
@@ -134,6 +135,7 @@ export default function StatisticsPage() {
   const setDatePreset = (preset: string) => {
     const today = new Date();
     const formatDate = (d: Date) => d.toISOString().split('T')[0];
+    setSelectedPreset(preset);
 
     switch (preset) {
       case 'today':
@@ -231,7 +233,11 @@ export default function StatisticsPage() {
                 <button
                   key={preset.key}
                   onClick={() => setDatePreset(preset.key)}
-                  className="px-3 py-1.5 text-sm rounded-md bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                  className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
+                    selectedPreset === preset.key
+                      ? 'bg-blue-600 text-white hover:bg-blue-700'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  }`}
                 >
                   {preset.label}
                 </button>
@@ -248,7 +254,10 @@ export default function StatisticsPage() {
               <input
                 type="date"
                 value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
+                onChange={(e) => {
+                  setStartDate(e.target.value);
+                  setSelectedPreset('');
+                }}
                 className="w-full px-3 py-2.5 text-base border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700"
               />
             </div>
@@ -259,7 +268,10 @@ export default function StatisticsPage() {
               <input
                 type="date"
                 value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
+                onChange={(e) => {
+                  setEndDate(e.target.value);
+                  setSelectedPreset('');
+                }}
                 className="w-full px-3 py-2.5 text-base border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700"
               />
             </div>
