@@ -63,7 +63,7 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
       product_id: '',
       product_name: '',
       unit_price: '',
-      quantity: '1',
+      quantity: '',
       courier_price: '',
       searchQuery: '',
       showDropdown: false,
@@ -130,6 +130,7 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
   };
 
   const validateQuantity = (value: string): boolean => {
+    if (!value || value.trim() === '') return false;
     const num = parseInt(value, 10);
     return !isNaN(num) && num >= 1 && num <= VALIDATION_LIMITS.QUANTITY_MAX;
   };
@@ -206,12 +207,12 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
       const digitsOnly = value.replace(/[^0-9]/g, '');
       const num = parseInt(digitsOnly, 10);
       // Limit to max quantity
-      if (num > VALIDATION_LIMITS.QUANTITY_MAX) {
+      if (!isNaN(num) && num > VALIDATION_LIMITS.QUANTITY_MAX) {
         return;
       }
       setOrderItems((prev) =>
         prev.map((item) =>
-          item.id === itemId ? { ...item, [field]: digitsOnly || '1' } : item
+          item.id === itemId ? { ...item, [field]: digitsOnly } : item
         )
       );
       return;
@@ -255,7 +256,7 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
         product_id: '',
         product_name: '',
         unit_price: '',
-        quantity: '1',
+        quantity: '',
         courier_price: '',
         searchQuery: '',
         showDropdown: false,
@@ -626,13 +627,15 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
                   {/* Quantity */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      რაოდენობა
+                      რაოდენობა *
                     </label>
                     <input
-                      type="number"
-                      min="1"
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
                       value={item.quantity}
                       onChange={(e) => handleItemChange(item.id, 'quantity', e.target.value)}
+                      placeholder="1"
                       className="w-full px-3 py-2.5 text-base border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-600"
                     />
                   </div>

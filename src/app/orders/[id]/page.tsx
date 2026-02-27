@@ -228,7 +228,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
       {
         id: `new-${Date.now()}`,
         product_id: 0,
-        quantity: '1',
+        quantity: '',
         unit_price: '',
         courier_price: '0',
         searchQuery: '',
@@ -242,6 +242,14 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   };
 
   const updateEditOrderItem = (id: string, field: keyof EditOrderItem, value: string | number | boolean) => {
+    // For quantity field, only allow digits
+    if (field === 'quantity' && typeof value === 'string') {
+      const digitsOnly = value.replace(/[^0-9]/g, '');
+      setEditOrderItems(
+        editOrderItems.map((item) => (item.id === id ? { ...item, [field]: digitsOnly } : item))
+      );
+      return;
+    }
     setEditOrderItems(
       editOrderItems.map((item) => (item.id === id ? { ...item, [field]: value } : item))
     );
@@ -309,8 +317,8 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
         return 'აირჩიეთ პროდუქტი ყველა პოზიციისთვის';
       }
       const qty = parseInt(item.quantity);
-      if (isNaN(qty) || qty < 1) {
-        return 'რაოდენობა უნდა იყოს მინიმუმ 1';
+      if (!item.quantity || isNaN(qty) || qty < 1) {
+        return 'შეიყვანეთ რაოდენობა (მინიმუმ 1)';
       }
       const price = parseFloat(item.unit_price);
       if (isNaN(price) || price < 0) {
@@ -752,10 +760,12 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                                 რაოდენობა *
                               </label>
                               <input
-                                type="number"
-                                min="1"
+                                type="text"
+                                inputMode="numeric"
+                                pattern="[0-9]*"
                                 value={item.quantity}
                                 onChange={(e) => updateEditOrderItem(item.id, 'quantity', e.target.value)}
+                                placeholder="1"
                                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700"
                               />
                             </div>
