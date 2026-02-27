@@ -238,10 +238,6 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   };
 
   const removeEditOrderItem = (id: string) => {
-    if (editOrderItems.length <= 1) {
-      setEditError('შეკვეთას უნდა ჰქონდეს მინიმუმ 1 პროდუქტი');
-      return;
-    }
     setEditOrderItems(editOrderItems.filter((item) => item.id !== id));
   };
 
