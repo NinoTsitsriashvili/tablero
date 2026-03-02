@@ -19,7 +19,7 @@ interface Order {
   status: string;
   payment_type: string;
   location: string;
-  created_at: string;
+  send_date: string | null;
   items: OrderItem[];
 }
 
@@ -83,123 +83,123 @@ export async function GET(request: NextRequest) {
     // Build query based on active filters
     if (hasDateFilter && hasStatusFilter && hasPaymentFilter && hasProductFilter && hasLocationFilter) {
       ordersQuery = await sql`
-        SELECT o.id, o.status, o.payment_type, o.location, o.created_at,
+        SELECT o.id, o.status, o.payment_type, o.location, o.send_date,
                oi.id as item_id, oi.product_id, p.name as product_name,
                oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
         FROM orders o
         JOIN order_items oi ON o.id = oi.order_id
         LEFT JOIN products p ON oi.product_id = p.id
-        WHERE o.created_at >= ${startDate}::date
-          AND o.created_at < (${endDate}::date + INTERVAL '1 day')
+        WHERE o.send_date >= ${startDate}::date
+          AND o.send_date < (${endDate}::date + INTERVAL '1 day')
           AND o.status = ${statusFilter}
           AND o.payment_type = ${paymentType}
           AND o.location = ${locationFilter}
           AND oi.product_id = ${parseInt(productId)}
-        ORDER BY o.created_at DESC
+        ORDER BY o.send_date DESC
       `;
     } else if (hasDateFilter && hasStatusFilter && hasPaymentFilter && hasLocationFilter) {
       ordersQuery = await sql`
-        SELECT o.id, o.status, o.payment_type, o.location, o.created_at,
+        SELECT o.id, o.status, o.payment_type, o.location, o.send_date,
                oi.id as item_id, oi.product_id, p.name as product_name,
                oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
         FROM orders o
         JOIN order_items oi ON o.id = oi.order_id
         LEFT JOIN products p ON oi.product_id = p.id
-        WHERE o.created_at >= ${startDate}::date
-          AND o.created_at < (${endDate}::date + INTERVAL '1 day')
+        WHERE o.send_date >= ${startDate}::date
+          AND o.send_date < (${endDate}::date + INTERVAL '1 day')
           AND o.status = ${statusFilter}
           AND o.payment_type = ${paymentType}
           AND o.location = ${locationFilter}
-        ORDER BY o.created_at DESC
+        ORDER BY o.send_date DESC
       `;
     } else if (hasDateFilter && hasStatusFilter && hasProductFilter && hasLocationFilter) {
       ordersQuery = await sql`
-        SELECT o.id, o.status, o.payment_type, o.location, o.created_at,
+        SELECT o.id, o.status, o.payment_type, o.location, o.send_date,
                oi.id as item_id, oi.product_id, p.name as product_name,
                oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
         FROM orders o
         JOIN order_items oi ON o.id = oi.order_id
         LEFT JOIN products p ON oi.product_id = p.id
-        WHERE o.created_at >= ${startDate}::date
-          AND o.created_at < (${endDate}::date + INTERVAL '1 day')
+        WHERE o.send_date >= ${startDate}::date
+          AND o.send_date < (${endDate}::date + INTERVAL '1 day')
           AND o.status = ${statusFilter}
           AND o.location = ${locationFilter}
           AND oi.product_id = ${parseInt(productId)}
-        ORDER BY o.created_at DESC
+        ORDER BY o.send_date DESC
       `;
     } else if (hasDateFilter && hasPaymentFilter && hasProductFilter && hasLocationFilter) {
       ordersQuery = await sql`
-        SELECT o.id, o.status, o.payment_type, o.location, o.created_at,
+        SELECT o.id, o.status, o.payment_type, o.location, o.send_date,
                oi.id as item_id, oi.product_id, p.name as product_name,
                oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
         FROM orders o
         JOIN order_items oi ON o.id = oi.order_id
         LEFT JOIN products p ON oi.product_id = p.id
-        WHERE o.created_at >= ${startDate}::date
-          AND o.created_at < (${endDate}::date + INTERVAL '1 day')
+        WHERE o.send_date >= ${startDate}::date
+          AND o.send_date < (${endDate}::date + INTERVAL '1 day')
           AND o.payment_type = ${paymentType}
           AND o.location = ${locationFilter}
           AND oi.product_id = ${parseInt(productId)}
-        ORDER BY o.created_at DESC
+        ORDER BY o.send_date DESC
       `;
     } else if (hasDateFilter && hasStatusFilter && hasLocationFilter) {
       ordersQuery = await sql`
-        SELECT o.id, o.status, o.payment_type, o.location, o.created_at,
+        SELECT o.id, o.status, o.payment_type, o.location, o.send_date,
                oi.id as item_id, oi.product_id, p.name as product_name,
                oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
         FROM orders o
         JOIN order_items oi ON o.id = oi.order_id
         LEFT JOIN products p ON oi.product_id = p.id
-        WHERE o.created_at >= ${startDate}::date
-          AND o.created_at < (${endDate}::date + INTERVAL '1 day')
+        WHERE o.send_date >= ${startDate}::date
+          AND o.send_date < (${endDate}::date + INTERVAL '1 day')
           AND o.status = ${statusFilter}
           AND o.location = ${locationFilter}
-        ORDER BY o.created_at DESC
+        ORDER BY o.send_date DESC
       `;
     } else if (hasDateFilter && hasPaymentFilter && hasLocationFilter) {
       ordersQuery = await sql`
-        SELECT o.id, o.status, o.payment_type, o.location, o.created_at,
+        SELECT o.id, o.status, o.payment_type, o.location, o.send_date,
                oi.id as item_id, oi.product_id, p.name as product_name,
                oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
         FROM orders o
         JOIN order_items oi ON o.id = oi.order_id
         LEFT JOIN products p ON oi.product_id = p.id
-        WHERE o.created_at >= ${startDate}::date
-          AND o.created_at < (${endDate}::date + INTERVAL '1 day')
+        WHERE o.send_date >= ${startDate}::date
+          AND o.send_date < (${endDate}::date + INTERVAL '1 day')
           AND o.payment_type = ${paymentType}
           AND o.location = ${locationFilter}
-        ORDER BY o.created_at DESC
+        ORDER BY o.send_date DESC
       `;
     } else if (hasDateFilter && hasProductFilter && hasLocationFilter) {
       ordersQuery = await sql`
-        SELECT o.id, o.status, o.payment_type, o.location, o.created_at,
+        SELECT o.id, o.status, o.payment_type, o.location, o.send_date,
                oi.id as item_id, oi.product_id, p.name as product_name,
                oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
         FROM orders o
         JOIN order_items oi ON o.id = oi.order_id
         LEFT JOIN products p ON oi.product_id = p.id
-        WHERE o.created_at >= ${startDate}::date
-          AND o.created_at < (${endDate}::date + INTERVAL '1 day')
+        WHERE o.send_date >= ${startDate}::date
+          AND o.send_date < (${endDate}::date + INTERVAL '1 day')
           AND o.location = ${locationFilter}
           AND oi.product_id = ${parseInt(productId)}
-        ORDER BY o.created_at DESC
+        ORDER BY o.send_date DESC
       `;
     } else if (hasDateFilter && hasLocationFilter) {
       ordersQuery = await sql`
-        SELECT o.id, o.status, o.payment_type, o.location, o.created_at,
+        SELECT o.id, o.status, o.payment_type, o.location, o.send_date,
                oi.id as item_id, oi.product_id, p.name as product_name,
                oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
         FROM orders o
         JOIN order_items oi ON o.id = oi.order_id
         LEFT JOIN products p ON oi.product_id = p.id
-        WHERE o.created_at >= ${startDate}::date
-          AND o.created_at < (${endDate}::date + INTERVAL '1 day')
+        WHERE o.send_date >= ${startDate}::date
+          AND o.send_date < (${endDate}::date + INTERVAL '1 day')
           AND o.location = ${locationFilter}
-        ORDER BY o.created_at DESC
+        ORDER BY o.send_date DESC
       `;
     } else if (hasStatusFilter && hasPaymentFilter && hasProductFilter && hasLocationFilter) {
       ordersQuery = await sql`
-        SELECT o.id, o.status, o.payment_type, o.location, o.created_at,
+        SELECT o.id, o.status, o.payment_type, o.location, o.send_date,
                oi.id as item_id, oi.product_id, p.name as product_name,
                oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
         FROM orders o
@@ -209,11 +209,11 @@ export async function GET(request: NextRequest) {
           AND o.payment_type = ${paymentType}
           AND o.location = ${locationFilter}
           AND oi.product_id = ${parseInt(productId)}
-        ORDER BY o.created_at DESC
+        ORDER BY o.send_date DESC
       `;
     } else if (hasStatusFilter && hasPaymentFilter && hasLocationFilter) {
       ordersQuery = await sql`
-        SELECT o.id, o.status, o.payment_type, o.location, o.created_at,
+        SELECT o.id, o.status, o.payment_type, o.location, o.send_date,
                oi.id as item_id, oi.product_id, p.name as product_name,
                oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
         FROM orders o
@@ -222,11 +222,11 @@ export async function GET(request: NextRequest) {
         WHERE o.status = ${statusFilter}
           AND o.payment_type = ${paymentType}
           AND o.location = ${locationFilter}
-        ORDER BY o.created_at DESC
+        ORDER BY o.send_date DESC
       `;
     } else if (hasStatusFilter && hasProductFilter && hasLocationFilter) {
       ordersQuery = await sql`
-        SELECT o.id, o.status, o.payment_type, o.location, o.created_at,
+        SELECT o.id, o.status, o.payment_type, o.location, o.send_date,
                oi.id as item_id, oi.product_id, p.name as product_name,
                oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
         FROM orders o
@@ -235,11 +235,11 @@ export async function GET(request: NextRequest) {
         WHERE o.status = ${statusFilter}
           AND o.location = ${locationFilter}
           AND oi.product_id = ${parseInt(productId)}
-        ORDER BY o.created_at DESC
+        ORDER BY o.send_date DESC
       `;
     } else if (hasPaymentFilter && hasProductFilter && hasLocationFilter) {
       ordersQuery = await sql`
-        SELECT o.id, o.status, o.payment_type, o.location, o.created_at,
+        SELECT o.id, o.status, o.payment_type, o.location, o.send_date,
                oi.id as item_id, oi.product_id, p.name as product_name,
                oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
         FROM orders o
@@ -248,11 +248,11 @@ export async function GET(request: NextRequest) {
         WHERE o.payment_type = ${paymentType}
           AND o.location = ${locationFilter}
           AND oi.product_id = ${parseInt(productId)}
-        ORDER BY o.created_at DESC
+        ORDER BY o.send_date DESC
       `;
     } else if (hasStatusFilter && hasLocationFilter) {
       ordersQuery = await sql`
-        SELECT o.id, o.status, o.payment_type, o.location, o.created_at,
+        SELECT o.id, o.status, o.payment_type, o.location, o.send_date,
                oi.id as item_id, oi.product_id, p.name as product_name,
                oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
         FROM orders o
@@ -260,11 +260,11 @@ export async function GET(request: NextRequest) {
         LEFT JOIN products p ON oi.product_id = p.id
         WHERE o.status = ${statusFilter}
           AND o.location = ${locationFilter}
-        ORDER BY o.created_at DESC
+        ORDER BY o.send_date DESC
       `;
     } else if (hasPaymentFilter && hasLocationFilter) {
       ordersQuery = await sql`
-        SELECT o.id, o.status, o.payment_type, o.location, o.created_at,
+        SELECT o.id, o.status, o.payment_type, o.location, o.send_date,
                oi.id as item_id, oi.product_id, p.name as product_name,
                oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
         FROM orders o
@@ -272,11 +272,11 @@ export async function GET(request: NextRequest) {
         LEFT JOIN products p ON oi.product_id = p.id
         WHERE o.payment_type = ${paymentType}
           AND o.location = ${locationFilter}
-        ORDER BY o.created_at DESC
+        ORDER BY o.send_date DESC
       `;
     } else if (hasProductFilter && hasLocationFilter) {
       ordersQuery = await sql`
-        SELECT o.id, o.status, o.payment_type, o.location, o.created_at,
+        SELECT o.id, o.status, o.payment_type, o.location, o.send_date,
                oi.id as item_id, oi.product_id, p.name as product_name,
                oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
         FROM orders o
@@ -284,116 +284,116 @@ export async function GET(request: NextRequest) {
         LEFT JOIN products p ON oi.product_id = p.id
         WHERE o.location = ${locationFilter}
           AND oi.product_id = ${parseInt(productId)}
-        ORDER BY o.created_at DESC
+        ORDER BY o.send_date DESC
       `;
     } else if (hasLocationFilter) {
       ordersQuery = await sql`
-        SELECT o.id, o.status, o.payment_type, o.location, o.created_at,
+        SELECT o.id, o.status, o.payment_type, o.location, o.send_date,
                oi.id as item_id, oi.product_id, p.name as product_name,
                oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
         FROM orders o
         JOIN order_items oi ON o.id = oi.order_id
         LEFT JOIN products p ON oi.product_id = p.id
         WHERE o.location = ${locationFilter}
-        ORDER BY o.created_at DESC
+        ORDER BY o.send_date DESC
       `;
     } else if (hasDateFilter && hasStatusFilter && hasPaymentFilter && hasProductFilter) {
       ordersQuery = await sql`
-        SELECT o.id, o.status, o.payment_type, o.location, o.created_at,
+        SELECT o.id, o.status, o.payment_type, o.location, o.send_date,
                oi.id as item_id, oi.product_id, p.name as product_name,
                oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
         FROM orders o
         JOIN order_items oi ON o.id = oi.order_id
         LEFT JOIN products p ON oi.product_id = p.id
-        WHERE o.created_at >= ${startDate}::date
-          AND o.created_at < (${endDate}::date + INTERVAL '1 day')
+        WHERE o.send_date >= ${startDate}::date
+          AND o.send_date < (${endDate}::date + INTERVAL '1 day')
           AND o.status = ${statusFilter}
           AND o.payment_type = ${paymentType}
           AND oi.product_id = ${parseInt(productId)}
-        ORDER BY o.created_at DESC
+        ORDER BY o.send_date DESC
       `;
     } else if (hasDateFilter && hasStatusFilter && hasPaymentFilter) {
       ordersQuery = await sql`
-        SELECT o.id, o.status, o.payment_type, o.location, o.created_at,
+        SELECT o.id, o.status, o.payment_type, o.location, o.send_date,
                oi.id as item_id, oi.product_id, p.name as product_name,
                oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
         FROM orders o
         JOIN order_items oi ON o.id = oi.order_id
         LEFT JOIN products p ON oi.product_id = p.id
-        WHERE o.created_at >= ${startDate}::date
-          AND o.created_at < (${endDate}::date + INTERVAL '1 day')
+        WHERE o.send_date >= ${startDate}::date
+          AND o.send_date < (${endDate}::date + INTERVAL '1 day')
           AND o.status = ${statusFilter}
           AND o.payment_type = ${paymentType}
-        ORDER BY o.created_at DESC
+        ORDER BY o.send_date DESC
       `;
     } else if (hasDateFilter && hasStatusFilter && hasProductFilter) {
       ordersQuery = await sql`
-        SELECT o.id, o.status, o.payment_type, o.location, o.created_at,
+        SELECT o.id, o.status, o.payment_type, o.location, o.send_date,
                oi.id as item_id, oi.product_id, p.name as product_name,
                oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
         FROM orders o
         JOIN order_items oi ON o.id = oi.order_id
         LEFT JOIN products p ON oi.product_id = p.id
-        WHERE o.created_at >= ${startDate}::date
-          AND o.created_at < (${endDate}::date + INTERVAL '1 day')
+        WHERE o.send_date >= ${startDate}::date
+          AND o.send_date < (${endDate}::date + INTERVAL '1 day')
           AND o.status = ${statusFilter}
           AND oi.product_id = ${parseInt(productId)}
-        ORDER BY o.created_at DESC
+        ORDER BY o.send_date DESC
       `;
     } else if (hasDateFilter && hasStatusFilter) {
       ordersQuery = await sql`
-        SELECT o.id, o.status, o.payment_type, o.location, o.created_at,
+        SELECT o.id, o.status, o.payment_type, o.location, o.send_date,
                oi.id as item_id, oi.product_id, p.name as product_name,
                oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
         FROM orders o
         JOIN order_items oi ON o.id = oi.order_id
         LEFT JOIN products p ON oi.product_id = p.id
-        WHERE o.created_at >= ${startDate}::date
-          AND o.created_at < (${endDate}::date + INTERVAL '1 day')
+        WHERE o.send_date >= ${startDate}::date
+          AND o.send_date < (${endDate}::date + INTERVAL '1 day')
           AND o.status = ${statusFilter}
-        ORDER BY o.created_at DESC
+        ORDER BY o.send_date DESC
       `;
     } else if (hasDateFilter && hasPaymentFilter) {
       ordersQuery = await sql`
-        SELECT o.id, o.status, o.payment_type, o.location, o.created_at,
+        SELECT o.id, o.status, o.payment_type, o.location, o.send_date,
                oi.id as item_id, oi.product_id, p.name as product_name,
                oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
         FROM orders o
         JOIN order_items oi ON o.id = oi.order_id
         LEFT JOIN products p ON oi.product_id = p.id
-        WHERE o.created_at >= ${startDate}::date
-          AND o.created_at < (${endDate}::date + INTERVAL '1 day')
+        WHERE o.send_date >= ${startDate}::date
+          AND o.send_date < (${endDate}::date + INTERVAL '1 day')
           AND o.payment_type = ${paymentType}
-        ORDER BY o.created_at DESC
+        ORDER BY o.send_date DESC
       `;
     } else if (hasDateFilter && hasProductFilter) {
       ordersQuery = await sql`
-        SELECT o.id, o.status, o.payment_type, o.location, o.created_at,
+        SELECT o.id, o.status, o.payment_type, o.location, o.send_date,
                oi.id as item_id, oi.product_id, p.name as product_name,
                oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
         FROM orders o
         JOIN order_items oi ON o.id = oi.order_id
         LEFT JOIN products p ON oi.product_id = p.id
-        WHERE o.created_at >= ${startDate}::date
-          AND o.created_at < (${endDate}::date + INTERVAL '1 day')
+        WHERE o.send_date >= ${startDate}::date
+          AND o.send_date < (${endDate}::date + INTERVAL '1 day')
           AND oi.product_id = ${parseInt(productId)}
-        ORDER BY o.created_at DESC
+        ORDER BY o.send_date DESC
       `;
     } else if (hasDateFilter) {
       ordersQuery = await sql`
-        SELECT o.id, o.status, o.payment_type, o.location, o.created_at,
+        SELECT o.id, o.status, o.payment_type, o.location, o.send_date,
                oi.id as item_id, oi.product_id, p.name as product_name,
                oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
         FROM orders o
         JOIN order_items oi ON o.id = oi.order_id
         LEFT JOIN products p ON oi.product_id = p.id
-        WHERE o.created_at >= ${startDate}::date
-          AND o.created_at < (${endDate}::date + INTERVAL '1 day')
-        ORDER BY o.created_at DESC
+        WHERE o.send_date >= ${startDate}::date
+          AND o.send_date < (${endDate}::date + INTERVAL '1 day')
+        ORDER BY o.send_date DESC
       `;
     } else if (hasStatusFilter && hasPaymentFilter && hasProductFilter) {
       ordersQuery = await sql`
-        SELECT o.id, o.status, o.payment_type, o.location, o.created_at,
+        SELECT o.id, o.status, o.payment_type, o.location, o.send_date,
                oi.id as item_id, oi.product_id, p.name as product_name,
                oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
         FROM orders o
@@ -402,11 +402,11 @@ export async function GET(request: NextRequest) {
         WHERE o.status = ${statusFilter}
           AND o.payment_type = ${paymentType}
           AND oi.product_id = ${parseInt(productId)}
-        ORDER BY o.created_at DESC
+        ORDER BY o.send_date DESC
       `;
     } else if (hasStatusFilter && hasPaymentFilter) {
       ordersQuery = await sql`
-        SELECT o.id, o.status, o.payment_type, o.location, o.created_at,
+        SELECT o.id, o.status, o.payment_type, o.location, o.send_date,
                oi.id as item_id, oi.product_id, p.name as product_name,
                oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
         FROM orders o
@@ -414,11 +414,11 @@ export async function GET(request: NextRequest) {
         LEFT JOIN products p ON oi.product_id = p.id
         WHERE o.status = ${statusFilter}
           AND o.payment_type = ${paymentType}
-        ORDER BY o.created_at DESC
+        ORDER BY o.send_date DESC
       `;
     } else if (hasStatusFilter && hasProductFilter) {
       ordersQuery = await sql`
-        SELECT o.id, o.status, o.payment_type, o.location, o.created_at,
+        SELECT o.id, o.status, o.payment_type, o.location, o.send_date,
                oi.id as item_id, oi.product_id, p.name as product_name,
                oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
         FROM orders o
@@ -426,22 +426,22 @@ export async function GET(request: NextRequest) {
         LEFT JOIN products p ON oi.product_id = p.id
         WHERE o.status = ${statusFilter}
           AND oi.product_id = ${parseInt(productId)}
-        ORDER BY o.created_at DESC
+        ORDER BY o.send_date DESC
       `;
     } else if (hasStatusFilter) {
       ordersQuery = await sql`
-        SELECT o.id, o.status, o.payment_type, o.location, o.created_at,
+        SELECT o.id, o.status, o.payment_type, o.location, o.send_date,
                oi.id as item_id, oi.product_id, p.name as product_name,
                oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
         FROM orders o
         JOIN order_items oi ON o.id = oi.order_id
         LEFT JOIN products p ON oi.product_id = p.id
         WHERE o.status = ${statusFilter}
-        ORDER BY o.created_at DESC
+        ORDER BY o.send_date DESC
       `;
     } else if (hasPaymentFilter && hasProductFilter) {
       ordersQuery = await sql`
-        SELECT o.id, o.status, o.payment_type, o.location, o.created_at,
+        SELECT o.id, o.status, o.payment_type, o.location, o.send_date,
                oi.id as item_id, oi.product_id, p.name as product_name,
                oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
         FROM orders o
@@ -449,40 +449,40 @@ export async function GET(request: NextRequest) {
         LEFT JOIN products p ON oi.product_id = p.id
         WHERE o.payment_type = ${paymentType}
           AND oi.product_id = ${parseInt(productId)}
-        ORDER BY o.created_at DESC
+        ORDER BY o.send_date DESC
       `;
     } else if (hasPaymentFilter) {
       ordersQuery = await sql`
-        SELECT o.id, o.status, o.payment_type, o.location, o.created_at,
+        SELECT o.id, o.status, o.payment_type, o.location, o.send_date,
                oi.id as item_id, oi.product_id, p.name as product_name,
                oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
         FROM orders o
         JOIN order_items oi ON o.id = oi.order_id
         LEFT JOIN products p ON oi.product_id = p.id
         WHERE o.payment_type = ${paymentType}
-        ORDER BY o.created_at DESC
+        ORDER BY o.send_date DESC
       `;
     } else if (hasProductFilter) {
       ordersQuery = await sql`
-        SELECT o.id, o.status, o.payment_type, o.location, o.created_at,
+        SELECT o.id, o.status, o.payment_type, o.location, o.send_date,
                oi.id as item_id, oi.product_id, p.name as product_name,
                oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
         FROM orders o
         JOIN order_items oi ON o.id = oi.order_id
         LEFT JOIN products p ON oi.product_id = p.id
         WHERE oi.product_id = ${parseInt(productId)}
-        ORDER BY o.created_at DESC
+        ORDER BY o.send_date DESC
       `;
     } else {
       // No filters - get all orders
       ordersQuery = await sql`
-        SELECT o.id, o.status, o.payment_type, o.location, o.created_at,
+        SELECT o.id, o.status, o.payment_type, o.location, o.send_date,
                oi.id as item_id, oi.product_id, p.name as product_name,
                oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
         FROM orders o
         JOIN order_items oi ON o.id = oi.order_id
         LEFT JOIN products p ON oi.product_id = p.id
-        ORDER BY o.created_at DESC
+        ORDER BY o.send_date DESC
       `;
     }
 
@@ -499,8 +499,8 @@ export async function GET(request: NextRequest) {
       const unitPrice = Number(row.unit_price);
       const courierPrice = Number(row.courier_price || 0);
       const costPrice = row.cost_price ? Number(row.cost_price) : null;
-      const createdAt = new Date(row.created_at as string);
-      const dateKey = createdAt.toISOString().split('T')[0];
+      const sendDate = row.send_date ? new Date(row.send_date as string) : null;
+      const dateKey = sendDate ? sendDate.toISOString().split('T')[0] : null;
 
       // Build order map
       if (!ordersMap.has(orderId)) {
@@ -509,7 +509,7 @@ export async function GET(request: NextRequest) {
           status: row.status as string,
           payment_type: row.payment_type as string,
           location: (row.location as string) || 'tbilisi',
-          created_at: row.created_at as string,
+          send_date: row.send_date as string | null,
           items: [],
         });
       }
@@ -550,32 +550,37 @@ export async function GET(request: NextRequest) {
       productStats.total_cost += itemCost;
       productStats.total_profit += itemProfit;
 
-      // Update daily stats
-      if (!dailyStatsMap.has(dateKey)) {
-        dailyStatsMap.set(dateKey, {
-          date: dateKey,
-          order_count: 0,
-          total_revenue: 0,
-          total_courier: 0,
-          total_cost: 0,
-          total_profit: 0,
-          items_sold: 0,
-        });
+      // Update daily stats (only for orders with send_date)
+      if (dateKey) {
+        if (!dailyStatsMap.has(dateKey)) {
+          dailyStatsMap.set(dateKey, {
+            date: dateKey,
+            order_count: 0,
+            total_revenue: 0,
+            total_courier: 0,
+            total_cost: 0,
+            total_profit: 0,
+            items_sold: 0,
+          });
+        }
+        const dailyStats = dailyStatsMap.get(dateKey)!;
+        dailyStats.total_revenue += itemRevenue;
+        dailyStats.total_courier += itemCourier;
+        dailyStats.total_cost += itemCost;
+        dailyStats.total_profit += itemProfit;
+        dailyStats.items_sold += quantity;
       }
-      const dailyStats = dailyStatsMap.get(dateKey)!;
-      dailyStats.total_revenue += itemRevenue;
-      dailyStats.total_courier += itemCourier;
-      dailyStats.total_cost += itemCost;
-      dailyStats.total_profit += itemProfit;
-      dailyStats.items_sold += quantity;
     }
 
     // Count unique orders per product and per day
     for (const order of ordersMap.values()) {
-      const dateKey = new Date(order.created_at).toISOString().split('T')[0];
-      const dailyStats = dailyStatsMap.get(dateKey);
-      if (dailyStats) {
-        dailyStats.order_count++;
+      // Only count in daily stats if order has send_date
+      if (order.send_date) {
+        const dateKey = new Date(order.send_date).toISOString().split('T')[0];
+        const dailyStats = dailyStatsMap.get(dateKey);
+        if (dailyStats) {
+          dailyStats.order_count++;
+        }
       }
 
       // Count orders per product
