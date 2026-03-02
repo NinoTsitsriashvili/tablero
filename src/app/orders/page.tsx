@@ -1,12 +1,24 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import Navbar from '@/components/Navbar';
 import OrderForm from '@/components/OrderForm';
+
+// Status configuration
+const STATUS_CONFIG = {
+  pending: { label: 'მოლოდინში', style: 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200' },
+  stickered: { label: 'დასტიკერებული', style: 'bg-cyan-100 dark:bg-cyan-900 text-cyan-800 dark:text-cyan-200' },
+  shipped: { label: 'გაგზავნილი', style: 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200' },
+  postponed: { label: 'გადადებული', style: 'bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200' },
+  delivered: { label: 'მიწოდებული', style: 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200' },
+  cancelled: { label: 'გაუქმებული', style: 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200' },
+};
+
+const STATUS_ORDER = ['pending', 'stickered', 'shipped', 'postponed', 'delivered', 'cancelled'];
 
 interface OrderItem {
   id: number;
@@ -101,6 +113,9 @@ export default function OrdersPage() {
   const [showForm, setShowForm] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [statusDropdownOpen, setStatusDropdownOpen] = useState<number | null>(null);
+  const [updatingStatus, setUpdatingStatus] = useState<number | null>(null);
+  const statusDropdownRef = useRef<HTMLDivElement>(null);
   const ITEMS_PER_PAGE = 10;
 
   // Filter orders based on search query (FB name, recipient name, phone)
@@ -124,6 +139,20 @@ export default function OrdersPage() {
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (statusDropdownRef.current && !statusDropdownRef.current.contains(event.target as Node)) {
+        setStatusDropdownOpen(null);
+      }
+    };
+
+    if (statusDropdownOpen !== null) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [statusDropdownOpen]);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -156,27 +185,103 @@ export default function OrdersPage() {
     fetchOrders();
   };
 
+  const updateOrderStatus = async (orderId: number, newStatus: string) => {
+    setUpdatingStatus(orderId);
+    try {
+      const res = await fetch(`/api/orders/${orderId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (res.ok) {
+        // Update local state
+        setOrders(orders.map(order =>
+          order.id === orderId ? { ...order, status: newStatus } : order
+        ));
+      } else {
+        const data = await res.json();
+        alert(data.error || 'სტატუსის შეცვლა ვერ მოხერხდა');
+      }
+    } catch (error) {
+      console.error('Error updating status:', error);
+      alert('სტატუსის შეცვლა ვერ მოხერხდა');
+    } finally {
+      setUpdatingStatus(null);
+      setStatusDropdownOpen(null);
+    }
+  };
+
   const getStatusBadge = (status: string) => {
-    const styles: Record<string, string> = {
-      pending: 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200',
-      stickered: 'bg-cyan-100 dark:bg-cyan-900 text-cyan-800 dark:text-cyan-200',
-      shipped: 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200',
-      postponed: 'bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200',
-      delivered: 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200',
-      cancelled: 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200',
-    };
-    const labels: Record<string, string> = {
-      pending: 'მოლოდინში',
-      stickered: 'დასტიკერებული',
-      shipped: 'გაგზავნილი',
-      postponed: 'გადადებული',
-      delivered: 'მიწოდებული',
-      cancelled: 'გაუქმებული',
-    };
+    const config = STATUS_CONFIG[status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.pending;
     return (
-      <span className={`px-2 py-1 rounded-full text-xs font-medium ${styles[status] || styles.pending}`}>
-        {labels[status] || status}
+      <span className={`px-2 py-1 rounded-full text-xs font-medium ${config.style}`}>
+        {config.label}
       </span>
+    );
+  };
+
+  // Interactive status badge with dropdown
+  const StatusSelector = ({ order }: { order: Order }) => {
+    const isOpen = statusDropdownOpen === order.id;
+    const isUpdating = updatingStatus === order.id;
+    const config = STATUS_CONFIG[order.status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.pending;
+
+    return (
+      <div className="relative" ref={isOpen ? statusDropdownRef : undefined}>
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setStatusDropdownOpen(isOpen ? null : order.id);
+          }}
+          disabled={isUpdating}
+          className={`px-2 py-1 rounded-full text-xs font-medium ${config.style} cursor-pointer hover:opacity-80 transition-opacity flex items-center gap-1 ${isUpdating ? 'opacity-50' : ''}`}
+        >
+          {isUpdating ? (
+            <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+            </svg>
+          ) : null}
+          {config.label}
+          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+
+        {isOpen && (
+          <div className="absolute z-50 mt-1 w-40 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 left-0">
+            {STATUS_ORDER.map((statusKey) => {
+              const statusConfig = STATUS_CONFIG[statusKey as keyof typeof STATUS_CONFIG];
+              const isCurrentStatus = order.status === statusKey;
+              return (
+                <button
+                  key={statusKey}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (!isCurrentStatus) {
+                      updateOrderStatus(order.id, statusKey);
+                    }
+                  }}
+                  className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 ${
+                    isCurrentStatus ? 'bg-gray-50 dark:bg-gray-700' : ''
+                  }`}
+                >
+                  <span className={`w-2 h-2 rounded-full ${statusConfig.style.split(' ')[0]}`}></span>
+                  <span className="text-gray-800 dark:text-gray-200">{statusConfig.label}</span>
+                  {isCurrentStatus && (
+                    <svg className="w-4 h-4 ml-auto text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
     );
   };
 
@@ -446,15 +551,17 @@ export default function OrdersPage() {
             {/* Mobile Card View */}
             <div className="md:hidden space-y-3">
               {paginatedOrders.map((order) => (
-                <Link
+                <div
                   key={order.id}
-                  href={`/orders/${order.id}`}
-                  className="block bg-white dark:bg-gray-800 rounded-lg shadow p-4 hover:shadow-md transition-shadow"
+                  className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 hover:shadow-md transition-shadow"
                 >
                   {/* Header: Name and Status */}
                   <div className="flex items-start justify-between mb-2">
-                    <div className="flex-1 min-w-0 pr-2">
-                      <h3 className="font-medium text-gray-800 dark:text-white truncate">
+                    <Link
+                      href={`/orders/${order.id}`}
+                      className="flex-1 min-w-0 pr-2"
+                    >
+                      <h3 className="font-medium text-gray-800 dark:text-white truncate hover:text-blue-600 dark:hover:text-blue-400">
                         {order.fb_name}
                       </h3>
                       <div className="text-sm text-gray-500 dark:text-gray-400">
@@ -463,8 +570,8 @@ export default function OrdersPage() {
                       <div className="text-sm text-gray-400 dark:text-gray-500">
                         {order.phone}
                       </div>
-                    </div>
-                    {getStatusBadge(order.status)}
+                    </Link>
+                    <StatusSelector order={order} />
                   </div>
 
                   {/* Divider */}
@@ -529,21 +636,31 @@ export default function OrdersPage() {
                     )}
                   </div>
 
-                  {/* Footer: Total and Date */}
-                  <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
+                  {/* Footer: Total, Date, and View Button */}
+                  <Link
+                    href={`/orders/${order.id}`}
+                    className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100 dark:border-gray-700"
+                  >
                     <span className="font-medium text-gray-800 dark:text-white">
                       ₾{Number(order.total_price).toFixed(2)}
                     </span>
-                    <span className="text-sm text-gray-500 dark:text-gray-400">
-                      {new Date(order.created_at).toLocaleDateString('ka-GE', {
-                        day: 'numeric',
-                        month: 'short',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </span>
-                  </div>
-                </Link>
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm text-gray-500 dark:text-gray-400">
+                        {new Date(order.created_at).toLocaleDateString('ka-GE', {
+                          day: 'numeric',
+                          month: 'short',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </span>
+                      <span className="text-blue-600 dark:text-blue-400">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </span>
+                    </div>
+                  </Link>
+                </div>
               ))}
 
               {/* Mobile Pagination */}
@@ -641,7 +758,7 @@ export default function OrdersPage() {
                           ₾{Number(order.total_price).toFixed(2)}
                         </td>
                         <td className="px-4 py-3">
-                          {getStatusBadge(order.status)}
+                          <StatusSelector order={order} />
                         </td>
                         <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
                           {new Date(order.created_at).toLocaleDateString('ka-GE', {
