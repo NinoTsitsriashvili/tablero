@@ -45,6 +45,7 @@ export interface Order {
   comment: string | null;
   status: string;
   location: string;
+  send_date: string | null;
   created_at: string;
   updated_at: string;
   items_count: number;
