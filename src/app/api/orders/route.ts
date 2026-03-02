@@ -20,7 +20,7 @@ const VALIDATION = {
 const GEORGIAN_PHONE_REGEX = /^(\+995\s?)?5\d{8}$/;
 
 // Allowed order statuses (removed 'processing')
-const VALID_STATUSES = ['pending', 'shipped', 'delivered', 'cancelled'];
+const VALID_STATUSES = ['pending', 'stickered', 'shipped', 'postponed', 'delivered', 'cancelled'];
 
 // Allowed payment types
 const VALID_PAYMENT_TYPES = ['cash', 'transfer'];
