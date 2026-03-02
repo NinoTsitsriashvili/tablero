@@ -226,7 +226,7 @@ export async function POST(request: NextRequest) {
   try {
     const sql = getDb();
     const body = await request.json();
-    const { fb_name, recipient_name, phone, phone2, address, comment, items, payment_type, send_date } = body;
+    const { fb_name, recipient_name, phone, phone2, address, comment, items, payment_type, send_date, location } = body;
 
     // Validate input
     const validation = validateOrderInput(body);
@@ -256,8 +256,8 @@ export async function POST(request: NextRequest) {
 
     // Create the order
     const orderResult = await sql`
-      INSERT INTO orders (fb_name, recipient_name, phone, phone2, address, comment, payment_type, send_date)
-      VALUES (${fb_name}, ${recipient_name}, ${phone}, ${phone2 || null}, ${address}, ${comment || null}, ${payment_type || 'cash'}, ${send_date || null})
+      INSERT INTO orders (fb_name, recipient_name, phone, phone2, address, comment, payment_type, send_date, location)
+      VALUES (${fb_name}, ${recipient_name}, ${phone}, ${phone2 || null}, ${address}, ${comment || null}, ${payment_type || 'cash'}, ${send_date || null}, ${location || 'tbilisi'})
       RETURNING *
     ` as Record<string, unknown>[];
 

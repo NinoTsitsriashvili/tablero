@@ -485,7 +485,7 @@ export async function PUT(
     }
 
     // Update customer info
-    const { fb_name, recipient_name, phone, phone2, address, comment, status, payment_type, send_date } = body;
+    const { fb_name, recipient_name, phone, phone2, address, comment, status, payment_type, send_date, location } = body;
 
     const result = await sql`
       UPDATE orders
@@ -498,6 +498,7 @@ export async function PUT(
           status = ${status || 'pending'},
           payment_type = ${payment_type || 'cash'},
           send_date = ${send_date || null},
+          location = ${location || 'tbilisi'},
           updated_at = CURRENT_TIMESTAMP
       WHERE id = ${id}
       RETURNING *

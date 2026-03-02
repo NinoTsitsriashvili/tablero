@@ -44,6 +44,7 @@ export interface Order {
   total_price: number;
   comment: string | null;
   status: string;
+  location: string;
   created_at: string;
   updated_at: string;
   items_count: number;
@@ -115,11 +116,18 @@ export default function OrdersPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [statusDropdownOpen, setStatusDropdownOpen] = useState<number | null>(null);
   const [updatingStatus, setUpdatingStatus] = useState<number | null>(null);
+  const [locationFilter, setLocationFilter] = useState<'all' | 'tbilisi' | 'region'>('all');
   const statusDropdownRef = useRef<HTMLDivElement>(null);
   const ITEMS_PER_PAGE = 10;
 
-  // Filter orders based on search query (FB name, recipient name, phone)
+  // Filter orders based on search query and location
   const filteredOrders = orders.filter((order) => {
+    // Location filter
+    if (locationFilter !== 'all') {
+      if (order.location !== locationFilter) return false;
+    }
+
+    // Search filter
     if (!searchQuery.trim()) return true;
     const query = searchQuery.toLowerCase().trim();
     const fbNameMatch = order.fb_name.toLowerCase().includes(query);
@@ -466,8 +474,9 @@ export default function OrdersPage() {
           </button>
         </div>
 
-        {/* Search Input */}
-        <div className="mb-6">
+        {/* Search and Filters */}
+        <div className="mb-6 space-y-4">
+          {/* Search Input */}
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <svg
@@ -506,8 +515,44 @@ export default function OrdersPage() {
               </button>
             )}
           </div>
-          {searchQuery && (
-            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+
+          {/* Location Filter Tabs */}
+          <div className="flex gap-2">
+            <button
+              onClick={() => { setLocationFilter('all'); setCurrentPage(1); }}
+              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                locationFilter === 'all'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
+              }`}
+            >
+              ყველა
+            </button>
+            <button
+              onClick={() => { setLocationFilter('tbilisi'); setCurrentPage(1); }}
+              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                locationFilter === 'tbilisi'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
+              }`}
+            >
+              თბილისი
+            </button>
+            <button
+              onClick={() => { setLocationFilter('region'); setCurrentPage(1); }}
+              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                locationFilter === 'region'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
+              }`}
+            >
+              რეგიონები
+            </button>
+          </div>
+
+          {/* Filter info */}
+          {(searchQuery || locationFilter !== 'all') && (
+            <p className="text-sm text-gray-500 dark:text-gray-400">
               ნაპოვნია: {filteredOrders.length} შეკვეთა
             </p>
           )}

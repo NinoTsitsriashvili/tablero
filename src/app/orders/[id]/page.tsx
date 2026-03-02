@@ -29,6 +29,7 @@ interface OrderWithItems {
   status: string;
   payment_type: string;
   send_date: string | null;
+  location: string;
   created_at: string;
   updated_at: string;
   items: OrderItem[];
@@ -58,6 +59,7 @@ interface EditFormData {
   comment: string;
   payment_type: string;
   send_date: string;
+  location: string;
 }
 
 interface Product {
@@ -97,6 +99,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
     comment: '',
     payment_type: 'cash',
     send_date: '',
+    location: 'tbilisi',
   });
   const [products, setProducts] = useState<Product[]>([]);
   const [editOrderItems, setEditOrderItems] = useState<EditOrderItem[]>([]);
@@ -193,6 +196,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
         comment: order.comment || '',
         payment_type: order.payment_type || 'cash',
         send_date: order.send_date ? order.send_date.split('T')[0] : '',
+        location: order.location || 'tbilisi',
       });
 
       // Initialize edit order items from current order items
@@ -361,6 +365,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
           comment: editForm.comment || null,
           payment_type: editForm.payment_type,
           send_date: editForm.send_date || null,
+          location: editForm.location,
           status: order?.status || 'pending',
           items: items,
         }),
@@ -639,6 +644,35 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700"
                       />
                     </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        ლოკაცია *
+                      </label>
+                      <div className="flex gap-4">
+                        <label className="flex items-center cursor-pointer">
+                          <input
+                            type="radio"
+                            name="location"
+                            value="tbilisi"
+                            checked={editForm.location === 'tbilisi'}
+                            onChange={handleEditChange}
+                            className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                          />
+                          <span className="ml-2 text-gray-800 dark:text-gray-200">თბილისი</span>
+                        </label>
+                        <label className="flex items-center cursor-pointer">
+                          <input
+                            type="radio"
+                            name="location"
+                            value="region"
+                            checked={editForm.location === 'region'}
+                            onChange={handleEditChange}
+                            className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                          />
+                          <span className="ml-2 text-gray-800 dark:text-gray-200">რეგიონები</span>
+                        </label>
+                      </div>
+                    </div>
                   </div>
 
                   <div className="mb-4">
@@ -896,6 +930,16 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                 <p className="text-gray-800 dark:text-white font-medium">
                   {order.send_date ? new Date(order.send_date).toLocaleDateString('ka-GE') : '--'}
                 </p>
+              </div>
+              <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">ლოკაცია</p>
+                <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                  order.location === 'tbilisi'
+                    ? 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200'
+                    : 'bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-200'
+                }`}>
+                  {order.location === 'tbilisi' ? 'თბილისი' : 'რეგიონები'}
+                </span>
               </div>
             </div>
 

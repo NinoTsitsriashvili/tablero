@@ -55,6 +55,7 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
     comment: '',
     payment_type: 'cash',
     send_date: '',
+    location: 'tbilisi',
   });
 
   const [orderItems, setOrderItems] = useState<OrderItem[]>([
@@ -373,6 +374,7 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
           comment: formData.comment || null,
           payment_type: formData.payment_type,
           send_date: formData.send_date || null,
+          location: formData.location,
           items: validItems.map((item) => ({
             product_id: parseInt(item.product_id, 10),
             unit_price: parseFloat(item.unit_price),
@@ -528,6 +530,37 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
               onChange={handleChange}
               className="w-full px-3 py-2.5 text-base border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700"
             />
+          </div>
+        </div>
+
+        {/* Location selector */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            ლოკაცია *
+          </label>
+          <div className="flex gap-4">
+            <label className="flex items-center cursor-pointer">
+              <input
+                type="radio"
+                name="location"
+                value="tbilisi"
+                checked={formData.location === 'tbilisi'}
+                onChange={handleChange}
+                className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer"
+              />
+              <span className="ml-2 text-gray-800 dark:text-gray-200">თბილისი</span>
+            </label>
+            <label className="flex items-center cursor-pointer">
+              <input
+                type="radio"
+                name="location"
+                value="region"
+                checked={formData.location === 'region'}
+                onChange={handleChange}
+                className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer"
+              />
+              <span className="ml-2 text-gray-800 dark:text-gray-200">რეგიონები</span>
+            </label>
           </div>
         </div>
 

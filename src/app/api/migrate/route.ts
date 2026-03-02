@@ -49,6 +49,12 @@ export async function POST(request: NextRequest) {
       ADD COLUMN IF NOT EXISTS send_date DATE DEFAULT NULL
     `;
 
+    // Add location column for Tbilisi/Region filtering
+    await sql`
+      ALTER TABLE orders
+      ADD COLUMN IF NOT EXISTS location VARCHAR(20) DEFAULT 'tbilisi'
+    `;
+
     return NextResponse.json({ message: 'Migration completed successfully' }, { status: 200 });
   } catch (error) {
     console.error('Migration error:', error);
