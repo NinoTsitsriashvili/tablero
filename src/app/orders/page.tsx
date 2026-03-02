@@ -115,7 +115,6 @@ export default function OrdersPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [statusDropdownOpen, setStatusDropdownOpen] = useState<number | null>(null);
   const [updatingStatus, setUpdatingStatus] = useState<number | null>(null);
-  const statusDropdownRef = useRef<HTMLDivElement>(null);
   const ITEMS_PER_PAGE = 10;
 
   // Filter orders based on search query (FB name, recipient name, phone)
@@ -139,20 +138,6 @@ export default function OrdersPage() {
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery]);
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (statusDropdownRef.current && !statusDropdownRef.current.contains(event.target as Node)) {
-        setStatusDropdownOpen(null);
-      }
-    };
-
-    if (statusDropdownOpen !== null) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
-    }
-  }, [statusDropdownOpen]);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -226,10 +211,39 @@ export default function OrdersPage() {
     const isOpen = statusDropdownOpen === order.id;
     const isUpdating = updatingStatus === order.id;
     const config = STATUS_CONFIG[order.status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.pending;
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
+    // Close dropdown when clicking outside - specific to this dropdown
+    useEffect(() => {
+      if (!isOpen) return;
+
+      const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+        if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+          setStatusDropdownOpen(null);
+        }
+      };
+
+      // Use a small delay to prevent immediate close on mobile
+      const timeoutId = setTimeout(() => {
+        document.addEventListener('mousedown', handleClickOutside);
+        document.addEventListener('touchstart', handleClickOutside);
+      }, 10);
+
+      return () => {
+        clearTimeout(timeoutId);
+        document.removeEventListener('mousedown', handleClickOutside);
+        document.removeEventListener('touchstart', handleClickOutside);
+      };
+    }, [isOpen]);
 
     return (
-      <div className="relative" ref={isOpen ? statusDropdownRef : undefined}>
+      <div className="relative" ref={dropdownRef}>
         <button
+          type="button"
+          onMouseDown={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -251,18 +265,25 @@ export default function OrdersPage() {
         </button>
 
         {isOpen && (
-          <div className="absolute z-50 mt-1 w-40 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 left-0">
+          <div className="absolute z-50 mt-1 w-40 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 right-0 md:left-0 md:right-auto">
             {STATUS_ORDER.map((statusKey) => {
               const statusConfig = STATUS_CONFIG[statusKey as keyof typeof STATUS_CONFIG];
               const isCurrentStatus = order.status === statusKey;
               return (
                 <button
+                  type="button"
                   key={statusKey}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
                     if (!isCurrentStatus) {
                       updateOrderStatus(order.id, statusKey);
+                    } else {
+                      setStatusDropdownOpen(null);
                     }
                   }}
                   className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 ${
