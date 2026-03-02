@@ -40,6 +40,13 @@ interface PaymentBreakdown {
   courier: number;
 }
 
+interface LocationBreakdown {
+  location: string;
+  order_count: number;
+  revenue: number;
+  courier: number;
+}
+
 interface Summary {
   total_orders: number;
   total_revenue: number;
@@ -57,12 +64,13 @@ interface StatisticsData {
   by_date: DailyStats[];
   by_status: StatusBreakdown[];
   by_payment_type: PaymentBreakdown[];
+  by_location: LocationBreakdown[];
   filters: {
     products: { id: number; name: string }[];
   };
 }
 
-type ViewMode = 'summary' | 'products' | 'daily' | 'status' | 'payment';
+type ViewMode = 'summary' | 'products' | 'daily' | 'status' | 'payment' | 'location';
 
 const STATUS_LABELS: Record<string, string> = {
   pending: 'მოლოდინში',
@@ -76,6 +84,11 @@ const STATUS_LABELS: Record<string, string> = {
 const PAYMENT_LABELS: Record<string, string> = {
   cash: 'ხელზე გადახდა',
   transfer: 'ჩარიცხვა',
+};
+
+const LOCATION_LABELS: Record<string, string> = {
+  tbilisi: 'თბილისი',
+  region: 'რეგიონები',
 };
 
 export default function StatisticsPage() {
@@ -92,6 +105,7 @@ export default function StatisticsPage() {
   const [selectedProduct, setSelectedProduct] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [selectedPayment, setSelectedPayment] = useState('all');
+  const [selectedLocation, setSelectedLocation] = useState('all');
   const [selectedPreset, setSelectedPreset] = useState('all');
 
   // View mode
@@ -108,6 +122,7 @@ export default function StatisticsPage() {
       if (selectedProduct) params.set('product_id', selectedProduct);
       if (selectedStatus) params.set('status', selectedStatus);
       if (selectedPayment && selectedPayment !== 'all') params.set('payment_type', selectedPayment);
+      if (selectedLocation && selectedLocation !== 'all') params.set('location', selectedLocation);
 
       const res = await fetch(`/api/statistics?${params.toString()}`);
       if (!res.ok) throw new Error('Failed to fetch statistics');
@@ -119,7 +134,7 @@ export default function StatisticsPage() {
     } finally {
       setLoading(false);
     }
-  }, [startDate, endDate, selectedProduct, selectedStatus, selectedPayment]);
+  }, [startDate, endDate, selectedProduct, selectedStatus, selectedPayment, selectedLocation]);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -329,6 +344,20 @@ export default function StatisticsPage() {
                 <option value="transfer">ჩარიცხვა</option>
               </select>
             </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                ლოკაცია
+              </label>
+              <select
+                value={selectedLocation}
+                onChange={(e) => setSelectedLocation(e.target.value)}
+                className="w-full px-3 py-2.5 text-base border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700"
+              >
+                <option value="all">ყველა</option>
+                <option value="tbilisi">თბილისი</option>
+                <option value="region">რეგიონები</option>
+              </select>
+            </div>
           </div>
         </div>
 
@@ -402,6 +431,7 @@ export default function StatisticsPage() {
                     { key: 'daily', label: 'დღეები' },
                     { key: 'status', label: 'სტატუსი' },
                     { key: 'payment', label: 'გადახდა' },
+                    { key: 'location', label: 'ლოკაცია' },
                   ].map((tab) => (
                     <button
                       key={tab.key}
@@ -747,6 +777,48 @@ export default function StatisticsPage() {
                                 <span className="text-gray-500 dark:text-gray-400">კურიერი: </span>
                                 <span className="text-orange-600 dark:text-orange-400">
                                   {formatCurrency(Number(p.courier))}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Location View */}
+                {viewMode === 'location' && (
+                  <div>
+                    {!data.by_location || data.by_location.length === 0 ? (
+                      <p className="text-gray-500 dark:text-gray-400">მონაცემები არ არის</p>
+                    ) : (
+                      <div className="space-y-3">
+                        {data.by_location.map((l) => (
+                          <div key={l.location} className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                                l.location === 'tbilisi'
+                                  ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
+                                  : 'bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300'
+                              }`}>
+                                {LOCATION_LABELS[l.location] || l.location}
+                              </span>
+                              <span className="text-gray-600 dark:text-gray-400">
+                                {l.order_count} შეკვეთა
+                              </span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2 text-sm">
+                              <div>
+                                <span className="text-gray-500 dark:text-gray-400">შემოსავალი: </span>
+                                <span className="text-green-600 dark:text-green-400 font-medium">
+                                  {formatCurrency(Number(l.revenue))}
+                                </span>
+                              </div>
+                              <div>
+                                <span className="text-gray-500 dark:text-gray-400">კურიერი: </span>
+                                <span className="text-orange-600 dark:text-orange-400">
+                                  {formatCurrency(Number(l.courier))}
                                 </span>
                               </div>
                             </div>
