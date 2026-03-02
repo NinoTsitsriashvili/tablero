@@ -115,6 +115,7 @@ export default function OrdersPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [statusDropdownOpen, setStatusDropdownOpen] = useState<number | null>(null);
   const [updatingStatus, setUpdatingStatus] = useState<number | null>(null);
+  const statusDropdownRef = useRef<HTMLDivElement>(null);
   const ITEMS_PER_PAGE = 10;
 
   // Filter orders based on search query (FB name, recipient name, phone)
@@ -138,6 +139,32 @@ export default function OrdersPage() {
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery]);
+
+  // Close status dropdown when clicking outside
+  useEffect(() => {
+    if (statusDropdownOpen === null) return;
+
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      // Check if click is outside the dropdown
+      const target = event.target as HTMLElement;
+      const isInsideDropdown = target.closest('[data-status-dropdown]');
+      if (!isInsideDropdown) {
+        setStatusDropdownOpen(null);
+      }
+    };
+
+    // Small delay to prevent immediate close
+    const timeoutId = setTimeout(() => {
+      document.addEventListener('click', handleClickOutside, true);
+      document.addEventListener('touchend', handleClickOutside, true);
+    }, 50);
+
+    return () => {
+      clearTimeout(timeoutId);
+      document.removeEventListener('click', handleClickOutside, true);
+      document.removeEventListener('touchend', handleClickOutside, true);
+    };
+  }, [statusDropdownOpen]);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -211,46 +238,27 @@ export default function OrdersPage() {
     const isOpen = statusDropdownOpen === order.id;
     const isUpdating = updatingStatus === order.id;
     const config = STATUS_CONFIG[order.status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.pending;
-    const dropdownRef = useRef<HTMLDivElement>(null);
 
-    // Close dropdown when clicking outside - specific to this dropdown
-    useEffect(() => {
-      if (!isOpen) return;
+    const toggleDropdown = () => {
+      setStatusDropdownOpen(isOpen ? null : order.id);
+    };
 
-      const handleClickOutside = (event: MouseEvent | TouchEvent) => {
-        if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-          setStatusDropdownOpen(null);
-        }
-      };
-
-      // Use a small delay to prevent immediate close on mobile
-      const timeoutId = setTimeout(() => {
-        document.addEventListener('mousedown', handleClickOutside);
-        document.addEventListener('touchstart', handleClickOutside);
-      }, 10);
-
-      return () => {
-        clearTimeout(timeoutId);
-        document.removeEventListener('mousedown', handleClickOutside);
-        document.removeEventListener('touchstart', handleClickOutside);
-      };
-    }, [isOpen]);
+    const selectStatus = (newStatus: string) => {
+      if (order.status !== newStatus) {
+        updateOrderStatus(order.id, newStatus);
+      } else {
+        setStatusDropdownOpen(null);
+      }
+    };
 
     return (
-      <div className="relative" ref={dropdownRef}>
+      <div className="relative" data-status-dropdown>
         <button
           type="button"
-          onMouseDown={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-          }}
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            setStatusDropdownOpen(isOpen ? null : order.id);
-          }}
+          onClick={toggleDropdown}
           disabled={isUpdating}
-          className={`px-2 py-1 rounded-full text-xs font-medium ${config.style} cursor-pointer hover:opacity-80 transition-opacity flex items-center gap-1 ${isUpdating ? 'opacity-50' : ''}`}
+          className={`px-2 py-1 rounded-full text-xs font-medium ${config.style} cursor-pointer hover:opacity-80 active:opacity-60 transition-opacity flex items-center gap-1 select-none ${isUpdating ? 'opacity-50' : ''}`}
+          style={{ WebkitTapHighlightColor: 'transparent' }}
         >
           {isUpdating ? (
             <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24">
@@ -265,7 +273,10 @@ export default function OrdersPage() {
         </button>
 
         {isOpen && (
-          <div className="absolute z-50 mt-1 w-40 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 right-0 md:left-0 md:right-auto">
+          <div
+            className="absolute z-50 mt-1 w-40 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 right-0 md:left-0 md:right-auto"
+            data-status-dropdown
+          >
             {STATUS_ORDER.map((statusKey) => {
               const statusConfig = STATUS_CONFIG[statusKey as keyof typeof STATUS_CONFIG];
               const isCurrentStatus = order.status === statusKey;
@@ -273,22 +284,11 @@ export default function OrdersPage() {
                 <button
                   type="button"
                   key={statusKey}
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                  }}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    if (!isCurrentStatus) {
-                      updateOrderStatus(order.id, statusKey);
-                    } else {
-                      setStatusDropdownOpen(null);
-                    }
-                  }}
-                  className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 ${
+                  onClick={() => selectStatus(statusKey)}
+                  className={`w-full px-3 py-2.5 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600 flex items-center gap-2 select-none ${
                     isCurrentStatus ? 'bg-gray-50 dark:bg-gray-700' : ''
                   }`}
+                  style={{ WebkitTapHighlightColor: 'transparent' }}
                 >
                   <span className={`w-2 h-2 rounded-full ${statusConfig.style.split(' ')[0]}`}></span>
                   <span className="text-gray-800 dark:text-gray-200">{statusConfig.label}</span>
