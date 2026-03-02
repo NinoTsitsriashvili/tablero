@@ -712,12 +712,11 @@ export default function OrdersPage() {
                     </span>
                     <div className="flex items-center gap-3">
                       <span className="text-sm text-gray-500 dark:text-gray-400">
-                        {new Date(order.created_at).toLocaleDateString('ka-GE', {
-                          day: 'numeric',
+                        {order.send_date ? new Date(order.send_date).toLocaleDateString('ka-GE', {
+                          year: 'numeric',
                           month: 'short',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
+                          day: 'numeric',
+                        }) : '--'}
                       </span>
                       <span className="text-blue-600 dark:text-blue-400">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -750,7 +749,7 @@ export default function OrdersPage() {
                       <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">პროდუქტი</th>
                       <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">ჯამი</th>
                       <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">სტატუსი</th>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">თარიღი</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">გაგზავნის თარიღი</th>
                       <th className="px-4 py-3 text-right text-sm font-medium text-gray-700 dark:text-gray-300"></th>
                     </tr>
                   </thead>
@@ -827,12 +826,11 @@ export default function OrdersPage() {
                           <StatusSelector order={order} />
                         </td>
                         <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-                          {new Date(order.created_at).toLocaleDateString('ka-GE', {
-                            day: 'numeric',
+                          {order.send_date ? new Date(order.send_date).toLocaleDateString('ka-GE', {
+                            year: 'numeric',
                             month: 'short',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
+                            day: 'numeric',
+                          }) : '--'}
                         </td>
                         <td className="px-4 py-3 text-right">
                           <Link
