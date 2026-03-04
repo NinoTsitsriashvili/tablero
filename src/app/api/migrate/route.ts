@@ -55,6 +55,12 @@ export async function POST(request: NextRequest) {
       ADD COLUMN IF NOT EXISTS location VARCHAR(20) DEFAULT 'tbilisi'
     `;
 
+    // Add added_by column to track who added the order (default 'ani' for existing orders)
+    await sql`
+      ALTER TABLE orders
+      ADD COLUMN IF NOT EXISTS added_by VARCHAR(50) DEFAULT 'ani'
+    `;
+
     return NextResponse.json({ message: 'Migration completed successfully' }, { status: 200 });
   } catch (error) {
     console.error('Migration error:', error);

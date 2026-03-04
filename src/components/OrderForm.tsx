@@ -56,6 +56,7 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
     payment_type: 'cash',
     send_date: '',
     location: 'tbilisi',
+    added_by: 'ani',
   });
 
   const [orderItems, setOrderItems] = useState<OrderItem[]>([
@@ -375,6 +376,7 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
           payment_type: formData.payment_type,
           send_date: formData.send_date || null,
           location: formData.location,
+          added_by: formData.added_by,
           items: validItems.map((item) => ({
             product_id: parseInt(item.product_id, 10),
             unit_price: parseFloat(item.unit_price),
@@ -560,6 +562,37 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
                 className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer"
               />
               <span className="ml-2 text-gray-800 dark:text-gray-200">რეგიონები</span>
+            </label>
+          </div>
+        </div>
+
+        {/* Added by selector */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            ვინ დაამატა *
+          </label>
+          <div className="flex gap-4">
+            <label className="flex items-center cursor-pointer">
+              <input
+                type="radio"
+                name="added_by"
+                value="ani"
+                checked={formData.added_by === 'ani'}
+                onChange={handleChange}
+                className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer"
+              />
+              <span className="ml-2 text-gray-800 dark:text-gray-200">ანი</span>
+            </label>
+            <label className="flex items-center cursor-pointer">
+              <input
+                type="radio"
+                name="added_by"
+                value="kato"
+                checked={formData.added_by === 'kato'}
+                onChange={handleChange}
+                className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer"
+              />
+              <span className="ml-2 text-gray-800 dark:text-gray-200">კატო</span>
             </label>
           </div>
         </div>

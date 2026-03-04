@@ -30,6 +30,7 @@ interface OrderWithItems {
   payment_type: string;
   send_date: string | null;
   location: string;
+  added_by: string;
   created_at: string;
   updated_at: string;
   items: OrderItem[];
@@ -60,6 +61,7 @@ interface EditFormData {
   payment_type: string;
   send_date: string;
   location: string;
+  added_by: string;
 }
 
 interface Product {
@@ -100,6 +102,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
     payment_type: 'cash',
     send_date: '',
     location: 'tbilisi',
+    added_by: 'ani',
   });
   const [products, setProducts] = useState<Product[]>([]);
   const [editOrderItems, setEditOrderItems] = useState<EditOrderItem[]>([]);
@@ -197,6 +200,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
         payment_type: order.payment_type || 'cash',
         send_date: order.send_date ? order.send_date.split('T')[0] : '',
         location: order.location || 'tbilisi',
+        added_by: order.added_by || 'ani',
       });
 
       // Initialize edit order items from current order items
@@ -366,6 +370,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
           payment_type: editForm.payment_type,
           send_date: editForm.send_date || null,
           location: editForm.location,
+          added_by: editForm.added_by,
           status: order?.status || 'pending',
           items: items,
         }),
@@ -673,6 +678,35 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                         </label>
                       </div>
                     </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        ვინ დაამატა *
+                      </label>
+                      <div className="flex gap-4">
+                        <label className="flex items-center cursor-pointer">
+                          <input
+                            type="radio"
+                            name="added_by"
+                            value="ani"
+                            checked={editForm.added_by === 'ani'}
+                            onChange={handleEditChange}
+                            className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                          />
+                          <span className="ml-2 text-gray-800 dark:text-gray-200">ანი</span>
+                        </label>
+                        <label className="flex items-center cursor-pointer">
+                          <input
+                            type="radio"
+                            name="added_by"
+                            value="kato"
+                            checked={editForm.added_by === 'kato'}
+                            onChange={handleEditChange}
+                            className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                          />
+                          <span className="ml-2 text-gray-800 dark:text-gray-200">კატო</span>
+                        </label>
+                      </div>
+                    </div>
                   </div>
 
                   <div className="mb-4">
@@ -939,6 +973,12 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                     : 'bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-200'
                 }`}>
                   {order.location === 'tbilisi' ? 'თბილისი' : 'რეგიონები'}
+                </span>
+              </div>
+              <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">ვინ დაამატა</p>
+                <span className="px-3 py-1 rounded-full text-sm font-medium bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200">
+                  {order.added_by === 'ani' ? 'ანი' : order.added_by === 'kato' ? 'კატო' : order.added_by || 'ანი'}
                 </span>
               </div>
             </div>

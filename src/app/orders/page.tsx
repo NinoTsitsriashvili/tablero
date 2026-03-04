@@ -45,6 +45,7 @@ export interface Order {
   comment: string | null;
   status: string;
   location: string;
+  added_by: string;
   send_date: string | null;
   created_at: string;
   updated_at: string;
@@ -118,14 +119,20 @@ export default function OrdersPage() {
   const [statusDropdownOpen, setStatusDropdownOpen] = useState<number | null>(null);
   const [updatingStatus, setUpdatingStatus] = useState<number | null>(null);
   const [locationFilter, setLocationFilter] = useState<'all' | 'tbilisi' | 'region'>('all');
+  const [addedByFilter, setAddedByFilter] = useState<'all' | 'ani' | 'kato'>('all');
   const statusDropdownRef = useRef<HTMLDivElement>(null);
   const ITEMS_PER_PAGE = 10;
 
-  // Filter orders based on search query and location
+  // Filter orders based on search query, location, and added_by
   const filteredOrders = orders.filter((order) => {
     // Location filter
     if (locationFilter !== 'all') {
       if (order.location !== locationFilter) return false;
+    }
+
+    // Added by filter
+    if (addedByFilter !== 'all') {
+      if (order.added_by !== addedByFilter) return false;
     }
 
     // Search filter
@@ -517,42 +524,82 @@ export default function OrdersPage() {
             )}
           </div>
 
-          {/* Location Filter Tabs */}
-          <div className="flex gap-2">
-            <button
-              onClick={() => { setLocationFilter('all'); setCurrentPage(1); }}
-              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                locationFilter === 'all'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
-              }`}
-            >
-              ყველა
-            </button>
-            <button
-              onClick={() => { setLocationFilter('tbilisi'); setCurrentPage(1); }}
-              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                locationFilter === 'tbilisi'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
-              }`}
-            >
-              თბილისი
-            </button>
-            <button
-              onClick={() => { setLocationFilter('region'); setCurrentPage(1); }}
-              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                locationFilter === 'region'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
-              }`}
-            >
-              რეგიონები
-            </button>
+          {/* Filter Tabs Row */}
+          <div className="flex flex-wrap gap-4">
+            {/* Location Filter */}
+            <div className="flex gap-2">
+              <button
+                onClick={() => { setLocationFilter('all'); setCurrentPage(1); }}
+                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  locationFilter === 'all'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
+                }`}
+              >
+                ყველა
+              </button>
+              <button
+                onClick={() => { setLocationFilter('tbilisi'); setCurrentPage(1); }}
+                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  locationFilter === 'tbilisi'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
+                }`}
+              >
+                თბილისი
+              </button>
+              <button
+                onClick={() => { setLocationFilter('region'); setCurrentPage(1); }}
+                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  locationFilter === 'region'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
+                }`}
+              >
+                რეგიონები
+              </button>
+            </div>
+
+            {/* Separator */}
+            <div className="hidden sm:block w-px bg-gray-300 dark:bg-gray-600"></div>
+
+            {/* Added By Filter */}
+            <div className="flex gap-2">
+              <button
+                onClick={() => { setAddedByFilter('all'); setCurrentPage(1); }}
+                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  addedByFilter === 'all'
+                    ? 'bg-purple-600 text-white'
+                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
+                }`}
+              >
+                ყველა
+              </button>
+              <button
+                onClick={() => { setAddedByFilter('ani'); setCurrentPage(1); }}
+                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  addedByFilter === 'ani'
+                    ? 'bg-purple-600 text-white'
+                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
+                }`}
+              >
+                ანი
+              </button>
+              <button
+                onClick={() => { setAddedByFilter('kato'); setCurrentPage(1); }}
+                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  addedByFilter === 'kato'
+                    ? 'bg-purple-600 text-white'
+                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
+                }`}
+              >
+                კატო
+              </button>
+            </div>
           </div>
 
           {/* Filter info */}
-          {(searchQuery || locationFilter !== 'all') && (
+          {(searchQuery || locationFilter !== 'all' || addedByFilter !== 'all') && (
             <p className="text-sm text-gray-500 dark:text-gray-400">
               ნაპოვნია: {filteredOrders.length} შეკვეთა
             </p>
