@@ -15,6 +15,7 @@ interface OrderItem {
   unit_price: string;
   quantity: string;
   courier_price: string;
+  subtotal: string; // Editable subtotal (empty means auto-calculate)
   searchQuery: string;
   showDropdown: boolean;
 }
@@ -67,6 +68,7 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
       unit_price: '',
       quantity: '1',
       courier_price: '',
+      subtotal: '',
       searchQuery: '',
       showDropdown: false,
     },
@@ -186,6 +188,14 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
     );
   };
 
+  // Format price: no decimals if whole number
+  const formatPrice = (price: number): string => {
+    if (Number.isInteger(price)) {
+      return price.toString();
+    }
+    return price.toFixed(2).replace(/\.?0+$/, '');
+  };
+
   const handleProductSelect = (itemId: string, product: Product) => {
     setOrderItems((prev) =>
       prev.map((item) =>
@@ -194,7 +204,8 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
               ...item,
               product_id: product.id.toString(),
               product_name: product.name,
-              unit_price: product.price.toString(),
+              unit_price: formatPrice(Number(product.price)),
+              subtotal: '', // Reset subtotal to auto-calculate
               searchQuery: product.name,
               showDropdown: false,
             }
@@ -215,7 +226,7 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
       }
       setOrderItems((prev) =>
         prev.map((item) =>
-          item.id === itemId ? { ...item, [field]: digitsOnly } : item
+          item.id === itemId ? { ...item, [field]: digitsOnly, subtotal: '' } : item
         )
       );
       return;
@@ -227,8 +238,29 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
       if (!isNaN(num) && num > VALIDATION_LIMITS.COURIER_PRICE_MAX) {
         return;
       }
+      setOrderItems((prev) =>
+        prev.map((item) =>
+          item.id === itemId ? { ...item, [field]: value, subtotal: '' } : item
+        )
+      );
+      return;
     }
 
+    // Validate unit_price - only allow valid numbers
+    if (field === 'unit_price') {
+      // Allow empty or valid number format
+      if (value !== '' && isNaN(parseFloat(value))) {
+        return;
+      }
+      setOrderItems((prev) =>
+        prev.map((item) =>
+          item.id === itemId ? { ...item, [field]: value, subtotal: '' } : item
+        )
+      );
+      return;
+    }
+
+    // For subtotal, don't reset itself
     setOrderItems((prev) =>
       prev.map((item) =>
         item.id === itemId ? { ...item, [field]: value } : item
@@ -261,6 +293,7 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
         unit_price: '',
         quantity: '1',
         courier_price: '',
+        subtotal: '',
         searchQuery: '',
         showDropdown: false,
       },
@@ -407,6 +440,14 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
     return price * qty + courier;
   };
 
+  // Get effective subtotal: manual if set, otherwise calculated
+  const getItemSubtotal = (item: OrderItem): number => {
+    if (item.subtotal && item.subtotal.trim() !== '') {
+      return parseFloat(item.subtotal) || 0;
+    }
+    return calculateItemTotal(item);
+  };
+
   // Format number: no decimals if whole number, otherwise show decimals
   const formatNumber = (num: number): string => {
     if (Number.isInteger(num)) {
@@ -416,8 +457,8 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
     return num.toFixed(2).replace(/\.?0+$/, '');
   };
 
-  // Calculate grand total
-  const totalPrice = orderItems.reduce((sum, item) => sum + calculateItemTotal(item), 0);
+  // Calculate grand total using effective subtotals
+  const totalPrice = orderItems.reduce((sum, item) => sum + getItemSubtotal(item), 0);
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 sm:p-6">
@@ -723,12 +764,11 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
                       ფასი
                     </label>
                     <input
-                      type="number"
-                      step="0.01"
-                      min="0"
+                      type="text"
+                      inputMode="decimal"
                       value={item.unit_price}
                       onChange={(e) => handleItemChange(item.id, 'unit_price', e.target.value)}
-                      placeholder="0.00"
+                      placeholder="0"
                       className="w-full px-3 py-2.5 text-base border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-600"
                     />
                   </div>
@@ -739,29 +779,28 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
                       კურიერი
                     </label>
                     <input
-                      type="number"
-                      step="0.01"
-                      min="0"
+                      type="text"
+                      inputMode="decimal"
                       value={item.courier_price}
                       onChange={(e) => handleItemChange(item.id, 'courier_price', e.target.value)}
-                      placeholder="0.00"
+                      placeholder="0"
                       className="w-full px-3 py-2.5 text-base border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-600"
                     />
                   </div>
 
-                  {/* Item Subtotal - Display only (auto-calculated) */}
+                  {/* Item Subtotal (editable) */}
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                       ქვეჯამი
                     </label>
-                    <div className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium">
-                      ₾{formatNumber(calculateItemTotal(item))}
-                      {item.unit_price && parseInt(item.quantity) > 1 && (
-                        <span className="text-xs ml-2 text-gray-500 dark:text-gray-400">
-                          ({item.quantity} × ₾{formatNumber(Number(item.unit_price))}{item.courier_price ? ` + ₾${formatNumber(Number(item.courier_price))}` : ''})
-                        </span>
-                      )}
-                    </div>
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      value={item.subtotal || formatNumber(calculateItemTotal(item))}
+                      onChange={(e) => handleItemChange(item.id, 'subtotal', e.target.value)}
+                      placeholder="0"
+                      className="w-full px-3 py-2.5 text-base border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-600 bg-blue-50 dark:bg-blue-900/30 font-medium"
+                    />
                   </div>
                 </div>
               </div>
