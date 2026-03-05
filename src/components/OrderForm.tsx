@@ -793,14 +793,17 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                       ქვეჯამი
                     </label>
-                    <input
-                      type="text"
-                      inputMode="decimal"
-                      value={item.subtotal || formatNumber(calculateItemTotal(item))}
-                      onChange={(e) => handleItemChange(item.id, 'subtotal', e.target.value)}
-                      placeholder="0"
-                      className="w-full px-3 py-2.5 text-base border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-600 bg-blue-50 dark:bg-blue-900/30 font-medium"
-                    />
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-700 dark:text-blue-300 font-medium pointer-events-none">₾</span>
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        value={item.subtotal || formatNumber(calculateItemTotal(item))}
+                        onChange={(e) => handleItemChange(item.id, 'subtotal', e.target.value)}
+                        placeholder="0"
+                        className="w-full pl-7 pr-3 py-2.5 text-base border border-blue-300 dark:border-blue-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
