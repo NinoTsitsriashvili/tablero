@@ -17,8 +17,6 @@ interface OrderItem {
   courier_price: string;
   searchQuery: string;
   showDropdown: boolean;
-  subtotal_override: string | null; // Manual override for subtotal
-  isEditingSubtotal: boolean;
 }
 
 interface FieldErrors {
@@ -71,8 +69,6 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
       courier_price: '',
       searchQuery: '',
       showDropdown: false,
-      subtotal_override: null,
-      isEditingSubtotal: false,
     },
   ]);
 
@@ -82,8 +78,6 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const dropdownRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
-  // Refs for subtotal inputs
-  const subtotalInputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
 
   // Validation functions
   const validateName = (value: string, fieldLabel: string): string | undefined => {
@@ -269,8 +263,6 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
         courier_price: '',
         searchQuery: '',
         showDropdown: false,
-        subtotal_override: null,
-        isEditingSubtotal: false,
       },
     ]);
   };
@@ -415,14 +407,6 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
     return price * qty + courier;
   };
 
-  // Get the effective subtotal for an item (override or calculated)
-  const getItemSubtotal = (item: OrderItem): number => {
-    if (item.subtotal_override !== null) {
-      return parseFloat(item.subtotal_override) || 0;
-    }
-    return calculateItemTotal(item);
-  };
-
   // Format number: no decimals if whole number, otherwise show decimals
   const formatNumber = (num: number): string => {
     if (Number.isInteger(num)) {
@@ -432,67 +416,8 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
     return num.toFixed(2).replace(/\.?0+$/, '');
   };
 
-  // Handle click on subtotal to start editing
-  const handleSubtotalClick = (itemId: string) => {
-    const item = orderItems.find(i => i.id === itemId);
-    if (!item) return;
-
-    const currentSubtotal = getItemSubtotal(item);
-    setOrderItems(prev =>
-      prev.map(i =>
-        i.id === itemId
-          ? { ...i, isEditingSubtotal: true, subtotal_override: formatNumber(currentSubtotal) }
-          : i
-      )
-    );
-
-    setTimeout(() => {
-      const input = subtotalInputRefs.current[itemId];
-      if (input) {
-        input.focus();
-        const len = input.value.length;
-        input.setSelectionRange(len, len);
-      }
-    }, 0);
-  };
-
-  // Handle blur/exit from subtotal editing
-  const handleSubtotalBlur = (itemId: string) => {
-    setOrderItems(prev =>
-      prev.map(item => {
-        if (item.id !== itemId) return item;
-
-        // If empty or invalid, reset to calculated
-        if (!item.subtotal_override || isNaN(parseFloat(item.subtotal_override))) {
-          return { ...item, isEditingSubtotal: false, subtotal_override: null };
-        }
-        return { ...item, isEditingSubtotal: false };
-      })
-    );
-  };
-
-  // Handle subtotal value change
-  const handleSubtotalChange = (itemId: string, value: string) => {
-    // Only allow numbers and decimal point
-    const cleanValue = value.replace(/[^0-9.]/g, '');
-    setOrderItems(prev =>
-      prev.map(item =>
-        item.id === itemId ? { ...item, subtotal_override: cleanValue } : item
-      )
-    );
-  };
-
-  // Reset subtotal to calculated value
-  const handleResetSubtotal = (itemId: string) => {
-    setOrderItems(prev =>
-      prev.map(item =>
-        item.id === itemId ? { ...item, subtotal_override: null, isEditingSubtotal: false } : item
-      )
-    );
-  };
-
-  // Calculate grand total using effective subtotals
-  const totalPrice = orderItems.reduce((sum, item) => sum + getItemSubtotal(item), 0);
+  // Calculate grand total
+  const totalPrice = orderItems.reduce((sum, item) => sum + calculateItemTotal(item), 0);
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 sm:p-6">
@@ -792,17 +717,19 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
                     />
                   </div>
 
-                  {/* Unit Price (readonly) */}
+                  {/* Unit Price (editable) */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                       ფასი
                     </label>
                     <input
-                      type="text"
-                      value={item.unit_price ? `₾${Number(item.unit_price).toFixed(2)}` : ''}
-                      readOnly
-                      placeholder="--"
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-100 dark:bg-gray-500 text-gray-900 dark:text-white cursor-not-allowed"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={item.unit_price}
+                      onChange={(e) => handleItemChange(item.id, 'unit_price', e.target.value)}
+                      placeholder="0.00"
+                      className="w-full px-3 py-2.5 text-base border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-600"
                     />
                   </div>
 
@@ -822,52 +749,19 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
                     />
                   </div>
 
-                  {/* Item Subtotal - Editable */}
+                  {/* Item Subtotal - Display only (auto-calculated) */}
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                       ქვეჯამი
-                      {item.subtotal_override !== null && !item.isEditingSubtotal && (
-                        <button
-                          type="button"
-                          onClick={() => handleResetSubtotal(item.id)}
-                          className="ml-2 text-xs text-blue-500 hover:text-blue-700 dark:text-blue-400"
-                        >
-                          (გადატვირთვა)
-                        </button>
-                      )}
                     </label>
-                    {item.isEditingSubtotal ? (
-                      <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-700 dark:text-blue-300 font-medium">₾</span>
-                        <input
-                          ref={(el) => { subtotalInputRefs.current[item.id] = el; }}
-                          type="text"
-                          inputMode="decimal"
-                          value={item.subtotal_override || ''}
-                          onChange={(e) => handleSubtotalChange(item.id, e.target.value)}
-                          onBlur={() => handleSubtotalBlur(item.id)}
-                          onKeyDown={(e) => e.key === 'Enter' && handleSubtotalBlur(item.id)}
-                          className="w-full pl-8 pr-3 py-2 border-2 border-blue-500 rounded-md bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium focus:outline-none"
-                        />
-                      </div>
-                    ) : (
-                      <div
-                        onClick={() => handleSubtotalClick(item.id)}
-                        className={`w-full px-3 py-2 border rounded-md font-medium cursor-pointer transition-colors ${
-                          item.subtotal_override !== null
-                            ? 'border-blue-400 dark:border-blue-500 bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200'
-                            : 'border-gray-300 dark:border-gray-600 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:border-blue-400 dark:hover:border-blue-500'
-                        }`}
-                        title="დააჭირეთ რედაქტირებისთვის"
-                      >
-                        ₾{formatNumber(getItemSubtotal(item))}
-                        {item.subtotal_override === null && item.unit_price && parseInt(item.quantity) > 1 && (
-                          <span className="text-xs ml-2 text-gray-500 dark:text-gray-400">
-                            ({item.quantity} × ₾{Number(item.unit_price).toFixed(2)}{item.courier_price ? ` + ₾${Number(item.courier_price).toFixed(2)}` : ''})
-                          </span>
-                        )}
-                      </div>
-                    )}
+                    <div className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium">
+                      ₾{formatNumber(calculateItemTotal(item))}
+                      {item.unit_price && parseInt(item.quantity) > 1 && (
+                        <span className="text-xs ml-2 text-gray-500 dark:text-gray-400">
+                          ({item.quantity} × ₾{formatNumber(Number(item.unit_price))}{item.courier_price ? ` + ₾${formatNumber(Number(item.courier_price))}` : ''})
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
