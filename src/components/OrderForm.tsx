@@ -283,6 +283,34 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
     );
   };
 
+  // Handle focus on product search - clear text to allow new search
+  const handleProductFocus = (itemId: string) => {
+    setOrderItems((prev) =>
+      prev.map((item) =>
+        item.id === itemId
+          ? { ...item, searchQuery: '', showDropdown: true }
+          : item
+      )
+    );
+  };
+
+  // Handle blur on product search - restore product name if no change was made
+  const handleProductBlur = (itemId: string) => {
+    // Small delay to allow click on dropdown item to register first
+    setTimeout(() => {
+      setOrderItems((prev) =>
+        prev.map((item) => {
+          if (item.id !== itemId) return item;
+          // If product is selected but searchQuery is empty, restore the name
+          if (item.product_id && item.searchQuery === '') {
+            return { ...item, searchQuery: item.product_name, showDropdown: false };
+          }
+          return { ...item, showDropdown: false };
+        })
+      );
+    }, 150);
+  };
+
   const addOrderItem = () => {
     setOrderItems((prev) => [
       ...prev,
@@ -721,7 +749,8 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
                       type="text"
                       value={item.searchQuery}
                       onChange={(e) => handleSearchChange(item.id, e.target.value)}
-                      onFocus={() => handleItemChange(item.id, 'showDropdown', 'true')}
+                      onFocus={() => handleProductFocus(item.id)}
+                      onBlur={() => handleProductBlur(item.id)}
                       placeholder="მოძებნეთ პროდუქტი..."
                       className="w-full px-3 py-2.5 text-base border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-600"
                     />
