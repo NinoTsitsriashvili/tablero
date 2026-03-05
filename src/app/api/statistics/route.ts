@@ -80,411 +80,44 @@ export async function GET(request: NextRequest) {
     const hasProductFilter = !!productId;
     const hasLocationFilter = locationFilter !== 'all';
 
-    // Build query based on active filters
-    if (hasDateFilter && hasStatusFilter && hasPaymentFilter && hasProductFilter && hasLocationFilter) {
-      ordersQuery = await sql`
-        SELECT o.id, o.status, o.payment_type, o.location, o.send_date,
-               oi.id as item_id, oi.product_id, p.name as product_name,
-               oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
-        FROM orders o
-        JOIN order_items oi ON o.id = oi.order_id
-        LEFT JOIN products p ON oi.product_id = p.id
-        WHERE o.send_date >= ${startDate}::date
-          AND o.send_date < (${endDate}::date + INTERVAL '1 day')
-          AND o.status = ${statusFilter}
-          AND o.payment_type = ${paymentType}
-          AND o.location = ${locationFilter}
-          AND oi.product_id = ${parseInt(productId)}
-        ORDER BY o.send_date DESC
-      `;
-    } else if (hasDateFilter && hasStatusFilter && hasPaymentFilter && hasLocationFilter) {
-      ordersQuery = await sql`
-        SELECT o.id, o.status, o.payment_type, o.location, o.send_date,
-               oi.id as item_id, oi.product_id, p.name as product_name,
-               oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
-        FROM orders o
-        JOIN order_items oi ON o.id = oi.order_id
-        LEFT JOIN products p ON oi.product_id = p.id
-        WHERE o.send_date >= ${startDate}::date
-          AND o.send_date < (${endDate}::date + INTERVAL '1 day')
-          AND o.status = ${statusFilter}
-          AND o.payment_type = ${paymentType}
-          AND o.location = ${locationFilter}
-        ORDER BY o.send_date DESC
-      `;
-    } else if (hasDateFilter && hasStatusFilter && hasProductFilter && hasLocationFilter) {
-      ordersQuery = await sql`
-        SELECT o.id, o.status, o.payment_type, o.location, o.send_date,
-               oi.id as item_id, oi.product_id, p.name as product_name,
-               oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
-        FROM orders o
-        JOIN order_items oi ON o.id = oi.order_id
-        LEFT JOIN products p ON oi.product_id = p.id
-        WHERE o.send_date >= ${startDate}::date
-          AND o.send_date < (${endDate}::date + INTERVAL '1 day')
-          AND o.status = ${statusFilter}
-          AND o.location = ${locationFilter}
-          AND oi.product_id = ${parseInt(productId)}
-        ORDER BY o.send_date DESC
-      `;
-    } else if (hasDateFilter && hasPaymentFilter && hasProductFilter && hasLocationFilter) {
-      ordersQuery = await sql`
-        SELECT o.id, o.status, o.payment_type, o.location, o.send_date,
-               oi.id as item_id, oi.product_id, p.name as product_name,
-               oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
-        FROM orders o
-        JOIN order_items oi ON o.id = oi.order_id
-        LEFT JOIN products p ON oi.product_id = p.id
-        WHERE o.send_date >= ${startDate}::date
-          AND o.send_date < (${endDate}::date + INTERVAL '1 day')
-          AND o.payment_type = ${paymentType}
-          AND o.location = ${locationFilter}
-          AND oi.product_id = ${parseInt(productId)}
-        ORDER BY o.send_date DESC
-      `;
-    } else if (hasDateFilter && hasStatusFilter && hasLocationFilter) {
-      ordersQuery = await sql`
-        SELECT o.id, o.status, o.payment_type, o.location, o.send_date,
-               oi.id as item_id, oi.product_id, p.name as product_name,
-               oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
-        FROM orders o
-        JOIN order_items oi ON o.id = oi.order_id
-        LEFT JOIN products p ON oi.product_id = p.id
-        WHERE o.send_date >= ${startDate}::date
-          AND o.send_date < (${endDate}::date + INTERVAL '1 day')
-          AND o.status = ${statusFilter}
-          AND o.location = ${locationFilter}
-        ORDER BY o.send_date DESC
-      `;
-    } else if (hasDateFilter && hasPaymentFilter && hasLocationFilter) {
-      ordersQuery = await sql`
-        SELECT o.id, o.status, o.payment_type, o.location, o.send_date,
-               oi.id as item_id, oi.product_id, p.name as product_name,
-               oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
-        FROM orders o
-        JOIN order_items oi ON o.id = oi.order_id
-        LEFT JOIN products p ON oi.product_id = p.id
-        WHERE o.send_date >= ${startDate}::date
-          AND o.send_date < (${endDate}::date + INTERVAL '1 day')
-          AND o.payment_type = ${paymentType}
-          AND o.location = ${locationFilter}
-        ORDER BY o.send_date DESC
-      `;
-    } else if (hasDateFilter && hasProductFilter && hasLocationFilter) {
-      ordersQuery = await sql`
-        SELECT o.id, o.status, o.payment_type, o.location, o.send_date,
-               oi.id as item_id, oi.product_id, p.name as product_name,
-               oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
-        FROM orders o
-        JOIN order_items oi ON o.id = oi.order_id
-        LEFT JOIN products p ON oi.product_id = p.id
-        WHERE o.send_date >= ${startDate}::date
-          AND o.send_date < (${endDate}::date + INTERVAL '1 day')
-          AND o.location = ${locationFilter}
-          AND oi.product_id = ${parseInt(productId)}
-        ORDER BY o.send_date DESC
-      `;
-    } else if (hasDateFilter && hasLocationFilter) {
-      ordersQuery = await sql`
-        SELECT o.id, o.status, o.payment_type, o.location, o.send_date,
-               oi.id as item_id, oi.product_id, p.name as product_name,
-               oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
-        FROM orders o
-        JOIN order_items oi ON o.id = oi.order_id
-        LEFT JOIN products p ON oi.product_id = p.id
-        WHERE o.send_date >= ${startDate}::date
-          AND o.send_date < (${endDate}::date + INTERVAL '1 day')
-          AND o.location = ${locationFilter}
-        ORDER BY o.send_date DESC
-      `;
-    } else if (hasStatusFilter && hasPaymentFilter && hasProductFilter && hasLocationFilter) {
-      ordersQuery = await sql`
-        SELECT o.id, o.status, o.payment_type, o.location, o.send_date,
-               oi.id as item_id, oi.product_id, p.name as product_name,
-               oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
-        FROM orders o
-        JOIN order_items oi ON o.id = oi.order_id
-        LEFT JOIN products p ON oi.product_id = p.id
-        WHERE o.status = ${statusFilter}
-          AND o.payment_type = ${paymentType}
-          AND o.location = ${locationFilter}
-          AND oi.product_id = ${parseInt(productId)}
-        ORDER BY o.send_date DESC
-      `;
-    } else if (hasStatusFilter && hasPaymentFilter && hasLocationFilter) {
-      ordersQuery = await sql`
-        SELECT o.id, o.status, o.payment_type, o.location, o.send_date,
-               oi.id as item_id, oi.product_id, p.name as product_name,
-               oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
-        FROM orders o
-        JOIN order_items oi ON o.id = oi.order_id
-        LEFT JOIN products p ON oi.product_id = p.id
-        WHERE o.status = ${statusFilter}
-          AND o.payment_type = ${paymentType}
-          AND o.location = ${locationFilter}
-        ORDER BY o.send_date DESC
-      `;
-    } else if (hasStatusFilter && hasProductFilter && hasLocationFilter) {
-      ordersQuery = await sql`
-        SELECT o.id, o.status, o.payment_type, o.location, o.send_date,
-               oi.id as item_id, oi.product_id, p.name as product_name,
-               oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
-        FROM orders o
-        JOIN order_items oi ON o.id = oi.order_id
-        LEFT JOIN products p ON oi.product_id = p.id
-        WHERE o.status = ${statusFilter}
-          AND o.location = ${locationFilter}
-          AND oi.product_id = ${parseInt(productId)}
-        ORDER BY o.send_date DESC
-      `;
-    } else if (hasPaymentFilter && hasProductFilter && hasLocationFilter) {
-      ordersQuery = await sql`
-        SELECT o.id, o.status, o.payment_type, o.location, o.send_date,
-               oi.id as item_id, oi.product_id, p.name as product_name,
-               oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
-        FROM orders o
-        JOIN order_items oi ON o.id = oi.order_id
-        LEFT JOIN products p ON oi.product_id = p.id
-        WHERE o.payment_type = ${paymentType}
-          AND o.location = ${locationFilter}
-          AND oi.product_id = ${parseInt(productId)}
-        ORDER BY o.send_date DESC
-      `;
-    } else if (hasStatusFilter && hasLocationFilter) {
-      ordersQuery = await sql`
-        SELECT o.id, o.status, o.payment_type, o.location, o.send_date,
-               oi.id as item_id, oi.product_id, p.name as product_name,
-               oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
-        FROM orders o
-        JOIN order_items oi ON o.id = oi.order_id
-        LEFT JOIN products p ON oi.product_id = p.id
-        WHERE o.status = ${statusFilter}
-          AND o.location = ${locationFilter}
-        ORDER BY o.send_date DESC
-      `;
-    } else if (hasPaymentFilter && hasLocationFilter) {
-      ordersQuery = await sql`
-        SELECT o.id, o.status, o.payment_type, o.location, o.send_date,
-               oi.id as item_id, oi.product_id, p.name as product_name,
-               oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
-        FROM orders o
-        JOIN order_items oi ON o.id = oi.order_id
-        LEFT JOIN products p ON oi.product_id = p.id
-        WHERE o.payment_type = ${paymentType}
-          AND o.location = ${locationFilter}
-        ORDER BY o.send_date DESC
-      `;
-    } else if (hasProductFilter && hasLocationFilter) {
-      ordersQuery = await sql`
-        SELECT o.id, o.status, o.payment_type, o.location, o.send_date,
-               oi.id as item_id, oi.product_id, p.name as product_name,
-               oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
-        FROM orders o
-        JOIN order_items oi ON o.id = oi.order_id
-        LEFT JOIN products p ON oi.product_id = p.id
-        WHERE o.location = ${locationFilter}
-          AND oi.product_id = ${parseInt(productId)}
-        ORDER BY o.send_date DESC
-      `;
-    } else if (hasLocationFilter) {
-      ordersQuery = await sql`
-        SELECT o.id, o.status, o.payment_type, o.location, o.send_date,
-               oi.id as item_id, oi.product_id, p.name as product_name,
-               oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
-        FROM orders o
-        JOIN order_items oi ON o.id = oi.order_id
-        LEFT JOIN products p ON oi.product_id = p.id
-        WHERE o.location = ${locationFilter}
-        ORDER BY o.send_date DESC
-      `;
-    } else if (hasDateFilter && hasStatusFilter && hasPaymentFilter && hasProductFilter) {
-      ordersQuery = await sql`
-        SELECT o.id, o.status, o.payment_type, o.location, o.send_date,
-               oi.id as item_id, oi.product_id, p.name as product_name,
-               oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
-        FROM orders o
-        JOIN order_items oi ON o.id = oi.order_id
-        LEFT JOIN products p ON oi.product_id = p.id
-        WHERE o.send_date >= ${startDate}::date
-          AND o.send_date < (${endDate}::date + INTERVAL '1 day')
-          AND o.status = ${statusFilter}
-          AND o.payment_type = ${paymentType}
-          AND oi.product_id = ${parseInt(productId)}
-        ORDER BY o.send_date DESC
-      `;
-    } else if (hasDateFilter && hasStatusFilter && hasPaymentFilter) {
-      ordersQuery = await sql`
-        SELECT o.id, o.status, o.payment_type, o.location, o.send_date,
-               oi.id as item_id, oi.product_id, p.name as product_name,
-               oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
-        FROM orders o
-        JOIN order_items oi ON o.id = oi.order_id
-        LEFT JOIN products p ON oi.product_id = p.id
-        WHERE o.send_date >= ${startDate}::date
-          AND o.send_date < (${endDate}::date + INTERVAL '1 day')
-          AND o.status = ${statusFilter}
-          AND o.payment_type = ${paymentType}
-        ORDER BY o.send_date DESC
-      `;
-    } else if (hasDateFilter && hasStatusFilter && hasProductFilter) {
-      ordersQuery = await sql`
-        SELECT o.id, o.status, o.payment_type, o.location, o.send_date,
-               oi.id as item_id, oi.product_id, p.name as product_name,
-               oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
-        FROM orders o
-        JOIN order_items oi ON o.id = oi.order_id
-        LEFT JOIN products p ON oi.product_id = p.id
-        WHERE o.send_date >= ${startDate}::date
-          AND o.send_date < (${endDate}::date + INTERVAL '1 day')
-          AND o.status = ${statusFilter}
-          AND oi.product_id = ${parseInt(productId)}
-        ORDER BY o.send_date DESC
-      `;
-    } else if (hasDateFilter && hasStatusFilter) {
-      ordersQuery = await sql`
-        SELECT o.id, o.status, o.payment_type, o.location, o.send_date,
-               oi.id as item_id, oi.product_id, p.name as product_name,
-               oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
-        FROM orders o
-        JOIN order_items oi ON o.id = oi.order_id
-        LEFT JOIN products p ON oi.product_id = p.id
-        WHERE o.send_date >= ${startDate}::date
-          AND o.send_date < (${endDate}::date + INTERVAL '1 day')
-          AND o.status = ${statusFilter}
-        ORDER BY o.send_date DESC
-      `;
-    } else if (hasDateFilter && hasPaymentFilter) {
-      ordersQuery = await sql`
-        SELECT o.id, o.status, o.payment_type, o.location, o.send_date,
-               oi.id as item_id, oi.product_id, p.name as product_name,
-               oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
-        FROM orders o
-        JOIN order_items oi ON o.id = oi.order_id
-        LEFT JOIN products p ON oi.product_id = p.id
-        WHERE o.send_date >= ${startDate}::date
-          AND o.send_date < (${endDate}::date + INTERVAL '1 day')
-          AND o.payment_type = ${paymentType}
-        ORDER BY o.send_date DESC
-      `;
-    } else if (hasDateFilter && hasProductFilter) {
-      ordersQuery = await sql`
-        SELECT o.id, o.status, o.payment_type, o.location, o.send_date,
-               oi.id as item_id, oi.product_id, p.name as product_name,
-               oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
-        FROM orders o
-        JOIN order_items oi ON o.id = oi.order_id
-        LEFT JOIN products p ON oi.product_id = p.id
-        WHERE o.send_date >= ${startDate}::date
-          AND o.send_date < (${endDate}::date + INTERVAL '1 day')
-          AND oi.product_id = ${parseInt(productId)}
-        ORDER BY o.send_date DESC
-      `;
-    } else if (hasDateFilter) {
-      ordersQuery = await sql`
-        SELECT o.id, o.status, o.payment_type, o.location, o.send_date,
-               oi.id as item_id, oi.product_id, p.name as product_name,
-               oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
-        FROM orders o
-        JOIN order_items oi ON o.id = oi.order_id
-        LEFT JOIN products p ON oi.product_id = p.id
-        WHERE o.send_date >= ${startDate}::date
-          AND o.send_date < (${endDate}::date + INTERVAL '1 day')
-        ORDER BY o.send_date DESC
-      `;
-    } else if (hasStatusFilter && hasPaymentFilter && hasProductFilter) {
-      ordersQuery = await sql`
-        SELECT o.id, o.status, o.payment_type, o.location, o.send_date,
-               oi.id as item_id, oi.product_id, p.name as product_name,
-               oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
-        FROM orders o
-        JOIN order_items oi ON o.id = oi.order_id
-        LEFT JOIN products p ON oi.product_id = p.id
-        WHERE o.status = ${statusFilter}
-          AND o.payment_type = ${paymentType}
-          AND oi.product_id = ${parseInt(productId)}
-        ORDER BY o.send_date DESC
-      `;
-    } else if (hasStatusFilter && hasPaymentFilter) {
-      ordersQuery = await sql`
-        SELECT o.id, o.status, o.payment_type, o.location, o.send_date,
-               oi.id as item_id, oi.product_id, p.name as product_name,
-               oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
-        FROM orders o
-        JOIN order_items oi ON o.id = oi.order_id
-        LEFT JOIN products p ON oi.product_id = p.id
-        WHERE o.status = ${statusFilter}
-          AND o.payment_type = ${paymentType}
-        ORDER BY o.send_date DESC
-      `;
-    } else if (hasStatusFilter && hasProductFilter) {
-      ordersQuery = await sql`
-        SELECT o.id, o.status, o.payment_type, o.location, o.send_date,
-               oi.id as item_id, oi.product_id, p.name as product_name,
-               oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
-        FROM orders o
-        JOIN order_items oi ON o.id = oi.order_id
-        LEFT JOIN products p ON oi.product_id = p.id
-        WHERE o.status = ${statusFilter}
-          AND oi.product_id = ${parseInt(productId)}
-        ORDER BY o.send_date DESC
-      `;
-    } else if (hasStatusFilter) {
-      ordersQuery = await sql`
-        SELECT o.id, o.status, o.payment_type, o.location, o.send_date,
-               oi.id as item_id, oi.product_id, p.name as product_name,
-               oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
-        FROM orders o
-        JOIN order_items oi ON o.id = oi.order_id
-        LEFT JOIN products p ON oi.product_id = p.id
-        WHERE o.status = ${statusFilter}
-        ORDER BY o.send_date DESC
-      `;
-    } else if (hasPaymentFilter && hasProductFilter) {
-      ordersQuery = await sql`
-        SELECT o.id, o.status, o.payment_type, o.location, o.send_date,
-               oi.id as item_id, oi.product_id, p.name as product_name,
-               oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
-        FROM orders o
-        JOIN order_items oi ON o.id = oi.order_id
-        LEFT JOIN products p ON oi.product_id = p.id
-        WHERE o.payment_type = ${paymentType}
-          AND oi.product_id = ${parseInt(productId)}
-        ORDER BY o.send_date DESC
-      `;
-    } else if (hasPaymentFilter) {
-      ordersQuery = await sql`
-        SELECT o.id, o.status, o.payment_type, o.location, o.send_date,
-               oi.id as item_id, oi.product_id, p.name as product_name,
-               oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
-        FROM orders o
-        JOIN order_items oi ON o.id = oi.order_id
-        LEFT JOIN products p ON oi.product_id = p.id
-        WHERE o.payment_type = ${paymentType}
-        ORDER BY o.send_date DESC
-      `;
-    } else if (hasProductFilter) {
-      ordersQuery = await sql`
-        SELECT o.id, o.status, o.payment_type, o.location, o.send_date,
-               oi.id as item_id, oi.product_id, p.name as product_name,
-               oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
-        FROM orders o
-        JOIN order_items oi ON o.id = oi.order_id
-        LEFT JOIN products p ON oi.product_id = p.id
-        WHERE oi.product_id = ${parseInt(productId)}
-        ORDER BY o.send_date DESC
-      `;
-    } else {
-      // No filters - get all orders
-      ordersQuery = await sql`
-        SELECT o.id, o.status, o.payment_type, o.location, o.send_date,
-               oi.id as item_id, oi.product_id, p.name as product_name,
-               oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
-        FROM orders o
-        JOIN order_items oi ON o.id = oi.order_id
-        LEFT JOIN products p ON oi.product_id = p.id
-        ORDER BY o.send_date DESC
-      `;
-    }
+    // Fetch all order data in one query, then filter in JavaScript
+    // This is efficient for small business datasets and eliminates 32 query variations
+    const allOrdersData = await sql`
+      SELECT o.id, o.status, o.payment_type, o.location, o.send_date,
+             oi.id as item_id, oi.product_id, p.name as product_name,
+             oi.quantity, oi.unit_price, oi.courier_price, p.cost_price
+      FROM orders o
+      JOIN order_items oi ON o.id = oi.order_id
+      LEFT JOIN products p ON oi.product_id = p.id
+      ORDER BY o.send_date DESC
+    ` as Record<string, unknown>[];
+
+    // Filter in JavaScript based on active filters
+    ordersQuery = allOrdersData.filter(row => {
+      // Date filter
+      if (hasDateFilter) {
+        if (!row.send_date) return false;
+        const sendDate = new Date(row.send_date as string);
+        const start = new Date(startDate!);
+        const end = new Date(endDate!);
+        end.setDate(end.getDate() + 1); // Include end date
+        if (sendDate < start || sendDate >= end) return false;
+      }
+
+      // Status filter
+      if (hasStatusFilter && row.status !== statusFilter) return false;
+
+      // Payment filter
+      if (hasPaymentFilter && row.payment_type !== paymentType) return false;
+
+      // Location filter
+      if (hasLocationFilter && row.location !== locationFilter) return false;
+
+      // Product filter
+      if (hasProductFilter && row.product_id !== parseInt(productId!)) return false;
+
+      return true;
+    });
 
     // Process data
     const ordersMap = new Map<number, Order>();
