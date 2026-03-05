@@ -609,44 +609,62 @@ export async function GET(request: NextRequest) {
       totalItemsSold += stats.total_sold;
     }
 
-    // Get status breakdown - always show all statuses
-    const statusBreakdownQuery = await sql`
-      SELECT
-        o.status,
-        COUNT(DISTINCT o.id) as order_count,
-        COALESCE(SUM(oi.unit_price * oi.quantity), 0) as revenue,
-        COALESCE(SUM(oi.courier_price), 0) as courier
-      FROM orders o
-      JOIN order_items oi ON o.id = oi.order_id
-      GROUP BY o.status
-      ORDER BY order_count DESC
-    ` as unknown[];
+    // Compute breakdowns from filtered data (no extra queries needed)
+    // This also fixes a bug where breakdowns previously ignored user filters
 
-    // Get payment type breakdown
-    const paymentBreakdownQuery = await sql`
-      SELECT
-        o.payment_type,
-        COUNT(DISTINCT o.id) as order_count,
-        COALESCE(SUM(oi.unit_price * oi.quantity), 0) as revenue,
-        COALESCE(SUM(oi.courier_price), 0) as courier
-      FROM orders o
-      JOIN order_items oi ON o.id = oi.order_id
-      GROUP BY o.payment_type
-      ORDER BY order_count DESC
-    ` as unknown[];
+    // Status breakdown - computed from filtered ordersMap
+    const statusBreakdownMap = new Map<string, { order_count: number; revenue: number; courier: number }>();
+    for (const order of ordersMap.values()) {
+      const status = order.status;
+      if (!statusBreakdownMap.has(status)) {
+        statusBreakdownMap.set(status, { order_count: 0, revenue: 0, courier: 0 });
+      }
+      const breakdown = statusBreakdownMap.get(status)!;
+      breakdown.order_count++;
+      for (const item of order.items) {
+        breakdown.revenue += item.unit_price * item.quantity;
+        breakdown.courier += item.courier_price;
+      }
+    }
+    const statusBreakdown = Array.from(statusBreakdownMap.entries())
+      .map(([status, data]) => ({ status, ...data }))
+      .sort((a, b) => b.order_count - a.order_count);
 
-    // Get location breakdown
-    const locationBreakdownQuery = await sql`
-      SELECT
-        COALESCE(o.location, 'tbilisi') as location,
-        COUNT(DISTINCT o.id) as order_count,
-        COALESCE(SUM(oi.unit_price * oi.quantity), 0) as revenue,
-        COALESCE(SUM(oi.courier_price), 0) as courier
-      FROM orders o
-      JOIN order_items oi ON o.id = oi.order_id
-      GROUP BY o.location
-      ORDER BY order_count DESC
-    ` as unknown[];
+    // Payment type breakdown - computed from filtered ordersMap
+    const paymentBreakdownMap = new Map<string, { order_count: number; revenue: number; courier: number }>();
+    for (const order of ordersMap.values()) {
+      const paymentType = order.payment_type || 'cash';
+      if (!paymentBreakdownMap.has(paymentType)) {
+        paymentBreakdownMap.set(paymentType, { order_count: 0, revenue: 0, courier: 0 });
+      }
+      const breakdown = paymentBreakdownMap.get(paymentType)!;
+      breakdown.order_count++;
+      for (const item of order.items) {
+        breakdown.revenue += item.unit_price * item.quantity;
+        breakdown.courier += item.courier_price;
+      }
+    }
+    const paymentBreakdown = Array.from(paymentBreakdownMap.entries())
+      .map(([payment_type, data]) => ({ payment_type, ...data }))
+      .sort((a, b) => b.order_count - a.order_count);
+
+    // Location breakdown - computed from filtered ordersMap
+    const locationBreakdownMap = new Map<string, { order_count: number; revenue: number; courier: number }>();
+    for (const order of ordersMap.values()) {
+      const location = order.location || 'tbilisi';
+      if (!locationBreakdownMap.has(location)) {
+        locationBreakdownMap.set(location, { order_count: 0, revenue: 0, courier: 0 });
+      }
+      const breakdown = locationBreakdownMap.get(location)!;
+      breakdown.order_count++;
+      for (const item of order.items) {
+        breakdown.revenue += item.unit_price * item.quantity;
+        breakdown.courier += item.courier_price;
+      }
+    }
+    const locationBreakdown = Array.from(locationBreakdownMap.entries())
+      .map(([location, data]) => ({ location, ...data }))
+      .sort((a, b) => b.order_count - a.order_count);
 
     // Get all products for filter dropdown
     const allProducts = await sql`
@@ -682,9 +700,9 @@ export async function GET(request: NextRequest) {
       },
       by_product: productStatsSorted,
       by_date: dailyStatsSorted,
-      by_status: statusBreakdownQuery,
-      by_payment_type: paymentBreakdownQuery,
-      by_location: locationBreakdownQuery,
+      by_status: statusBreakdown,
+      by_payment_type: paymentBreakdown,
+      by_location: locationBreakdown,
       filters: {
         products: allProducts,
       },
