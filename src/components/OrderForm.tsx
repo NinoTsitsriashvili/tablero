@@ -78,6 +78,14 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const dropdownRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
+  // Editable totals state
+  const [isEditingProductsTotal, setIsEditingProductsTotal] = useState(false);
+  const [isEditingGrandTotal, setIsEditingGrandTotal] = useState(false);
+  const [manualProductsTotal, setManualProductsTotal] = useState<string | null>(null);
+  const [manualGrandTotal, setManualGrandTotal] = useState<string | null>(null);
+  const productsTotalInputRef = useRef<HTMLInputElement>(null);
+  const grandTotalInputRef = useRef<HTMLInputElement>(null);
+
   // Validation functions
   const validateName = (value: string, fieldLabel: string): string | undefined => {
     if (!value || value.trim().length === 0) {
@@ -406,7 +414,80 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
     return price * qty + courier;
   };
 
-  const totalPrice = orderItems.reduce((sum, item) => sum + calculateItemTotal(item), 0);
+  const calculateProductsOnly = (item: OrderItem) => {
+    const price = parseFloat(item.unit_price) || 0;
+    const qty = parseInt(item.quantity, 10) || 0;
+    return price * qty;
+  };
+
+  // Calculated totals
+  const calculatedProductsTotal = orderItems.reduce((sum, item) => sum + calculateProductsOnly(item), 0);
+  const calculatedCourierTotal = orderItems.reduce((sum, item) => sum + (parseFloat(item.courier_price) || 0), 0);
+  const calculatedGrandTotal = orderItems.reduce((sum, item) => sum + calculateItemTotal(item), 0);
+
+  // Actual displayed/used totals (manual override or calculated)
+  const productsTotal = manualProductsTotal !== null ? parseFloat(manualProductsTotal) || 0 : calculatedProductsTotal;
+  const grandTotal = manualGrandTotal !== null ? parseFloat(manualGrandTotal) || 0 : calculatedGrandTotal;
+
+  // Format number: no decimals if whole number, otherwise show decimals
+  const formatNumber = (num: number): string => {
+    if (Number.isInteger(num)) {
+      return num.toString();
+    }
+    // Remove trailing zeros after decimal
+    return num.toFixed(2).replace(/\.?0+$/, '');
+  };
+
+  // Handle click on products total to edit
+  const handleProductsTotalClick = () => {
+    setIsEditingProductsTotal(true);
+    setManualProductsTotal(formatNumber(productsTotal));
+    setTimeout(() => {
+      if (productsTotalInputRef.current) {
+        productsTotalInputRef.current.focus();
+        // Move cursor to end
+        const len = productsTotalInputRef.current.value.length;
+        productsTotalInputRef.current.setSelectionRange(len, len);
+      }
+    }, 0);
+  };
+
+  // Handle click on grand total to edit
+  const handleGrandTotalClick = () => {
+    setIsEditingGrandTotal(true);
+    setManualGrandTotal(formatNumber(grandTotal));
+    setTimeout(() => {
+      if (grandTotalInputRef.current) {
+        grandTotalInputRef.current.focus();
+        // Move cursor to end
+        const len = grandTotalInputRef.current.value.length;
+        grandTotalInputRef.current.setSelectionRange(len, len);
+      }
+    }, 0);
+  };
+
+  // Handle blur/exit from editing
+  const handleProductsTotalBlur = () => {
+    setIsEditingProductsTotal(false);
+    // If empty or invalid, reset to calculated
+    if (!manualProductsTotal || isNaN(parseFloat(manualProductsTotal))) {
+      setManualProductsTotal(null);
+    }
+  };
+
+  const handleGrandTotalBlur = () => {
+    setIsEditingGrandTotal(false);
+    // If empty or invalid, reset to calculated
+    if (!manualGrandTotal || isNaN(parseFloat(manualGrandTotal))) {
+      setManualGrandTotal(null);
+    }
+  };
+
+  // Reset manual totals when items change
+  const handleResetTotals = () => {
+    setManualProductsTotal(null);
+    setManualGrandTotal(null);
+  };
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 sm:p-6">
@@ -756,16 +837,81 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
           </div>
         </div>
 
-        {/* Total */}
+        {/* Totals */}
         <div className="border-t dark:border-gray-700 pt-4">
-          <div className="flex justify-end">
-            <div className="w-full md:w-64">
+          <div className="flex flex-col sm:flex-row justify-end gap-3">
+            {/* Products Only Total */}
+            <div className="w-full sm:w-48">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                პროდუქტები
+                {manualProductsTotal !== null && (
+                  <button
+                    type="button"
+                    onClick={handleResetTotals}
+                    className="ml-2 text-xs text-blue-500 hover:text-blue-700 dark:text-blue-400"
+                  >
+                    (გადატვირთვა)
+                  </button>
+                )}
+              </label>
+              {isEditingProductsTotal ? (
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-700 dark:text-blue-300 font-bold">₾</span>
+                  <input
+                    ref={productsTotalInputRef}
+                    type="text"
+                    inputMode="decimal"
+                    value={manualProductsTotal || ''}
+                    onChange={(e) => setManualProductsTotal(e.target.value.replace(/[^0-9.]/g, ''))}
+                    onBlur={handleProductsTotalBlur}
+                    onKeyDown={(e) => e.key === 'Enter' && handleProductsTotalBlur()}
+                    className="w-full pl-8 pr-3 py-2.5 border-2 border-blue-500 rounded-md bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-bold text-lg focus:outline-none"
+                  />
+                </div>
+              ) : (
+                <div
+                  onClick={handleProductsTotalClick}
+                  className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-bold text-lg cursor-pointer hover:border-blue-400 dark:hover:border-blue-500 transition-colors"
+                  title="დააჭირეთ რედაქტირებისთვის"
+                >
+                  ₾{formatNumber(productsTotal)}
+                </div>
+              )}
+            </div>
+
+            {/* Grand Total (with courier) */}
+            <div className="w-full sm:w-56">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 სულ ჯამი
+                {calculatedCourierTotal > 0 && (
+                  <span className="text-xs text-gray-500 dark:text-gray-400 ml-1">
+                    (+ ₾{formatNumber(calculatedCourierTotal)} კურიერი)
+                  </span>
+                )}
               </label>
-              <div className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-md bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 font-bold text-xl">
-                ₾{totalPrice.toFixed(2)}
-              </div>
+              {isEditingGrandTotal ? (
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-green-700 dark:text-green-300 font-bold text-xl">₾</span>
+                  <input
+                    ref={grandTotalInputRef}
+                    type="text"
+                    inputMode="decimal"
+                    value={manualGrandTotal || ''}
+                    onChange={(e) => setManualGrandTotal(e.target.value.replace(/[^0-9.]/g, ''))}
+                    onBlur={handleGrandTotalBlur}
+                    onKeyDown={(e) => e.key === 'Enter' && handleGrandTotalBlur()}
+                    className="w-full pl-10 pr-4 py-3 border-2 border-green-500 rounded-md bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 font-bold text-xl focus:outline-none"
+                  />
+                </div>
+              ) : (
+                <div
+                  onClick={handleGrandTotalClick}
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-md bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 font-bold text-xl cursor-pointer hover:border-green-400 dark:hover:border-green-500 transition-colors"
+                  title="დააჭირეთ რედაქტირებისთვის"
+                >
+                  ₾{formatNumber(grandTotal)}
+                </div>
+              )}
             </div>
           </div>
         </div>
