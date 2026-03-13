@@ -34,7 +34,7 @@ interface OrderItemInput {
 
 // Validation helper function for order input
 function validateOrderInput(body: Record<string, unknown>): { valid: boolean; error?: string } {
-  const { fb_name, recipient_name, phone, phone2, address, comment, items, payment_type } = body;
+  const { fb_name, recipient_name, phone, phone2, address, comment, items, payment_type, send_date } = body;
 
   // FB name validation (required)
   if (!fb_name || typeof fb_name !== 'string') {
@@ -108,6 +108,11 @@ function validateOrderInput(body: Record<string, unknown>): { valid: boolean; er
     return { valid: false, error: `კომენტარი მაქსიმუმ ${VALIDATION.COMMENT_MAX} სიმბოლო` };
   }
 
+  // Send date validation (required)
+  if (!send_date || typeof send_date !== 'string' || send_date.trim().length === 0) {
+    return { valid: false, error: 'გაგზავნის თარიღი სავალდებულოა' };
+  }
+
   // Items validation (required, at least 1)
   if (!items || !Array.isArray(items) || items.length === 0) {
     return { valid: false, error: 'დაამატეთ მინიმუმ ერთი პროდუქტი' };
@@ -166,11 +171,11 @@ export async function GET() {
   try {
     const sql = getDb();
 
-    // Get all orders
+    // Get all orders - sorted by send_date (most recent first), with null dates at the end
     const orders = await sql`
       SELECT *
       FROM orders
-      ORDER BY created_at DESC
+      ORDER BY send_date DESC NULLS LAST, created_at DESC
     ` as Record<string, unknown>[];
 
     // Get all order items with product info

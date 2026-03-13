@@ -27,6 +27,7 @@ interface FieldErrors {
   phone2?: string;
   address?: string;
   comment?: string;
+  send_date?: string;
   items?: string;
 }
 
@@ -388,6 +389,11 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
     const commentError = validateComment(formData.comment);
     if (commentError) errors.comment = commentError;
 
+    // Validate send_date (required)
+    if (!formData.send_date) {
+      errors.send_date = 'გაგზავნის თარიღი სავალდებულოა';
+    }
+
     // Validate items
     const validItems = orderItems.filter((item) => item.product_id);
     if (validItems.length === 0) {
@@ -602,7 +608,7 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
 
           <div>
             <label htmlFor="send_date" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              გაგზავნის თარიღი <span className="text-gray-400 font-normal">(არასავალდებულო)</span>
+              გაგზავნის თარიღი *
             </label>
             <input
               id="send_date"
@@ -610,19 +616,14 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
               type="date"
               value={formData.send_date}
               onChange={handleChange}
-              onClick={(e) => {
-                // On mobile, explicitly show picker to prevent flaky auto-select behavior
-                const input = e.target as HTMLInputElement;
-                if (typeof input.showPicker === 'function') {
-                  try {
-                    input.showPicker();
-                  } catch {
-                    // Ignore if showPicker fails (some browsers don't support it)
-                  }
-                }
-              }}
-              className="w-full px-3 py-2.5 text-base border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700"
+              className={`w-full px-3 py-2.5 text-base border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700 ${
+                fieldErrors.send_date ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'
+              }`}
+              required
             />
+            {fieldErrors.send_date && (
+              <p className="text-red-500 dark:text-red-400 text-xs mt-1">{fieldErrors.send_date}</p>
+            )}
           </div>
         </div>
 
