@@ -610,6 +610,17 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
               type="date"
               value={formData.send_date}
               onChange={handleChange}
+              onClick={(e) => {
+                // On mobile, explicitly show picker to prevent flaky auto-select behavior
+                const input = e.target as HTMLInputElement;
+                if (typeof input.showPicker === 'function') {
+                  try {
+                    input.showPicker();
+                  } catch {
+                    // Ignore if showPicker fails (some browsers don't support it)
+                  }
+                }
+              }}
               className="w-full px-3 py-2.5 text-base border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:bg-gray-700"
             />
           </div>
