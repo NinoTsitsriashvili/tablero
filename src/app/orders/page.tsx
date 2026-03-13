@@ -160,10 +160,10 @@ export default function OrdersPage() {
   useEffect(() => {
     if (statusDropdownOpen === null) return;
 
-    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
-      // Check if click is outside the dropdown
+    const handleClickOutside = (event: MouseEvent) => {
+      // Check if click is outside the specific dropdown that is open
       const target = event.target as HTMLElement;
-      const isInsideDropdown = target.closest('[data-status-dropdown]');
+      const isInsideDropdown = target.closest(`[data-status-dropdown="${statusDropdownOpen}"]`);
       if (!isInsideDropdown) {
         setStatusDropdownOpen(null);
       }
@@ -171,14 +171,12 @@ export default function OrdersPage() {
 
     // Small delay to prevent immediate close
     const timeoutId = setTimeout(() => {
-      document.addEventListener('click', handleClickOutside, true);
-      document.addEventListener('touchend', handleClickOutside, true);
+      document.addEventListener('click', handleClickOutside);
     }, 50);
 
     return () => {
       clearTimeout(timeoutId);
-      document.removeEventListener('click', handleClickOutside, true);
-      document.removeEventListener('touchend', handleClickOutside, true);
+      document.removeEventListener('click', handleClickOutside);
     };
   }, [statusDropdownOpen]);
 
@@ -255,11 +253,13 @@ export default function OrdersPage() {
     const isUpdating = updatingStatus === order.id;
     const config = STATUS_CONFIG[order.status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.pending;
 
-    const toggleDropdown = () => {
+    const toggleDropdown = (e: React.MouseEvent) => {
+      e.stopPropagation();
       setStatusDropdownOpen(isOpen ? null : order.id);
     };
 
-    const selectStatus = (newStatus: string) => {
+    const selectStatus = (e: React.MouseEvent, newStatus: string) => {
+      e.stopPropagation();
       if (order.status !== newStatus) {
         updateOrderStatus(order.id, newStatus);
       } else {
@@ -268,10 +268,10 @@ export default function OrdersPage() {
     };
 
     return (
-      <div className="relative" data-status-dropdown>
+      <div className="relative" data-status-dropdown={order.id}>
         <button
           type="button"
-          onClick={toggleDropdown}
+          onClick={(e) => toggleDropdown(e)}
           disabled={isUpdating}
           className={`px-2 py-1 rounded-full text-xs font-medium ${config.style} cursor-pointer hover:opacity-80 active:opacity-60 transition-opacity flex items-center gap-1 select-none ${isUpdating ? 'opacity-50' : ''}`}
           style={{ WebkitTapHighlightColor: 'transparent' }}
@@ -291,7 +291,7 @@ export default function OrdersPage() {
         {isOpen && (
           <div
             className="absolute z-50 mt-1 w-40 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 right-0 md:left-0 md:right-auto"
-            data-status-dropdown
+            data-status-dropdown={order.id}
           >
             {STATUS_ORDER.map((statusKey) => {
               const statusConfig = STATUS_CONFIG[statusKey as keyof typeof STATUS_CONFIG];
@@ -300,7 +300,7 @@ export default function OrdersPage() {
                 <button
                   type="button"
                   key={statusKey}
-                  onClick={() => selectStatus(statusKey)}
+                  onClick={(e) => selectStatus(e, statusKey)}
                   className={`w-full px-3 py-2.5 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600 flex items-center gap-2 select-none ${
                     isCurrentStatus ? 'bg-gray-50 dark:bg-gray-700' : ''
                   }`}
