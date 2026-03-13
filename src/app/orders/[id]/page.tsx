@@ -1125,7 +1125,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
         </div>
 
         {/* ========== PRINT-ONLY SHIPPING LABEL (easy to remove) ========== */}
-        <div className="hidden print:block print:mt-0">
+        <div className="print-label hidden print:block print:mt-0">
           <div className="p-4 border-2 border-black" style={{ maxWidth: '100mm' }}>
             <div className="text-center mb-4 pb-2 border-b-2 border-black">
               <p className="text-lg font-bold">მიწოდების მისამართი</p>
@@ -1168,24 +1168,28 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
         {/* ========== PRINT STYLES (easy to remove) ========== */}
         <style jsx global>{`
           @media print {
-            /* Hide everything except print area */
-            body > * {
+            /* Hide everything by default */
+            body * {
               visibility: hidden;
             }
 
-            /* Hide navbar and other non-essential elements */
-            nav, header, .print\\:hidden {
-              display: none !important;
+            /* Show the print label and all its contents */
+            .print-label,
+            .print-label * {
+              visibility: visible !important;
             }
 
-            /* Show only the print area */
-            .print\\:block {
-              visibility: visible !important;
-              display: block !important;
-              position: absolute;
-              left: 0;
-              top: 0;
-              width: 100%;
+            /* Position the print label at top left */
+            .print-label {
+              position: absolute !important;
+              left: 0 !important;
+              top: 0 !important;
+              width: 100mm !important;
+            }
+
+            /* Hide navbar and other elements completely */
+            nav, header {
+              display: none !important;
             }
 
             /* Optimize for label size */
@@ -1195,9 +1199,12 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
             }
 
             /* Reset colors for printing */
-            * {
+            .print-label,
+            .print-label * {
               color: black !important;
               background: white !important;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
             }
           }
         `}</style>
