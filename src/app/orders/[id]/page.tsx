@@ -660,8 +660,11 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                         type="date"
                         value={editForm.send_date}
                         onChange={handleEditChange}
-                        onClick={(e) => {
+                        onTouchEnd={(e) => {
+                          // Prevent default touch behavior that causes flaky date picker on mobile
+                          e.preventDefault();
                           const input = e.target as HTMLInputElement;
+                          input.focus();
                           if (typeof input.showPicker === 'function') {
                             try {
                               input.showPicker();
