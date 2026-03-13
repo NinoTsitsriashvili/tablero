@@ -1125,40 +1125,31 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
         </div>
 
         {/* ========== PRINT-ONLY SHIPPING LABEL (easy to remove) ========== */}
+        {/* Label size: 60x50mm */}
         <div className="print-label hidden print:block print:mt-0">
-          <div className="p-4 border-2 border-black" style={{ maxWidth: '100mm' }}>
-            <div className="text-center mb-4 pb-2 border-b-2 border-black">
-              <p className="text-lg font-bold">მიწოდების მისამართი</p>
-            </div>
-
-            <div className="space-y-3">
+          <div className="p-2 border border-black" style={{ width: '56mm', height: '46mm', overflow: 'hidden' }}>
+            <div className="space-y-1">
               <div>
-                <p className="text-xs text-gray-600 uppercase">ადრესატი:</p>
-                <p className="text-lg font-bold">{order.recipient_name}</p>
+                <p className="font-bold text-sm leading-tight">{order.recipient_name}</p>
               </div>
 
               <div>
-                <p className="text-xs text-gray-600 uppercase">ტელეფონი:</p>
-                <p className="text-lg font-bold">{order.phone}</p>
-                {order.phone2 && (
-                  <p className="text-lg font-bold">{order.phone2}</p>
-                )}
+                <p className="font-bold text-sm">{order.phone}</p>
+                {order.phone2 && <p className="font-bold text-sm">{order.phone2}</p>}
               </div>
 
               <div>
-                <p className="text-xs text-gray-600 uppercase">მისამართი:</p>
-                <p className="text-base font-medium">{order.address}</p>
+                <p className="text-xs leading-tight">{order.address}</p>
               </div>
 
-              <div className="pt-2 border-t border-gray-300">
-                <p className="text-xs text-gray-600 uppercase">გადახდა:</p>
-                <p className="text-base font-bold">
-                  {order.payment_type === 'cash' ? `₾${Number(order.total_price).toFixed(0)} - ხელზე` : 'გადახდილია'}
+              <div className="pt-1 border-t border-gray-400">
+                <p className="font-bold text-sm">
+                  {order.payment_type === 'cash' ? `₾${Number(order.total_price).toFixed(0)} ხელზე` : 'გადახდილია'}
                 </p>
               </div>
 
-              <div className="pt-2 border-t border-gray-300 text-center">
-                <p className="text-xs text-gray-500">შეკვეთა #{order.id}</p>
+              <div className="text-center">
+                <p className="text-xs text-gray-500">#{order.id}</p>
               </div>
             </div>
           </div>
@@ -1166,6 +1157,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
         {/* ========== END PRINT-ONLY SHIPPING LABEL ========== */}
 
         {/* ========== PRINT STYLES (easy to remove) ========== */}
+        {/* Configured for 60x50mm labels */}
         <style jsx global>{`
           @media print {
             /* Hide everything by default */
@@ -1184,7 +1176,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
               position: absolute !important;
               left: 0 !important;
               top: 0 !important;
-              width: 100mm !important;
+              width: 60mm !important;
             }
 
             /* Hide navbar and other elements completely */
@@ -1192,10 +1184,10 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
               display: none !important;
             }
 
-            /* Optimize for label size */
+            /* Optimize for 60x50mm label size */
             @page {
-              size: 100mm 150mm;
-              margin: 5mm;
+              size: 60mm 50mm;
+              margin: 2mm;
             }
 
             /* Reset colors for printing */
