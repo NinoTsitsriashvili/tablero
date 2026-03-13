@@ -450,6 +450,12 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
     return (Number(item.unit_price) * Number(item.quantity)) + Number(item.courier_price || 0);
   };
 
+  // ========== PRINT FEATURE (easy to remove) ==========
+  const handlePrint = () => {
+    window.print();
+  };
+  // ========== END PRINT FEATURE ==========
+
   if (status === 'loading' || loading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -528,7 +534,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
           </Link>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden print:hidden">
           <div className="p-4 sm:p-6">
             {/* Header - stacked on mobile, row on desktop */}
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6">
@@ -538,7 +544,15 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                   შექმნილია: {new Date(order.created_at).toLocaleString('ka-GE')}
                 </p>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 print:hidden">
+                {/* ========== PRINT BUTTON (easy to remove) ========== */}
+                <button
+                  onClick={handlePrint}
+                  className="flex-1 sm:flex-none px-4 py-2.5 text-sm bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded-md hover:bg-green-200 dark:hover:bg-green-800 transition-colors cursor-pointer font-medium"
+                >
+                  ბეჭდვა
+                </button>
+                {/* ========== END PRINT BUTTON ========== */}
                 <button
                   onClick={startEditing}
                   className="flex-1 sm:flex-none px-4 py-2.5 text-sm bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-md hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors cursor-pointer font-medium"
@@ -1091,7 +1105,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
             </div>
 
             {/* Timestamps */}
-            <div className="border-t dark:border-gray-700 pt-4 mt-4">
+            <div className="border-t dark:border-gray-700 pt-4 mt-4 print:hidden">
               <div className="flex flex-col sm:flex-row sm:gap-6 gap-2 text-sm text-gray-500 dark:text-gray-400">
                 <div>
                   <span>შექმნილია: </span>
@@ -1109,6 +1123,85 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
             </div>
           </div>
         </div>
+
+        {/* ========== PRINT-ONLY SHIPPING LABEL (easy to remove) ========== */}
+        <div className="hidden print:block print:mt-0">
+          <div className="p-4 border-2 border-black" style={{ maxWidth: '100mm' }}>
+            <div className="text-center mb-4 pb-2 border-b-2 border-black">
+              <p className="text-lg font-bold">მიწოდების მისამართი</p>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <p className="text-xs text-gray-600 uppercase">ადრესატი:</p>
+                <p className="text-lg font-bold">{order.recipient_name}</p>
+              </div>
+
+              <div>
+                <p className="text-xs text-gray-600 uppercase">ტელეფონი:</p>
+                <p className="text-lg font-bold">{order.phone}</p>
+                {order.phone2 && (
+                  <p className="text-lg font-bold">{order.phone2}</p>
+                )}
+              </div>
+
+              <div>
+                <p className="text-xs text-gray-600 uppercase">მისამართი:</p>
+                <p className="text-base font-medium">{order.address}</p>
+              </div>
+
+              <div className="pt-2 border-t border-gray-300">
+                <p className="text-xs text-gray-600 uppercase">გადახდა:</p>
+                <p className="text-base font-bold">
+                  {order.payment_type === 'cash' ? `₾${Number(order.total_price).toFixed(0)} - ხელზე` : 'გადახდილია'}
+                </p>
+              </div>
+
+              <div className="pt-2 border-t border-gray-300 text-center">
+                <p className="text-xs text-gray-500">შეკვეთა #{order.id}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        {/* ========== END PRINT-ONLY SHIPPING LABEL ========== */}
+
+        {/* ========== PRINT STYLES (easy to remove) ========== */}
+        <style jsx global>{`
+          @media print {
+            /* Hide everything except print area */
+            body > * {
+              visibility: hidden;
+            }
+
+            /* Hide navbar and other non-essential elements */
+            nav, header, .print\\:hidden {
+              display: none !important;
+            }
+
+            /* Show only the print area */
+            .print\\:block {
+              visibility: visible !important;
+              display: block !important;
+              position: absolute;
+              left: 0;
+              top: 0;
+              width: 100%;
+            }
+
+            /* Optimize for label size */
+            @page {
+              size: 100mm 150mm;
+              margin: 5mm;
+            }
+
+            /* Reset colors for printing */
+            * {
+              color: black !important;
+              background: white !important;
+            }
+          }
+        `}</style>
+        {/* ========== END PRINT STYLES ========== */}
       </main>
     </div>
   );
