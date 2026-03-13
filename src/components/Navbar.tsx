@@ -16,6 +16,7 @@ export default function Navbar() {
     { href: '/storage', label: 'საწყობი' },
     { href: '/orders', label: 'შეკვეთები' },
     { href: '/statistics', label: 'სტატისტიკა' },
+    { href: '/marketing', label: 'მარკეტინგი' },
     { href: '/ai-orders', label: 'AI შეკვეთები' },
   ];
 

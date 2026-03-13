@@ -61,6 +61,65 @@ export async function POST(request: NextRequest) {
       ADD COLUMN IF NOT EXISTS added_by VARCHAR(50) DEFAULT 'ani'
     `;
 
+    // Create exchange_rates table for USD/EUR to GEL conversion
+    await sql`
+      CREATE TABLE IF NOT EXISTS exchange_rates (
+        id SERIAL PRIMARY KEY,
+        currency VARCHAR(3) NOT NULL,
+        rate_to_gel DECIMAL(10, 4) NOT NULL,
+        effective_date DATE NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(currency, effective_date)
+      )
+    `;
+
+    // Create fb_ad_spend table for daily ad spend synced from Facebook API
+    await sql`
+      CREATE TABLE IF NOT EXISTS fb_ad_spend (
+        id SERIAL PRIMARY KEY,
+        date DATE NOT NULL,
+        spend_usd DECIMAL(10, 2) NOT NULL,
+        spend_gel DECIMAL(10, 2),
+        exchange_rate DECIMAL(10, 4),
+        impressions INTEGER DEFAULT 0,
+        clicks INTEGER DEFAULT 0,
+        campaign_id VARCHAR(100),
+        campaign_name VARCHAR(255),
+        synced_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(date, campaign_id)
+      )
+    `;
+
+    // Create fb_payments table for manual payment entry
+    await sql`
+      CREATE TABLE IF NOT EXISTS fb_payments (
+        id SERIAL PRIMARY KEY,
+        payment_date DATE NOT NULL,
+        amount_usd DECIMAL(10, 2) NOT NULL,
+        amount_gel DECIMAL(10, 2),
+        exchange_rate DECIMAL(10, 4),
+        description TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+
+    // Add indexes for better query performance
+    await sql`
+      CREATE INDEX IF NOT EXISTS idx_fb_ad_spend_date ON fb_ad_spend(date)
+    `;
+
+    await sql`
+      CREATE INDEX IF NOT EXISTS idx_fb_payments_date ON fb_payments(payment_date)
+    `;
+
+    await sql`
+      CREATE INDEX IF NOT EXISTS idx_exchange_rates_date ON exchange_rates(effective_date)
+    `;
+
+    await sql`
+      CREATE INDEX IF NOT EXISTS idx_orders_send_date ON orders(send_date)
+    `;
+
     return NextResponse.json({ message: 'Migration completed successfully' }, { status: 200 });
   } catch (error) {
     console.error('Migration error:', error);
