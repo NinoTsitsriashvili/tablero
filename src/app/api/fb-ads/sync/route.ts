@@ -48,12 +48,12 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { start_date, end_date } = body;
 
-    // Default to last 30 days if no dates provided
+    // Default to last 2 years if no dates provided (to get all historical data)
     const today = new Date();
-    const thirtyDaysAgo = new Date(today);
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const twoYearsAgo = new Date(today);
+    twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2);
 
-    const startDate = start_date || thirtyDaysAgo.toISOString().split('T')[0];
+    const startDate = start_date || twoYearsAgo.toISOString().split('T')[0];
     const endDate = end_date || today.toISOString().split('T')[0];
 
     // Fetch from Facebook API - account level daily breakdown
