@@ -51,14 +51,33 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { start_date, end_date } = body;
 
-    // Default to last 2 years if no dates provided (to get all historical data)
     const today = new Date();
-    const twoYearsAgo = new Date(today);
-    twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2);
+    let startDate: string;
+    let endDate: string;
 
-    // Handle empty strings as well as undefined/null
-    const startDate = (start_date && start_date.trim()) || twoYearsAgo.toISOString().split('T')[0];
-    const endDate = (end_date && end_date.trim()) || today.toISOString().split('T')[0];
+    // If no dates provided, do incremental sync from last synced date
+    if (!start_date || !start_date.trim() || !end_date || !end_date.trim()) {
+      // Find the most recent synced date
+      const lastSync = await sql`
+        SELECT MAX(date) as last_date FROM fb_ad_spend WHERE campaign_id = 'daily_total'
+      ` as { last_date: string | null }[];
+
+      if (lastSync[0]?.last_date) {
+        // Start from 2 days before last sync (to catch any late updates)
+        const lastDate = new Date(lastSync[0].last_date);
+        lastDate.setDate(lastDate.getDate() - 2);
+        startDate = lastDate.toISOString().split('T')[0];
+      } else {
+        // No data yet, sync last 60 days (safe for Hobby plan timeout)
+        const sixtyDaysAgo = new Date(today);
+        sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+        startDate = sixtyDaysAgo.toISOString().split('T')[0];
+      }
+      endDate = today.toISOString().split('T')[0];
+    } else {
+      startDate = start_date.trim();
+      endDate = end_date.trim();
+    }
 
     // Fetch from Facebook API - account level daily breakdown
     const timeRange = encodeURIComponent(JSON.stringify({ since: startDate, until: endDate }));
