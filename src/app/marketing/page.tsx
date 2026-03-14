@@ -304,13 +304,14 @@ export default function MarketingPage() {
     }
   };
 
-  const formatCurrency = (value: number, currency: 'USD' | 'GEL' = 'GEL') => {
-    if (currency === 'USD') return `$${value.toFixed(2)}`;
-    return `₾${value.toFixed(2)}`;
+  const formatCurrency = (value: number | null | undefined, currency: 'USD' | 'GEL' = 'GEL') => {
+    const num = value ?? 0;
+    if (currency === 'USD') return `$${num.toFixed(2)}`;
+    return `₾${num.toFixed(2)}`;
   };
 
-  const formatPercent = (value: number) => `${value.toFixed(2)}%`;
-  const formatNumber = (value: number) => value.toLocaleString('ka-GE');
+  const formatPercent = (value: number | null | undefined) => `${(value ?? 0).toFixed(2)}%`;
+  const formatNumber = (value: number | null | undefined) => (value ?? 0).toLocaleString('ka-GE');
 
   if (status === 'loading' || loading) {
     return (
