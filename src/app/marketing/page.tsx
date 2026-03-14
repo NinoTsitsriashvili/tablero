@@ -492,19 +492,19 @@ export default function MarketingPage() {
               </div>
               <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-3 sm:p-4">
                 <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-1">ROAS</p>
-                <p className={`text-lg sm:text-2xl font-bold ${data.summary.roas >= 1 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                  {data.summary.roas.toFixed(2)}x
+                <p className={`text-lg sm:text-2xl font-bold ${(data.summary.roas ?? 0) >= 1 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                  {(data.summary.roas ?? 0).toFixed(2)}x
                 </p>
               </div>
               <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-3 sm:p-4">
                 <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-1">მოგება (რეკლამამდე)</p>
-                <p className={`text-lg sm:text-2xl font-bold ${data.summary.profit_before_ads >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                <p className={`text-lg sm:text-2xl font-bold ${(data.summary.profit_before_ads ?? 0) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                   {formatCurrency(data.summary.profit_before_ads)}
                 </p>
               </div>
               <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-3 sm:p-4">
                 <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-1">წმინდა მოგება</p>
-                <p className={`text-lg sm:text-2xl font-bold ${data.summary.profit_after_ads >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                <p className={`text-lg sm:text-2xl font-bold ${(data.summary.profit_after_ads ?? 0) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                   {formatCurrency(data.summary.profit_after_ads)}
                 </p>
               </div>
@@ -951,7 +951,7 @@ export default function MarketingPage() {
                                 </p>
                               </div>
                               <p className="font-bold text-gray-800 dark:text-white">
-                                = {Number(r.rate_to_gel).toFixed(4)} GEL
+                                = {(Number(r.rate_to_gel) || 0).toFixed(4)} GEL
                               </p>
                             </div>
                           ))}
