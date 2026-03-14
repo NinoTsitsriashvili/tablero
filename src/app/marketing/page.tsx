@@ -205,7 +205,14 @@ export default function MarketingPage() {
         }),
       });
 
-      const result = await res.json();
+      const text = await res.text();
+      let result;
+      try {
+        result = JSON.parse(text);
+      } catch {
+        console.error('Failed to parse sync response:', text.substring(0, 200));
+        throw new Error('სერვერმა არასწორი პასუხი დააბრუნა. სცადეთ თავიდან.');
+      }
 
       if (!res.ok) {
         throw new Error(result.error || 'Sync failed');

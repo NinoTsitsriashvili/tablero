@@ -3,6 +3,9 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { getDb } from '@/lib/db';
 
+// Increase function timeout for large data syncs
+export const maxDuration = 60;
+
 const FB_AD_ACCOUNT_ID = process.env.FB_AD_ACCOUNT_ID || 'act_221097566364764';
 const FB_ACCESS_TOKEN = process.env.FB_ACCESS_TOKEN;
 
