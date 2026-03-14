@@ -53,8 +53,9 @@ export async function POST(request: NextRequest) {
     const twoYearsAgo = new Date(today);
     twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2);
 
-    const startDate = start_date || twoYearsAgo.toISOString().split('T')[0];
-    const endDate = end_date || today.toISOString().split('T')[0];
+    // Handle empty strings as well as undefined/null
+    const startDate = (start_date && start_date.trim()) || twoYearsAgo.toISOString().split('T')[0];
+    const endDate = (end_date && end_date.trim()) || today.toISOString().split('T')[0];
 
     // Fetch from Facebook API - account level daily breakdown
     const timeRange = encodeURIComponent(JSON.stringify({ since: startDate, until: endDate }));
