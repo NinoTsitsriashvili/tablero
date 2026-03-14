@@ -66,7 +66,18 @@ export async function POST(request: NextRequest) {
       `&limit=500`;
 
     const response = await fetch(fbUrl);
-    const data = await response.json();
+    const responseText = await response.text();
+
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch {
+      console.error('Facebook API returned non-JSON response:', responseText.substring(0, 500));
+      return NextResponse.json(
+        { error: 'Facebook API returned invalid response. Please check your access token.' },
+        { status: 400 }
+      );
+    }
 
     if (data.error) {
       console.error('Facebook API error:', data.error);
@@ -119,7 +130,13 @@ export async function POST(request: NextRequest) {
       `&limit=500`;
 
     const accountResponse = await fetch(accountUrl);
-    const accountData = await accountResponse.json();
+    let accountData;
+    try {
+      accountData = await accountResponse.json();
+    } catch {
+      console.error('Failed to parse account-level response');
+      accountData = { error: true };
+    }
 
     if (!accountData.error && accountData.data) {
       for (const row of accountData.data as FbInsightRow[]) {
