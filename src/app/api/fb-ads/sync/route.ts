@@ -57,9 +57,10 @@ export async function POST(request: NextRequest) {
     const endDate = end_date || today.toISOString().split('T')[0];
 
     // Fetch from Facebook API - account level daily breakdown
+    const timeRange = encodeURIComponent(JSON.stringify({ since: startDate, until: endDate }));
     const fbUrl = `https://graph.facebook.com/v19.0/${FB_AD_ACCOUNT_ID}/insights?` +
       `access_token=${FB_ACCESS_TOKEN}` +
-      `&time_range={"since":"${startDate}","until":"${endDate}"}` +
+      `&time_range=${timeRange}` +
       `&fields=spend,impressions,clicks,campaign_id,campaign_name` +
       `&level=campaign` +
       `&time_increment=1` +
@@ -123,7 +124,7 @@ export async function POST(request: NextRequest) {
     // Also fetch account-level totals (aggregated per day)
     const accountUrl = `https://graph.facebook.com/v19.0/${FB_AD_ACCOUNT_ID}/insights?` +
       `access_token=${FB_ACCESS_TOKEN}` +
-      `&time_range={"since":"${startDate}","until":"${endDate}"}` +
+      `&time_range=${timeRange}` +
       `&fields=spend,impressions,clicks` +
       `&level=account` +
       `&time_increment=1` +
