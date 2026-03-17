@@ -112,8 +112,8 @@ export async function GET(request: NextRequest) {
       const order = ordersMap.get(row.id)!;
       const productStr = `${row.product_name || 'უცნობი'} x${row.quantity}`;
       order.products.push(productStr);
-      order.total += row.unit_price * row.quantity;
-      order.courier += row.courier_price || 0;
+      order.total += Number(row.unit_price) * Number(row.quantity);
+      order.courier += Number(row.courier_price) || 0;
     }
 
     // Convert to array for Excel
@@ -122,8 +122,8 @@ export async function GET(request: NextRequest) {
       'სახელი': order.recipient_name,
       'ტელეფონი': order.phone,
       'პროდუქტები': order.products.join(', '),
-      'ჯამი (₾)': order.total.toFixed(2),
-      'კურიერი (₾)': order.courier.toFixed(2),
+      'ჯამი (₾)': Number(order.total).toFixed(2),
+      'კურიერი (₾)': Number(order.courier).toFixed(2),
       'სტატუსი': STATUS_LABELS[order.status] || order.status,
     }));
 
