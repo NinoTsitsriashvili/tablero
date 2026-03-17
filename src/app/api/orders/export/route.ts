@@ -128,7 +128,9 @@ export async function GET(request: NextRequest) {
     }));
 
     if (excelData.length === 0) {
-      return NextResponse.json({ error: 'No orders found for export' }, { status: 404 });
+      return NextResponse.json({
+        error: 'ექსპორტისთვის შეკვეთები ვერ მოიძებნა. შეამოწმეთ ფილტრები.'
+      }, { status: 404 });
     }
 
     // Create workbook
@@ -166,6 +168,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error exporting orders:', error);
-    return NextResponse.json({ error: 'Failed to export orders' }, { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    return NextResponse.json({ error: `Failed to export orders: ${errorMessage}` }, { status: 500 });
   }
 }
