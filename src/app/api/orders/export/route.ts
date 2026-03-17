@@ -147,8 +147,9 @@ export async function GET(request: NextRequest) {
       { wch: 15 },  // Status
     ];
 
-    // Generate array buffer (works in serverless environments)
-    const uint8Array = XLSX.write(workbook, { type: 'array', bookType: 'xlsx' }) as Uint8Array;
+    // Generate array and convert to ArrayBuffer
+    const xlsxArray = XLSX.write(workbook, { type: 'array', bookType: 'xlsx' });
+    const arrayBuffer = new Uint8Array(xlsxArray).buffer;
 
     // Generate filename with date range
     const dateStr = startDate && endDate
@@ -156,7 +157,8 @@ export async function GET(request: NextRequest) {
       : new Date().toISOString().split('T')[0];
     const filename = `orders_${dateStr}.xlsx`;
 
-    return new NextResponse(uint8Array, {
+    return new NextResponse(arrayBuffer, {
+      status: 200,
       headers: {
         'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         'Content-Disposition': `attachment; filename="${filename}"`,
