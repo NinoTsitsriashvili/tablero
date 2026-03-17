@@ -768,17 +768,39 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
                     />
                     {item.showDropdown && getFilteredProducts(item.searchQuery).length > 0 && (
                       <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded-md shadow-lg max-h-48 overflow-y-auto">
-                        {getFilteredProducts(item.searchQuery).map((product) => (
-                          <button
-                            key={product.id}
-                            type="button"
-                            onClick={() => handleProductSelect(item.id, product)}
-                            className="w-full px-4 py-3 text-left hover:bg-gray-100 dark:hover:bg-gray-500 flex justify-between items-center cursor-pointer"
-                          >
-                            <span className="text-gray-800 dark:text-white">{product.name}</span>
-                            <span className="text-gray-500 dark:text-gray-300 text-sm">₾{Number(product.price).toFixed(2)}</span>
-                          </button>
-                        ))}
+                        {getFilteredProducts(item.searchQuery).map((product) => {
+                          const stockQty = Number(product.quantity);
+                          const isOutOfStock = stockQty <= 0;
+                          return (
+                            <button
+                              key={product.id}
+                              type="button"
+                              onClick={() => !isOutOfStock && handleProductSelect(item.id, product)}
+                              disabled={isOutOfStock}
+                              className={`w-full px-4 py-3 text-left flex justify-between items-center ${
+                                isOutOfStock
+                                  ? 'bg-gray-100 dark:bg-gray-700 cursor-not-allowed opacity-60'
+                                  : 'hover:bg-gray-100 dark:hover:bg-gray-500 cursor-pointer'
+                              }`}
+                            >
+                              <div className="flex flex-col">
+                                <span className={`${isOutOfStock ? 'text-gray-500 dark:text-gray-400' : 'text-gray-800 dark:text-white'}`}>
+                                  {product.name}
+                                </span>
+                                <span className={`text-xs ${
+                                  isOutOfStock
+                                    ? 'text-red-500 dark:text-red-400'
+                                    : stockQty <= 3
+                                    ? 'text-orange-500 dark:text-orange-400'
+                                    : 'text-gray-400 dark:text-gray-500'
+                                }`}>
+                                  {isOutOfStock ? 'არ არის მარაგში' : `მარაგში: ${stockQty}`}
+                                </span>
+                              </div>
+                              <span className="text-gray-500 dark:text-gray-300 text-sm">₾{Number(product.price).toFixed(2)}</span>
+                            </button>
+                          );
+                        })}
                       </div>
                     )}
                   </div>
@@ -889,7 +911,17 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
         </div>
 
         {error && (
-          <p className="text-red-500 dark:text-red-400 text-sm">{error}</p>
+          <div className="bg-red-50 dark:bg-red-900/30 border border-red-300 dark:border-red-700 rounded-lg p-4">
+            <div className="flex items-start gap-3">
+              <svg className="w-5 h-5 text-red-500 dark:text-red-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <div>
+                <p className="text-red-700 dark:text-red-300 font-medium">შეკვეთა ვერ დაემატა</p>
+                <p className="text-red-600 dark:text-red-400 text-sm mt-1">{error}</p>
+              </div>
+            </div>
+          </div>
         )}
 
         <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end">

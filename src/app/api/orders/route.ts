@@ -331,6 +331,7 @@ export async function POST(request: NextRequest) {
     );
   } catch (error) {
     console.error('Error creating order:', error);
-    return NextResponse.json({ error: 'Failed to create order' }, { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    return NextResponse.json({ error: `შეკვეთის შექმნა ვერ მოხერხდა: ${errorMessage}` }, { status: 500 });
   }
 }
