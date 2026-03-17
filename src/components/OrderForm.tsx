@@ -78,8 +78,23 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showErrorModal, setShowErrorModal] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const dropdownRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+  const errorRef = useRef<HTMLDivElement>(null);
+
+  // Show modal when error occurs and scroll to it
+  useEffect(() => {
+    if (error) {
+      setShowErrorModal(true);
+      // Scroll to error on mobile
+      errorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      // Vibrate on mobile if supported
+      if (navigator.vibrate) {
+        navigator.vibrate(200);
+      }
+    }
+  }, [error]);
 
 
   // Validation functions
@@ -910,15 +925,54 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
           )}
         </div>
 
+        {/* Error Display - Mobile Optimized */}
         {error && (
-          <div className="bg-red-50 dark:bg-red-900/30 border border-red-300 dark:border-red-700 rounded-lg p-4">
-            <div className="flex items-start gap-3">
-              <svg className="w-5 h-5 text-red-500 dark:text-red-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <div>
-                <p className="text-red-700 dark:text-red-300 font-medium">შეკვეთა ვერ დაემატა</p>
-                <p className="text-red-600 dark:text-red-400 text-sm mt-1">{error}</p>
+          <div ref={errorRef} className="relative">
+            {/* Inline error for context */}
+            <div className="bg-red-50 dark:bg-red-900/30 border-2 border-red-400 dark:border-red-600 rounded-xl p-4 shadow-lg">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 sm:w-8 sm:h-8 bg-red-100 dark:bg-red-800 rounded-full flex items-center justify-center flex-shrink-0">
+                  <svg className="w-6 h-6 sm:w-5 sm:h-5 text-red-600 dark:text-red-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-red-800 dark:text-red-200 font-semibold text-base sm:text-sm">შეკვეთა ვერ დაემატა</p>
+                  <p className="text-red-700 dark:text-red-300 text-base sm:text-sm mt-1 break-words">{error}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setError('')}
+                  className="p-2 -mr-2 -mt-1 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-200 touch-manipulation"
+                >
+                  <svg className="w-6 h-6 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Full-screen error modal for mobile */}
+        {showErrorModal && error && (
+          <div className="fixed inset-0 z-50 sm:hidden flex items-end justify-center bg-black/50 animate-fadeIn">
+            <div className="w-full bg-white dark:bg-gray-800 rounded-t-2xl p-6 pb-8 shadow-2xl animate-slideUp">
+              <div className="flex flex-col items-center text-center">
+                <div className="w-16 h-16 bg-red-100 dark:bg-red-900/50 rounded-full flex items-center justify-center mb-4">
+                  <svg className="w-10 h-10 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">შეკვეთა ვერ დაემატა</h3>
+                <p className="text-gray-600 dark:text-gray-300 text-lg mb-6">{error}</p>
+                <button
+                  type="button"
+                  onClick={() => setShowErrorModal(false)}
+                  className="w-full py-4 bg-red-600 hover:bg-red-700 active:bg-red-800 text-white text-lg font-semibold rounded-xl transition-colors touch-manipulation"
+                >
+                  გასაგებია
+                </button>
               </div>
             </div>
           </div>
