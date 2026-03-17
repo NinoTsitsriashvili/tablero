@@ -147,7 +147,7 @@ export default function DashboardPage() {
       <Navbar />
       <main className="max-w-7xl mx-auto px-4 py-6 sm:py-8">
         {/* Header */}
-        <div className="mb-6 sm:mb-8">
+        <div className="mb-4 sm:mb-6">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
             {greeting}!
           </h1>
@@ -156,25 +156,103 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        {/* Quick Actions - Mobile First */}
-        <div className="grid grid-cols-2 gap-3 mb-6 sm:hidden">
+        {/* Quick Actions - Mobile */}
+        <div className="grid grid-cols-4 gap-2 mb-6 sm:hidden">
           <Link
             href="/orders"
-            className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-xl p-4 font-medium transition-colors touch-manipulation"
+            className="flex flex-col items-center justify-center gap-1.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-xl p-3 font-medium transition-colors touch-manipulation"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
-            შეკვეთა
+            <span className="text-xs">შეკვეთა</span>
+          </Link>
+          <Link
+            href="/orders"
+            className="flex flex-col items-center justify-center gap-1.5 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-xl p-3 font-medium transition-colors touch-manipulation"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+            <span className="text-xs">შეკვეთები</span>
           </Link>
           <Link
             href="/storage"
-            className="flex items-center justify-center gap-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-xl p-4 font-medium transition-colors touch-manipulation"
+            className="flex flex-col items-center justify-center gap-1.5 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-xl p-3 font-medium transition-colors touch-manipulation"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
             </svg>
-            საწყობი
+            <span className="text-xs">საწყობი</span>
+          </Link>
+          <Link
+            href="/statistics"
+            className="flex flex-col items-center justify-center gap-1.5 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-xl p-3 font-medium transition-colors touch-manipulation"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+            <span className="text-xs">სტატისტიკა</span>
+          </Link>
+        </div>
+
+        {/* Quick Actions - Desktop */}
+        <div className="hidden sm:grid grid-cols-4 gap-4 mb-6">
+          <Link
+            href="/orders"
+            className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl p-4 flex items-center gap-3 shadow-sm hover:shadow-md transition-all"
+          >
+            <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+            </div>
+            <div>
+              <p className="font-semibold">ახალი შეკვეთა</p>
+              <p className="text-sm text-blue-100">დაამატე</p>
+            </div>
+          </Link>
+          <Link
+            href="/orders"
+            className="bg-white dark:bg-gray-800 rounded-xl p-4 flex items-center gap-3 shadow-sm hover:shadow-md transition-all"
+          >
+            <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center">
+              <svg className="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+            </div>
+            <div>
+              <p className="font-semibold text-gray-900 dark:text-white">შეკვეთები</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">ნახე ყველა</p>
+            </div>
+          </Link>
+          <Link
+            href="/storage"
+            className="bg-white dark:bg-gray-800 rounded-xl p-4 flex items-center gap-3 shadow-sm hover:shadow-md transition-all"
+          >
+            <div className="w-10 h-10 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg flex items-center justify-center">
+              <svg className="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+              </svg>
+            </div>
+            <div>
+              <p className="font-semibold text-gray-900 dark:text-white">საწყობი</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">მარაგის მართვა</p>
+            </div>
+          </Link>
+          <Link
+            href="/statistics"
+            className="bg-white dark:bg-gray-800 rounded-xl p-4 flex items-center gap-3 shadow-sm hover:shadow-md transition-all"
+          >
+            <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center">
+              <svg className="w-5 h-5 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+            </div>
+            <div>
+              <p className="font-semibold text-gray-900 dark:text-white">სტატისტიკა</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">ანალიზი</p>
+            </div>
           </Link>
         </div>
 
@@ -413,51 +491,6 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* Desktop Quick Actions */}
-        <div className="hidden sm:grid grid-cols-3 gap-4 mt-8">
-          <Link
-            href="/orders"
-            className="bg-white dark:bg-gray-800 rounded-2xl p-6 flex items-center gap-4 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5"
-          >
-            <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center">
-              <svg className="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-            </div>
-            <div>
-              <p className="font-semibold text-gray-900 dark:text-white">ახალი შეკვეთა</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">დაამატე შეკვეთა</p>
-            </div>
-          </Link>
-          <Link
-            href="/storage"
-            className="bg-white dark:bg-gray-800 rounded-2xl p-6 flex items-center gap-4 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5"
-          >
-            <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/30 rounded-xl flex items-center justify-center">
-              <svg className="w-6 h-6 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-              </svg>
-            </div>
-            <div>
-              <p className="font-semibold text-gray-900 dark:text-white">საწყობი</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">მარაგის მართვა</p>
-            </div>
-          </Link>
-          <Link
-            href="/statistics"
-            className="bg-white dark:bg-gray-800 rounded-2xl p-6 flex items-center gap-4 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5"
-          >
-            <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-xl flex items-center justify-center">
-              <svg className="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-              </svg>
-            </div>
-            <div>
-              <p className="font-semibold text-gray-900 dark:text-white">სტატისტიკა</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">შემოსავლის ანალიზი</p>
-            </div>
-          </Link>
-        </div>
       </main>
     </div>
   );
