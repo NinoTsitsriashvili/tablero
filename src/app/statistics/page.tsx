@@ -99,10 +99,9 @@ export default function StatisticsPage() {
   const [data, setData] = useState<StatisticsData | null>(null);
   const [error, setError] = useState('');
 
-  // Filters - auto-populate with current month
+  // Filters - default to today
   const [startDate, setStartDate] = useState(() => {
-    const today = new Date();
-    return new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+    return new Date().toISOString().split('T')[0];
   });
   const [endDate, setEndDate] = useState(() => {
     return new Date().toISOString().split('T')[0];
@@ -111,7 +110,7 @@ export default function StatisticsPage() {
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [selectedPayment, setSelectedPayment] = useState('all');
   const [selectedLocation, setSelectedLocation] = useState('all');
-  const [selectedPreset, setSelectedPreset] = useState('month');
+  const [selectedPreset, setSelectedPreset] = useState('today');
 
   // View mode
   const [viewMode, setViewMode] = useState<ViewMode>('summary');
