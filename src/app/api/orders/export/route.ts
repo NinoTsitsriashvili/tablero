@@ -17,13 +17,13 @@ interface OrderRow {
   id: number;
   recipient_name: string;
   phone: string;
+  address: string;
   status: string;
   send_date: string | null;
   payment_type: string;
   location: string;
-  product_name: string;
-  quantity: number;
   unit_price: number;
+  quantity: number;
   courier_price: number;
 }
 
@@ -40,18 +40,16 @@ export async function GET(request: NextRequest) {
 
     const startDate = searchParams.get('start_date');
     const endDate = searchParams.get('end_date');
-    const productId = searchParams.get('product_id');
     const status = searchParams.get('status');
     const paymentType = searchParams.get('payment_type');
     const location = searchParams.get('location');
 
     // Fetch all order data
     const allOrdersData = await sql`
-      SELECT o.id, o.recipient_name, o.phone, o.status, o.send_date, o.payment_type, o.location,
-             p.name as product_name, oi.quantity, oi.unit_price, oi.courier_price
+      SELECT o.id, o.recipient_name, o.phone, o.address, o.status, o.send_date, o.payment_type, o.location,
+             oi.quantity, oi.unit_price, oi.courier_price
       FROM orders o
       JOIN order_items oi ON o.id = oi.order_id
-      LEFT JOIN products p ON oi.product_id = p.id
       ORDER BY o.send_date DESC, o.id DESC
     ` as OrderRow[];
 
@@ -82,16 +80,13 @@ export async function GET(request: NextRequest) {
       return true;
     });
 
-    // If product filter is set, we need to check after grouping
-    const productIdNum = productId ? parseInt(productId) : null;
-
     // Group by order ID
     const ordersMap = new Map<number, {
       id: number;
       recipient_name: string;
       phone: string;
+      address: string;
       status: string;
-      products: string[];
       total: number;
       courier: number;
     }>();
@@ -102,16 +97,14 @@ export async function GET(request: NextRequest) {
           id: row.id,
           recipient_name: row.recipient_name,
           phone: row.phone,
+          address: row.address,
           status: row.status,
-          products: [],
           total: 0,
           courier: 0,
         });
       }
 
       const order = ordersMap.get(row.id)!;
-      const productStr = `${row.product_name || 'უცნობი'} x${row.quantity}`;
-      order.products.push(productStr);
       order.total += Number(row.unit_price) * Number(row.quantity);
       order.courier += Number(row.courier_price) || 0;
     }
@@ -121,7 +114,7 @@ export async function GET(request: NextRequest) {
       'შეკვეთის ID': order.id,
       'სახელი': order.recipient_name,
       'ტელეფონი': order.phone,
-      'პროდუქტები': order.products.join(', '),
+      'მისამართი': order.address,
       'ჯამი (₾)': Number(order.total).toFixed(2),
       'კურიერი (₾)': Number(order.courier).toFixed(2),
       'სტატუსი': STATUS_LABELS[order.status] || order.status,
@@ -143,7 +136,7 @@ export async function GET(request: NextRequest) {
       { wch: 12 },  // ID
       { wch: 25 },  // Name
       { wch: 15 },  // Phone
-      { wch: 50 },  // Products
+      { wch: 40 },  // Address
       { wch: 12 },  // Total
       { wch: 12 },  // Courier
       { wch: 15 },  // Status
