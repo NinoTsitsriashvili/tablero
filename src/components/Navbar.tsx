@@ -17,7 +17,6 @@ export default function Navbar() {
     { href: '/orders', label: 'შეკვეთები' },
     { href: '/statistics', label: 'სტატისტიკა' },
     { href: '/marketing', label: 'მარკეტინგი' },
-    { href: '/ai-orders', label: 'AI შეკვეთები' },
   ];
 
   return (
