@@ -121,7 +121,7 @@ export default function OrdersPage() {
   const [locationFilter, setLocationFilter] = useState<'all' | 'tbilisi' | 'regions' | 'city' | 'village'>('all');
   const [addedByFilter, setAddedByFilter] = useState<'all' | 'ani' | 'kato'>('all');
   const statusDropdownRef = useRef<HTMLDivElement>(null);
-  const ITEMS_PER_PAGE = 10;
+  const ITEMS_PER_PAGE = 25;
 
   // Filter orders based on search query, location, and added_by
   const filteredOrders = orders.filter((order) => {
