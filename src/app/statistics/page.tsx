@@ -403,6 +403,8 @@ export default function StatisticsPage() {
                 <option value="all">ყველა</option>
                 <option value="tbilisi">თბილისი</option>
                 <option value="regions">რეგიონები</option>
+                <option value="city">ქალაქები</option>
+                <option value="village">სოფლები</option>
               </select>
             </div>
           </div>
