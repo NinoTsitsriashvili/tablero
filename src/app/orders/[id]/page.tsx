@@ -674,7 +674,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         ლოკაცია *
                       </label>
-                      <div className="flex gap-4">
+                      <div className="flex flex-wrap gap-4">
                         <label className="flex items-center cursor-pointer">
                           <input
                             type="radio"
@@ -690,12 +690,23 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                           <input
                             type="radio"
                             name="location"
-                            value="region"
-                            checked={editForm.location === 'region'}
+                            value="city"
+                            checked={editForm.location === 'city'}
                             onChange={handleEditChange}
                             className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
                           />
-                          <span className="ml-2 text-gray-800 dark:text-gray-200">რეგიონები</span>
+                          <span className="ml-2 text-gray-800 dark:text-gray-200">ქალაქები</span>
+                        </label>
+                        <label className="flex items-center cursor-pointer">
+                          <input
+                            type="radio"
+                            name="location"
+                            value="village"
+                            checked={editForm.location === 'village'}
+                            onChange={handleEditChange}
+                            className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                          />
+                          <span className="ml-2 text-gray-800 dark:text-gray-200">სოფლები</span>
                         </label>
                       </div>
                     </div>
@@ -991,9 +1002,13 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                 <span className={`px-3 py-1 rounded-full text-sm font-medium ${
                   order.location === 'tbilisi'
                     ? 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200'
+                    : order.location === 'city'
+                    ? 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200'
+                    : order.location === 'village'
+                    ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200'
                     : 'bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-200'
                 }`}>
-                  {order.location === 'tbilisi' ? 'თბილისი' : 'რეგიონები'}
+                  {order.location === 'tbilisi' ? 'თბილისი' : order.location === 'city' ? 'ქალაქები' : order.location === 'village' ? 'სოფლები' : 'რეგიონები'}
                 </span>
               </div>
               <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
