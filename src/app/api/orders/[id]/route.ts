@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { getDb } from '@/lib/db';
 
 // Allowed order statuses
-const VALID_STATUSES = ['pending', 'stickered', 'shipped', 'postponed', 'delivered', 'cancelled'];
+const VALID_STATUSES = ['pending', 'stickered', 'shipped', 'postponed'];
 
 // Allowed payment types
 const VALID_PAYMENT_TYPES = ['cash', 'transfer'];

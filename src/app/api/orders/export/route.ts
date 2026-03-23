@@ -9,8 +9,6 @@ const STATUS_LABELS: Record<string, string> = {
   stickered: 'დასტიკერებული',
   shipped: 'გაგზავნილი',
   postponed: 'გადადებული',
-  delivered: 'მიწოდებული',
-  cancelled: 'გაუქმებული',
 };
 
 interface OrderRow {

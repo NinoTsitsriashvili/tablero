@@ -77,8 +77,6 @@ const STATUS_LABELS: Record<string, string> = {
   stickered: 'დასტიკერებული',
   shipped: 'გაგზავნილი',
   postponed: 'გადადებული',
-  delivered: 'მიწოდებული',
-  cancelled: 'გაუქმებული',
 };
 
 const PAYMENT_LABELS: Record<string, string> = {
@@ -370,8 +368,6 @@ export default function StatisticsPage() {
                 <option value="stickered">დასტიკერებული</option>
                 <option value="shipped">გაგზავნილი</option>
                 <option value="postponed">გადადებული</option>
-                <option value="delivered">მიწოდებული</option>
-                <option value="cancelled">გაუქმებული</option>
               </select>
             </div>
           </div>
@@ -788,9 +784,7 @@ export default function StatisticsPage() {
                           <div key={s.status} className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
                             <div className="flex items-center justify-between mb-2">
                               <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                                s.status === 'delivered'
-                                  ? 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300'
-                                  : s.status === 'shipped'
+                                s.status === 'shipped'
                                   ? 'bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300'
                                   : s.status === 'pending'
                                   ? 'bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-300'
@@ -798,7 +792,7 @@ export default function StatisticsPage() {
                                   ? 'bg-cyan-100 dark:bg-cyan-900 text-cyan-700 dark:text-cyan-300'
                                   : s.status === 'postponed'
                                   ? 'bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-300'
-                                  : 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300'
+                                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
                               }`}>
                                 {STATUS_LABELS[s.status] || s.status}
                               </span>

@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { getDb } from '@/lib/db';
 
 // Allowed order statuses
-const VALID_STATUSES = ['pending', 'stickered', 'shipped', 'postponed', 'delivered', 'cancelled'];
+const VALID_STATUSES = ['pending', 'stickered', 'shipped', 'postponed'];
 
 // Helper function to restore stock for order items (when order is cancelled)
 async function restoreStockForOrder(sql: ReturnType<typeof getDb>, orderId: number, reason: string) {

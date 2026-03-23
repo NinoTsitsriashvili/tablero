@@ -15,7 +15,6 @@ interface DashboardData {
     stickered: number;
     shipped: number;
     postponed: number;
-    delivered: number;
   };
   pendingOrders: {
     id: number;
@@ -48,7 +47,6 @@ const STATUS_COLORS: Record<string, string> = {
   stickered: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300',
   shipped: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300',
   postponed: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300',
-  delivered: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
 };
 
 export default function DashboardPage() {
@@ -324,7 +322,6 @@ export default function DashboardPage() {
               { key: 'stickered', label: 'დასტიკერ.', color: 'bg-cyan-500', count: data?.statusCounts.stickered || 0 },
               { key: 'shipped', label: 'გაგზავნილი', color: 'bg-purple-500', count: data?.statusCounts.shipped || 0 },
               { key: 'postponed', label: 'გადადებული', color: 'bg-orange-500', count: data?.statusCounts.postponed || 0 },
-              { key: 'delivered', label: 'მიწოდებული', color: 'bg-green-500', count: data?.statusCounts.delivered || 0 },
             ].map((status) => (
               <Link
                 key={status.key}

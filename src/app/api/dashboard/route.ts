@@ -8,8 +8,6 @@ const STATUS_LABELS: Record<string, string> = {
   stickered: 'დასტიკერებული',
   shipped: 'გაგზავნილი',
   postponed: 'გადადებული',
-  delivered: 'მიწოდებული',
-  cancelled: 'გაუქმებული',
 };
 
 export async function GET() {
@@ -135,7 +133,6 @@ export async function GET() {
         stickered: statusCounts.stickered || 0,
         shipped: statusCounts.shipped || 0,
         postponed: statusCounts.postponed || 0,
-        delivered: statusCounts.delivered || 0,
       },
       pendingOrders: pendingOrders.map(o => ({
         id: o.id,

@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
 import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import Navbar from '@/components/Navbar';
@@ -14,11 +14,9 @@ const STATUS_CONFIG = {
   stickered: { label: 'დასტიკერებული', style: 'bg-cyan-100 dark:bg-cyan-900 text-cyan-800 dark:text-cyan-200' },
   shipped: { label: 'გაგზავნილი', style: 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200' },
   postponed: { label: 'გადადებული', style: 'bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200' },
-  delivered: { label: 'მიწოდებული', style: 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200' },
-  cancelled: { label: 'გაუქმებული', style: 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200' },
 };
 
-const STATUS_ORDER = ['pending', 'stickered', 'shipped', 'postponed', 'delivered', 'cancelled'];
+const STATUS_ORDER = ['pending', 'stickered', 'shipped', 'postponed'];
 
 interface OrderItem {
   id: number;
@@ -51,6 +49,7 @@ export interface Order {
   updated_at: string;
   items_count: number;
   items: OrderItem[];
+  initialStatus?: string; // Snapshot of status at load time for filtering
 }
 
 // Skeleton loader for order table rows
@@ -108,23 +107,68 @@ function OrderCardSkeleton() {
   );
 }
 
-export default function OrdersPage() {
+type StatusFilterType = 'all' | 'pending' | 'stickered' | 'shipped' | 'postponed';
+type LocationFilterType = 'all' | 'tbilisi' | 'regions' | 'city' | 'village';
+type AddedByFilterType = 'all' | 'ani' | 'kato';
+
+function OrdersPageContent() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
   const [statusDropdownOpen, setStatusDropdownOpen] = useState<number | null>(null);
   const [updatingStatus, setUpdatingStatus] = useState<number | null>(null);
-  const [locationFilter, setLocationFilter] = useState<'all' | 'tbilisi' | 'regions' | 'city' | 'village'>('all');
-  const [addedByFilter, setAddedByFilter] = useState<'all' | 'ani' | 'kato'>('all');
+  const [statusFilterDropdownOpen, setStatusFilterDropdownOpen] = useState(false);
   const statusDropdownRef = useRef<HTMLDivElement>(null);
+  const statusFilterDropdownRef = useRef<HTMLDivElement>(null);
   const ITEMS_PER_PAGE = 25;
 
-  // Filter orders based on search query, location, and added_by
+  // Read filters from URL params (with defaults)
+  const statusFilter = (searchParams.get('status') || 'all') as StatusFilterType;
+  const locationFilter = (searchParams.get('location') || 'all') as LocationFilterType;
+  const addedByFilter = (searchParams.get('addedBy') || 'all') as AddedByFilterType;
+  const currentPage = parseInt(searchParams.get('page') || '1', 10);
+
+  // Update URL params helper
+  const updateUrlParams = useCallback((updates: Record<string, string>) => {
+    const params = new URLSearchParams(searchParams.toString());
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value === 'all' || value === '1') {
+        params.delete(key); // Remove default values from URL
+      } else {
+        params.set(key, value);
+      }
+    });
+    const newUrl = params.toString() ? `?${params.toString()}` : window.location.pathname;
+    router.replace(newUrl, { scroll: false });
+  }, [searchParams, router]);
+
+  // Filter setters that update URL
+  const setStatusFilter = (value: StatusFilterType) => {
+    updateUrlParams({ status: value, page: '1' });
+  };
+  const setLocationFilter = (value: LocationFilterType) => {
+    updateUrlParams({ location: value, page: '1' });
+  };
+  const setAddedByFilter = (value: AddedByFilterType) => {
+    updateUrlParams({ addedBy: value, page: '1' });
+  };
+  const setCurrentPage = (page: number) => {
+    updateUrlParams({ page: page.toString() });
+  };
+
+  // Filter orders based on search query, status, location, and added_by
+  // Uses initialStatus (snapshot at load time) so orders stay visible after status change
   const filteredOrders = orders.filter((order) => {
+    // Status filter - uses initialStatus to keep orders visible after status change
+    if (statusFilter !== 'all') {
+      const statusToCheck = order.initialStatus || order.status;
+      if (statusToCheck !== statusFilter) return false;
+    }
+
     // Location filter
     if (locationFilter !== 'all') {
       if (locationFilter === 'tbilisi') {
@@ -165,7 +209,10 @@ export default function OrdersPage() {
 
   // Reset to page 1 when search changes
   useEffect(() => {
-    setCurrentPage(1);
+    if (currentPage !== 1) {
+      updateUrlParams({ page: '1' });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery]);
 
   // Close status dropdown when clicking outside
@@ -192,6 +239,28 @@ export default function OrdersPage() {
     };
   }, [statusDropdownOpen]);
 
+  // Close status filter dropdown when clicking outside
+  useEffect(() => {
+    if (!statusFilterDropdownOpen) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      const isInsideDropdown = target.closest('[data-status-filter-dropdown]');
+      if (!isInsideDropdown) {
+        setStatusFilterDropdownOpen(false);
+      }
+    };
+
+    const timeoutId = setTimeout(() => {
+      document.addEventListener('click', handleClickOutside);
+    }, 50);
+
+    return () => {
+      clearTimeout(timeoutId);
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, [statusFilterDropdownOpen]);
+
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/');
@@ -209,7 +278,12 @@ export default function OrdersPage() {
       const res = await fetch('/api/orders');
       if (res.ok) {
         const data = await res.json();
-        setOrders(data);
+        // Add initialStatus snapshot for each order (used for filtering)
+        const ordersWithInitialStatus = data.map((order: Order) => ({
+          ...order,
+          initialStatus: order.status,
+        }));
+        setOrders(ordersWithInitialStatus);
       }
     } catch (error) {
       console.error('Error fetching orders:', error);
@@ -536,13 +610,93 @@ export default function OrdersPage() {
             )}
           </div>
 
+          {/* Status Filter - Dropdown Picker */}
+          <div className="flex items-center gap-2 overflow-visible">
+            <span className="text-sm text-gray-500 dark:text-gray-400 flex-shrink-0">სტატუსი:</span>
+            <div className="relative" data-status-filter-dropdown>
+              <button
+                type="button"
+                onClick={() => setStatusFilterDropdownOpen(!statusFilterDropdownOpen)}
+                className={`px-3 py-1.5 rounded-full text-sm font-medium cursor-pointer hover:opacity-80 active:opacity-60 transition-opacity flex items-center gap-1.5 select-none ${
+                  statusFilter === 'all'
+                    ? 'bg-gray-700 text-white'
+                    : STATUS_CONFIG[statusFilter as keyof typeof STATUS_CONFIG]?.style || 'bg-gray-700 text-white'
+                }`}
+                style={{ WebkitTapHighlightColor: 'transparent' }}
+              >
+                {statusFilter === 'all'
+                  ? 'ყველა'
+                  : STATUS_CONFIG[statusFilter as keyof typeof STATUS_CONFIG]?.label || 'ყველა'}
+                <svg className={`w-3 h-3 transition-transform ${statusFilterDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              {statusFilterDropdownOpen && (
+                <div
+                  className="absolute z-50 mt-1 w-44 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 left-0"
+                  data-status-filter-dropdown
+                >
+                  {/* All option */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStatusFilter('all');
+                      setStatusFilterDropdownOpen(false);
+                    }}
+                    className={`w-full px-3 py-2.5 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600 flex items-center gap-2 select-none ${
+                      statusFilter === 'all' ? 'bg-gray-50 dark:bg-gray-700' : ''
+                    }`}
+                    style={{ WebkitTapHighlightColor: 'transparent' }}
+                  >
+                    <span className="w-2 h-2 rounded-full bg-gray-500"></span>
+                    <span className="text-gray-800 dark:text-gray-200">ყველა</span>
+                    {statusFilter === 'all' && (
+                      <svg className="w-4 h-4 ml-auto text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                  </button>
+
+                  {/* Status options */}
+                  {STATUS_ORDER.map((statusKey) => {
+                    const config = STATUS_CONFIG[statusKey as keyof typeof STATUS_CONFIG];
+                    const isCurrentStatus = statusFilter === statusKey;
+                    return (
+                      <button
+                        type="button"
+                        key={statusKey}
+                        onClick={() => {
+                          setStatusFilter(statusKey as StatusFilterType);
+                          setStatusFilterDropdownOpen(false);
+                        }}
+                        className={`w-full px-3 py-2.5 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600 flex items-center gap-2 select-none ${
+                          isCurrentStatus ? 'bg-gray-50 dark:bg-gray-700' : ''
+                        }`}
+                        style={{ WebkitTapHighlightColor: 'transparent' }}
+                      >
+                        <span className={`w-2 h-2 rounded-full ${config.style.split(' ')[0]}`}></span>
+                        <span className="text-gray-800 dark:text-gray-200">{config.label}</span>
+                        {isCurrentStatus && (
+                          <svg className="w-4 h-4 ml-auto text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* Filter Tabs Row */}
           <div className="flex flex-wrap gap-4">
             {/* Location Filter */}
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <button
-                onClick={() => { setLocationFilter('all'); setCurrentPage(1); }}
-                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                onClick={() => setLocationFilter('all')}
+                className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
                   locationFilter === 'all'
                     ? 'bg-blue-600 text-white'
                     : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
@@ -551,8 +705,8 @@ export default function OrdersPage() {
                 ყველა
               </button>
               <button
-                onClick={() => { setLocationFilter('tbilisi'); setCurrentPage(1); }}
-                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                onClick={() => setLocationFilter('tbilisi')}
+                className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
                   locationFilter === 'tbilisi'
                     ? 'bg-blue-600 text-white'
                     : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
@@ -561,8 +715,8 @@ export default function OrdersPage() {
                 თბილისი
               </button>
               <button
-                onClick={() => { setLocationFilter('regions'); setCurrentPage(1); }}
-                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                onClick={() => setLocationFilter('regions')}
+                className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
                   locationFilter === 'regions'
                     ? 'bg-blue-600 text-white'
                     : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
@@ -571,8 +725,8 @@ export default function OrdersPage() {
                 რეგიონები
               </button>
               <button
-                onClick={() => { setLocationFilter('city'); setCurrentPage(1); }}
-                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                onClick={() => setLocationFilter('city')}
+                className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
                   locationFilter === 'city'
                     ? 'bg-purple-600 text-white'
                     : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
@@ -581,8 +735,8 @@ export default function OrdersPage() {
                 ქალაქები
               </button>
               <button
-                onClick={() => { setLocationFilter('village'); setCurrentPage(1); }}
-                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                onClick={() => setLocationFilter('village')}
+                className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
                   locationFilter === 'village'
                     ? 'bg-green-600 text-white'
                     : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
@@ -596,10 +750,10 @@ export default function OrdersPage() {
             <div className="hidden sm:block w-px bg-gray-300 dark:bg-gray-600"></div>
 
             {/* Added By Filter */}
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <button
-                onClick={() => { setAddedByFilter('all'); setCurrentPage(1); }}
-                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                onClick={() => setAddedByFilter('all')}
+                className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
                   addedByFilter === 'all'
                     ? 'bg-purple-600 text-white'
                     : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
@@ -608,8 +762,8 @@ export default function OrdersPage() {
                 ყველა
               </button>
               <button
-                onClick={() => { setAddedByFilter('ani'); setCurrentPage(1); }}
-                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                onClick={() => setAddedByFilter('ani')}
+                className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
                   addedByFilter === 'ani'
                     ? 'bg-purple-600 text-white'
                     : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
@@ -618,8 +772,8 @@ export default function OrdersPage() {
                 ანი
               </button>
               <button
-                onClick={() => { setAddedByFilter('kato'); setCurrentPage(1); }}
-                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                onClick={() => setAddedByFilter('kato')}
+                className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
                   addedByFilter === 'kato'
                     ? 'bg-purple-600 text-white'
                     : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
@@ -631,7 +785,7 @@ export default function OrdersPage() {
           </div>
 
           {/* Filter info */}
-          {(searchQuery || locationFilter !== 'all' || addedByFilter !== 'all') && (
+          {(searchQuery || statusFilter !== 'all' || locationFilter !== 'all' || addedByFilter !== 'all') && (
             <p className="text-sm text-gray-500 dark:text-gray-400">
               ნაპოვნია: {filteredOrders.length} შეკვეთა
             </p>
@@ -695,14 +849,14 @@ export default function OrdersPage() {
         ) : (
           <>
             {/* Mobile Card View */}
-            <div className="md:hidden space-y-3">
+            <div className="md:hidden space-y-3 overflow-visible">
               {paginatedOrders.map((order) => (
                 <div
                   key={order.id}
-                  className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 hover:shadow-md transition-shadow"
+                  className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 hover:shadow-md transition-shadow overflow-visible"
                 >
                   {/* Header: Name and Status */}
-                  <div className="flex items-start justify-between mb-2">
+                  <div className="flex items-start justify-between mb-2 overflow-visible">
                     <Link
                       href={`/orders/${order.id}`}
                       className="flex-1 min-w-0 pr-2"
@@ -819,8 +973,8 @@ export default function OrdersPage() {
             </div>
 
             {/* Desktop Table View */}
-            <div className="hidden md:block bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-              <div className="overflow-x-auto">
+            <div className="hidden md:block bg-white dark:bg-gray-800 rounded-lg shadow">
+              <div className="overflow-visible">
                 <table className="w-full">
                   <thead className="bg-gray-50 dark:bg-gray-700">
                     <tr>
@@ -939,5 +1093,29 @@ export default function OrdersPage() {
         )}
       </main>
     </div>
+  );
+}
+
+// Wrapper component with Suspense for useSearchParams
+export default function OrdersPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <Navbar />
+        <main className="max-w-7xl mx-auto px-4 py-6 sm:py-8">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
+            <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-32 animate-pulse"></div>
+            <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded w-full sm:w-44 animate-pulse"></div>
+          </div>
+          <div className="space-y-3">
+            <OrderCardSkeleton />
+            <OrderCardSkeleton />
+            <OrderCardSkeleton />
+          </div>
+        </main>
+      </div>
+    }>
+      <OrdersPageContent />
+    </Suspense>
   );
 }

@@ -403,16 +403,12 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
       stickered: 'bg-cyan-100 dark:bg-cyan-900 text-cyan-800 dark:text-cyan-200',
       shipped: 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200',
       postponed: 'bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200',
-      delivered: 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200',
-      cancelled: 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200',
     };
     const labels: Record<string, string> = {
       pending: 'მოლოდინში',
       stickered: 'დასტიკერებული',
       shipped: 'გაგზავნილი',
       postponed: 'გადადებული',
-      delivered: 'მიწოდებული',
-      cancelled: 'გაუქმებული',
     };
     return (
       <span className={`px-3 py-1 rounded-full text-sm font-medium ${styles[status] || styles.pending}`}>
@@ -442,8 +438,6 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
     { value: 'stickered', label: 'დასტიკერებული' },
     { value: 'shipped', label: 'გაგზავნილი' },
     { value: 'postponed', label: 'გადადებული' },
-    { value: 'delivered', label: 'მიწოდებული' },
-    { value: 'cancelled', label: 'გაუქმებული' },
   ];
 
   const calculateItemSubtotal = (item: OrderItem) => {
