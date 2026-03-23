@@ -18,6 +18,16 @@ const STATUS_CONFIG = {
 
 const STATUS_ORDER = ['pending', 'stickered', 'shipped', 'postponed'];
 
+// Location configuration
+const LOCATION_CONFIG = {
+  tbilisi: { label: 'თბილისი', style: 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200' },
+  regions: { label: 'რეგიონები', style: 'bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-200' },
+  city: { label: 'ქალაქები', style: 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200' },
+  village: { label: 'სოფლები', style: 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200' },
+};
+
+const LOCATION_ORDER = ['tbilisi', 'regions', 'city', 'village'];
+
 interface OrderItem {
   id: number;
   product_id: number;
@@ -122,8 +132,10 @@ function OrdersPageContent() {
   const [statusDropdownOpen, setStatusDropdownOpen] = useState<number | null>(null);
   const [updatingStatus, setUpdatingStatus] = useState<number | null>(null);
   const [statusFilterDropdownOpen, setStatusFilterDropdownOpen] = useState(false);
+  const [locationFilterDropdownOpen, setLocationFilterDropdownOpen] = useState(false);
   const statusDropdownRef = useRef<HTMLDivElement>(null);
   const statusFilterDropdownRef = useRef<HTMLDivElement>(null);
+  const locationFilterDropdownRef = useRef<HTMLDivElement>(null);
   const ITEMS_PER_PAGE = 25;
 
   // Read filters from URL params (with defaults)
@@ -260,6 +272,28 @@ function OrdersPageContent() {
       document.removeEventListener('click', handleClickOutside);
     };
   }, [statusFilterDropdownOpen]);
+
+  // Close location filter dropdown when clicking outside
+  useEffect(() => {
+    if (!locationFilterDropdownOpen) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      const isInsideDropdown = target.closest('[data-location-filter-dropdown]');
+      if (!isInsideDropdown) {
+        setLocationFilterDropdownOpen(false);
+      }
+    };
+
+    const timeoutId = setTimeout(() => {
+      document.addEventListener('click', handleClickOutside);
+    }, 50);
+
+    return () => {
+      clearTimeout(timeoutId);
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, [locationFilterDropdownOpen]);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -690,72 +724,95 @@ function OrdersPageContent() {
             </div>
           </div>
 
-          {/* Filter Tabs Row */}
-          <div className="flex flex-wrap gap-4">
-            {/* Location Filter */}
-            <div className="flex flex-wrap gap-2">
+          {/* Location Filter - Dropdown Picker */}
+          <div className="flex items-center gap-2 overflow-visible">
+            <span className="text-sm text-gray-500 dark:text-gray-400 flex-shrink-0">ლოკაცია:</span>
+            <div className="relative" data-location-filter-dropdown>
               <button
-                onClick={() => setLocationFilter('all')}
-                className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+                type="button"
+                onClick={() => setLocationFilterDropdownOpen(!locationFilterDropdownOpen)}
+                className={`px-3 py-1.5 rounded-full text-sm font-medium cursor-pointer hover:opacity-80 active:opacity-60 transition-opacity flex items-center gap-1.5 select-none ${
                   locationFilter === 'all'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
+                    ? 'bg-gray-700 text-white'
+                    : LOCATION_CONFIG[locationFilter as keyof typeof LOCATION_CONFIG]?.style || 'bg-gray-700 text-white'
                 }`}
+                style={{ WebkitTapHighlightColor: 'transparent' }}
               >
-                ყველა
+                {locationFilter === 'all'
+                  ? 'ყველა'
+                  : LOCATION_CONFIG[locationFilter as keyof typeof LOCATION_CONFIG]?.label || 'ყველა'}
+                <svg className={`w-3 h-3 transition-transform ${locationFilterDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
               </button>
-              <button
-                onClick={() => setLocationFilter('tbilisi')}
-                className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
-                  locationFilter === 'tbilisi'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
-                }`}
-              >
-                თბილისი
-              </button>
-              <button
-                onClick={() => setLocationFilter('regions')}
-                className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
-                  locationFilter === 'regions'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
-                }`}
-              >
-                რეგიონები
-              </button>
-              <button
-                onClick={() => setLocationFilter('city')}
-                className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
-                  locationFilter === 'city'
-                    ? 'bg-purple-600 text-white'
-                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
-                }`}
-              >
-                ქალაქები
-              </button>
-              <button
-                onClick={() => setLocationFilter('village')}
-                className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
-                  locationFilter === 'village'
-                    ? 'bg-green-600 text-white'
-                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
-                }`}
-              >
-                სოფლები
-              </button>
+
+              {locationFilterDropdownOpen && (
+                <div
+                  className="absolute z-50 mt-1 w-44 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 left-0"
+                  data-location-filter-dropdown
+                >
+                  {/* All option */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLocationFilter('all');
+                      setLocationFilterDropdownOpen(false);
+                    }}
+                    className={`w-full px-3 py-2.5 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600 flex items-center gap-2 select-none ${
+                      locationFilter === 'all' ? 'bg-gray-50 dark:bg-gray-700' : ''
+                    }`}
+                    style={{ WebkitTapHighlightColor: 'transparent' }}
+                  >
+                    <span className="w-2 h-2 rounded-full bg-gray-500"></span>
+                    <span className="text-gray-800 dark:text-gray-200">ყველა</span>
+                    {locationFilter === 'all' && (
+                      <svg className="w-4 h-4 ml-auto text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                  </button>
+
+                  {/* Location options */}
+                  {LOCATION_ORDER.map((locationKey) => {
+                    const config = LOCATION_CONFIG[locationKey as keyof typeof LOCATION_CONFIG];
+                    const isCurrentLocation = locationFilter === locationKey;
+                    return (
+                      <button
+                        type="button"
+                        key={locationKey}
+                        onClick={() => {
+                          setLocationFilter(locationKey as LocationFilterType);
+                          setLocationFilterDropdownOpen(false);
+                        }}
+                        className={`w-full px-3 py-2.5 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600 flex items-center gap-2 select-none ${
+                          isCurrentLocation ? 'bg-gray-50 dark:bg-gray-700' : ''
+                        }`}
+                        style={{ WebkitTapHighlightColor: 'transparent' }}
+                      >
+                        <span className={`w-2 h-2 rounded-full ${config.style.split(' ')[0]}`}></span>
+                        <span className="text-gray-800 dark:text-gray-200">{config.label}</span>
+                        {isCurrentLocation && (
+                          <svg className="w-4 h-4 ml-auto text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
+          </div>
 
-            {/* Separator */}
-            <div className="hidden sm:block w-px bg-gray-300 dark:bg-gray-600"></div>
-
-            {/* Added By Filter */}
+          {/* Added By Filter */}
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-500 dark:text-gray-400 flex-shrink-0">დამატებული:</span>
             <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => setAddedByFilter('all')}
-                className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+                className={`px-3 py-1.5 text-sm font-medium rounded-full transition-colors ${
                   addedByFilter === 'all'
-                    ? 'bg-purple-600 text-white'
+                    ? 'bg-gray-700 text-white'
                     : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
                 }`}
               >
@@ -763,9 +820,9 @@ function OrdersPageContent() {
               </button>
               <button
                 onClick={() => setAddedByFilter('ani')}
-                className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+                className={`px-3 py-1.5 text-sm font-medium rounded-full transition-colors ${
                   addedByFilter === 'ani'
-                    ? 'bg-purple-600 text-white'
+                    ? 'bg-pink-100 dark:bg-pink-900 text-pink-800 dark:text-pink-200'
                     : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
                 }`}
               >
@@ -773,9 +830,9 @@ function OrdersPageContent() {
               </button>
               <button
                 onClick={() => setAddedByFilter('kato')}
-                className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+                className={`px-3 py-1.5 text-sm font-medium rounded-full transition-colors ${
                   addedByFilter === 'kato'
-                    ? 'bg-purple-600 text-white'
+                    ? 'bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200'
                     : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
                 }`}
               >
