@@ -75,7 +75,16 @@ export async function GET(request: NextRequest) {
       if (paymentType && paymentType !== 'all' && row.payment_type !== paymentType) return false;
 
       // Location filter
-      if (location && location !== 'all' && row.location !== location) return false;
+      if (location && location !== 'all') {
+        if (location === 'tbilisi') {
+          if (row.location !== 'tbilisi') return false;
+        } else if (location === 'regions') {
+          // Regions includes: old 'region' value + new 'city' and 'village' values
+          if (row.location !== 'region' && row.location !== 'city' && row.location !== 'village') return false;
+        } else {
+          if (row.location !== location) return false;
+        }
+      }
 
       return true;
     });

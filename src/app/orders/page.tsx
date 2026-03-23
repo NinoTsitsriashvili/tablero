@@ -118,7 +118,7 @@ export default function OrdersPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [statusDropdownOpen, setStatusDropdownOpen] = useState<number | null>(null);
   const [updatingStatus, setUpdatingStatus] = useState<number | null>(null);
-  const [locationFilter, setLocationFilter] = useState<'all' | 'tbilisi' | 'region'>('all');
+  const [locationFilter, setLocationFilter] = useState<'all' | 'tbilisi' | 'regions'>('all');
   const [addedByFilter, setAddedByFilter] = useState<'all' | 'ani' | 'kato'>('all');
   const statusDropdownRef = useRef<HTMLDivElement>(null);
   const ITEMS_PER_PAGE = 10;
@@ -127,7 +127,13 @@ export default function OrdersPage() {
   const filteredOrders = orders.filter((order) => {
     // Location filter
     if (locationFilter !== 'all') {
-      if (order.location !== locationFilter) return false;
+      if (locationFilter === 'tbilisi') {
+        // Only tbilisi
+        if (order.location !== 'tbilisi') return false;
+      } else if (locationFilter === 'regions') {
+        // Regions includes: old 'region' value + new 'city' and 'village' values
+        if (order.location !== 'region' && order.location !== 'city' && order.location !== 'village') return false;
+      }
     }
 
     // Added by filter
@@ -549,9 +555,9 @@ export default function OrdersPage() {
                 თბილისი
               </button>
               <button
-                onClick={() => { setLocationFilter('region'); setCurrentPage(1); }}
+                onClick={() => { setLocationFilter('regions'); setCurrentPage(1); }}
                 className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                  locationFilter === 'region'
+                  locationFilter === 'regions'
                     ? 'bg-blue-600 text-white'
                     : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
                 }`}

@@ -647,7 +647,7 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             ლოკაცია *
           </label>
-          <div className="flex gap-4">
+          <div className="flex flex-wrap gap-4">
             <label className="flex items-center cursor-pointer">
               <input
                 type="radio"
@@ -663,12 +663,23 @@ export default function OrderForm({ onSave, onCancel }: OrderFormProps) {
               <input
                 type="radio"
                 name="location"
-                value="region"
-                checked={formData.location === 'region'}
+                value="city"
+                checked={formData.location === 'city'}
                 onChange={handleChange}
                 className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer"
               />
-              <span className="ml-2 text-gray-800 dark:text-gray-200">რეგიონები</span>
+              <span className="ml-2 text-gray-800 dark:text-gray-200">ქალაქები</span>
+            </label>
+            <label className="flex items-center cursor-pointer">
+              <input
+                type="radio"
+                name="location"
+                value="village"
+                checked={formData.location === 'village'}
+                onChange={handleChange}
+                className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer"
+              />
+              <span className="ml-2 text-gray-800 dark:text-gray-200">სოფლები</span>
             </label>
           </div>
         </div>

@@ -88,7 +88,9 @@ const PAYMENT_LABELS: Record<string, string> = {
 
 const LOCATION_LABELS: Record<string, string> = {
   tbilisi: 'თბილისი',
-  region: 'რეგიონები',
+  region: 'რეგიონები', // Old value for backward compatibility
+  city: 'ქალაქები',
+  village: 'სოფლები',
 };
 
 export default function StatisticsPage() {
@@ -400,7 +402,7 @@ export default function StatisticsPage() {
               >
                 <option value="all">ყველა</option>
                 <option value="tbilisi">თბილისი</option>
-                <option value="region">რეგიონები</option>
+                <option value="regions">რეგიონები</option>
               </select>
             </div>
           </div>
@@ -874,6 +876,10 @@ export default function StatisticsPage() {
                               <span className={`px-3 py-1 rounded-full text-sm font-medium ${
                                 l.location === 'tbilisi'
                                   ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
+                                  : l.location === 'city'
+                                  ? 'bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300'
+                                  : l.location === 'village'
+                                  ? 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300'
                                   : 'bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300'
                               }`}>
                                 {LOCATION_LABELS[l.location] || l.location}

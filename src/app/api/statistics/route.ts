@@ -111,7 +111,18 @@ export async function GET(request: NextRequest) {
       if (hasPaymentFilter && row.payment_type !== paymentType) return false;
 
       // Location filter
-      if (hasLocationFilter && row.location !== locationFilter) return false;
+      if (hasLocationFilter) {
+        if (locationFilter === 'tbilisi') {
+          // Only tbilisi
+          if (row.location !== 'tbilisi') return false;
+        } else if (locationFilter === 'regions') {
+          // Regions includes: old 'region' value + new 'city' and 'village' values
+          if (row.location !== 'region' && row.location !== 'city' && row.location !== 'village') return false;
+        } else {
+          // Specific location type (city or village)
+          if (row.location !== locationFilter) return false;
+        }
+      }
 
       // Product filter
       if (hasProductFilter && row.product_id !== parseInt(productId!)) return false;
