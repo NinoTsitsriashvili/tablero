@@ -118,7 +118,7 @@ export default function OrdersPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [statusDropdownOpen, setStatusDropdownOpen] = useState<number | null>(null);
   const [updatingStatus, setUpdatingStatus] = useState<number | null>(null);
-  const [locationFilter, setLocationFilter] = useState<'all' | 'tbilisi' | 'regions'>('all');
+  const [locationFilter, setLocationFilter] = useState<'all' | 'tbilisi' | 'regions' | 'city' | 'village'>('all');
   const [addedByFilter, setAddedByFilter] = useState<'all' | 'ani' | 'kato'>('all');
   const statusDropdownRef = useRef<HTMLDivElement>(null);
   const ITEMS_PER_PAGE = 10;
@@ -133,6 +133,12 @@ export default function OrdersPage() {
       } else if (locationFilter === 'regions') {
         // Regions includes: old 'region' value + new 'city' and 'village' values
         if (order.location !== 'region' && order.location !== 'city' && order.location !== 'village') return false;
+      } else if (locationFilter === 'city') {
+        // Only cities
+        if (order.location !== 'city') return false;
+      } else if (locationFilter === 'village') {
+        // Only villages
+        if (order.location !== 'village') return false;
       }
     }
 
@@ -563,6 +569,26 @@ export default function OrdersPage() {
                 }`}
               >
                 რეგიონები
+              </button>
+              <button
+                onClick={() => { setLocationFilter('city'); setCurrentPage(1); }}
+                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  locationFilter === 'city'
+                    ? 'bg-purple-600 text-white'
+                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
+                }`}
+              >
+                ქალაქები
+              </button>
+              <button
+                onClick={() => { setLocationFilter('village'); setCurrentPage(1); }}
+                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  locationFilter === 'village'
+                    ? 'bg-green-600 text-white'
+                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
+                }`}
+              >
+                სოფლები
               </button>
             </div>
 
