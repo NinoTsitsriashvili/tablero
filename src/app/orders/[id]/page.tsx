@@ -90,6 +90,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   const [error, setError] = useState('');
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [editLoading, setEditLoading] = useState(false);
   const [editError, setEditError] = useState('');
   const [editForm, setEditForm] = useState<EditFormData>({
@@ -450,6 +451,34 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   };
   // ========== END PRINT FEATURE ==========
 
+  // ========== COPY TO CLIPBOARD FEATURE ==========
+  const handleCopy = async () => {
+    if (!order) return;
+
+    const lines: string[] = [
+      order.recipient_name,
+      order.phone,
+      order.address,
+    ];
+
+    if (order.payment_type === 'cash') {
+      lines.push(`გადასახდელია: ₾${Number(order.total_price).toFixed(0)}`);
+    } else {
+      lines.push('გადახდილია');
+    }
+
+    // Product list
+    for (const item of order.items) {
+      const name = item.product_name || `პროდუქტი #${item.product_id}`;
+      lines.push(`${name} x${item.quantity}`);
+    }
+
+    await navigator.clipboard.writeText(lines.join('\n'));
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+  // ========== END COPY TO CLIPBOARD FEATURE ==========
+
   if (status === 'loading' || loading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -547,6 +576,14 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                   ბეჭდვა
                 </button>
                 {/* ========== END PRINT BUTTON ========== */}
+                {/* ========== COPY BUTTON ========== */}
+                <button
+                  onClick={handleCopy}
+                  className="flex-1 sm:flex-none px-4 py-2.5 text-sm bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 rounded-md hover:bg-purple-200 dark:hover:bg-purple-800 transition-colors cursor-pointer font-medium"
+                >
+                  {copied ? 'დაკოპირდა!' : 'კოპირება'}
+                </button>
+                {/* ========== END COPY BUTTON ========== */}
                 <button
                   onClick={startEditing}
                   className="flex-1 sm:flex-none px-4 py-2.5 text-sm bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-md hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors cursor-pointer font-medium"
