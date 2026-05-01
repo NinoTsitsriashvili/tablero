@@ -6,7 +6,7 @@ import { getDb } from '@/lib/db';
 // Increase function timeout for large data syncs
 export const maxDuration = 60;
 
-const FB_AD_ACCOUNT_ID = process.env.FB_AD_ACCOUNT_ID || 'act_221097566364764';
+const FB_AD_ACCOUNT_ID = process.env.FB_AD_ACCOUNT_ID;
 const FB_ACCESS_TOKEN = process.env.FB_ACCESS_TOKEN;
 
 interface FbInsightRow {
@@ -39,9 +39,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  if (!FB_ACCESS_TOKEN) {
+  if (!FB_ACCESS_TOKEN || !FB_AD_ACCOUNT_ID) {
     return NextResponse.json(
-      { error: 'Facebook access token not configured' },
+      { error: 'Facebook credentials not configured' },
       { status: 500 }
     );
   }
